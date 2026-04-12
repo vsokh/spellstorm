@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-.claude/
-=======
 node_modules/
 dist/
 *.local
->>>>>>> worktree-agent-a03cfe6f
+.claude/
