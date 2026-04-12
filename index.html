@@ -408,9 +408,8 @@ function goThroughDoor(dir){
   roomsCleared++;sfx('door');
 
   // If just cleared a combat room, show upgrade
-  if(currentRoom.type==='combat'||currentRoom.type==='boss'){
-    showUpgradeScreen();
-    setTimeout(()=>{enterRoom(nextRoom);},100); // enters after upgrade picked
+  if(currentRoom.type==='combat'||currentRoom.type==='boss'||currentRoom.type==='start'){
+    showUpgradeScreen(nextRoom);
     return;
   }
   enterRoom(nextRoom);
@@ -419,35 +418,101 @@ function goThroughDoor(dir){
 // ═══════════════════════════════════
 //       UPGRADE SCREEN
 // ═══════════════════════════════════
-function showUpgradeScreen(){
+let pendingUpgradeChoices=null; // indices into UPGRADE_POOL
+let upgradePickedLocal=false;
+let upgradePickedRemote=false;
+let pendingNextRoom=null;
+
+function showUpgradeScreen(nextRoom){
   gamePhase='upgrade';
   document.body.classList.remove('in-game');
+  upgradePickedLocal=false;
+  upgradePickedRemote=false;
+  pendingNextRoom=nextRoom;
+
+  // Pick 3 random upgrade indices
+  const indices=[];
+  const available=[...Array(UPGRADE_POOL.length).keys()];
+  for(let i=0;i<3&&available.length>0;i++){
+    const pick=Math.floor(Math.random()*available.length);
+    indices.push(available.splice(pick,1)[0]);
+  }
+  pendingUpgradeChoices=indices;
+
+  // Send choices to guest
+  if(mode==='host'&&conn&&conn.open){
+    try{conn.send({type:'upgrade',indices});}catch(e){}
+  }
+
+  showUpgradeUI(indices);
+}
+
+function showUpgradeFromHost(indices){
+  // Guest receives upgrade choices from host
+  gamePhase='upgrade';
+  document.body.classList.remove('in-game');
+  upgradePickedLocal=false;
+  pendingUpgradeChoices=indices;
+  showUpgradeUI(indices);
+}
+
+function showUpgradeUI(indices){
   const screen=document.getElementById('upgrade-screen');
   const grid=document.getElementById('upgrade-grid');
   screen.style.display='flex';
-
-  // Pick 3 random upgrades
-  const choices=[];
-  const pool=[...UPGRADE_POOL];
-  for(let i=0;i<3&&pool.length>0;i++){
-    const idx=Math.floor(Math.random()*pool.length);
-    choices.push(pool.splice(idx,1)[0]);
-  }
-
   grid.innerHTML='';
-  for(const up of choices){
+
+  for(const idx of indices){
+    const up=UPGRADE_POOL[idx];
     const card=document.createElement('div');
     card.className='upgrade-card';
     card.innerHTML=`<div class="uname">${up.name}</div><div class="udesc">${up.desc}</div>`;
     card.onclick=()=>{
-      // Apply to all players
-      for(const p of players)up.apply(p);
-      screen.style.display='none';
-      document.body.classList.add('in-game');
-      gamePhase='playing';
+      if(upgradePickedLocal)return;
+      upgradePickedLocal=true;
+      // Apply to local player only
+      const myPlayer=players[localIdx];
+      if(myPlayer)up.apply(myPlayer);
       sfx('pickup');
+      card.style.borderColor='#44cc44';
+
+      // Tell the other side
+      if(mode==='host'&&conn&&conn.open){
+        try{conn.send({type:'host_picked',idx});}catch(e){}
+        checkBothPicked();
+      } else if(mode==='guest'&&conn&&conn.open){
+        try{conn.send({type:'guest_picked',idx});}catch(e){}
+        // Guest waits for host to resume
+        grid.innerHTML='<div style="color:#554466;padding:20px">Waiting for host...</div>';
+      } else {
+        // Local/solo — just continue
+        finishUpgrade();
+      }
     };
     grid.appendChild(card);
+  }
+}
+
+function checkBothPicked(){
+  if(upgradePickedLocal&&upgradePickedRemote){
+    finishUpgrade();
+  } else if(upgradePickedLocal){
+    const grid=document.getElementById('upgrade-grid');
+    grid.innerHTML='<div style="color:#554466;padding:20px">Waiting for partner...</div>';
+  }
+}
+
+function finishUpgrade(){
+  document.getElementById('upgrade-screen').style.display='none';
+  document.body.classList.add('in-game');
+  gamePhase='playing';
+  if(mode!=='guest'&&pendingNextRoom){
+    enterRoom(pendingNextRoom);
+    pendingNextRoom=null;
+  }
+  // Tell guest to resume
+  if(mode==='host'&&conn&&conn.open){
+    try{conn.send({type:'resume'});}catch(e){}
   }
 }
 
@@ -816,7 +881,17 @@ function hostGame(){initAudio();const code=Math.random().toString(36).substring(
   try{peer=new Peer('wcrawl-'+code)}catch(e){document.getElementById('error-msg').textContent='PeerJS error';return;}
   peer.on('open',()=>{document.getElementById('host-status').textContent='waiting for partner...'});
   peer.on('connection',c=>{conn=c;conn.on('open',()=>{mode='host';localIdx=0;document.getElementById('host-status').textContent='connected!';setTimeout(()=>showSelect(),400);});
-  conn.on('data',msg=>{if(msg.type==='input')remoteInput=msg;if(msg.type==='cls')startWithClasses(msg.cls);});
+  conn.on('data',msg=>{
+    if(msg.type==='input')remoteInput=msg;
+    if(msg.type==='cls')startWithClasses(msg.cls);
+    if(msg.type==='guest_picked'){
+      // Guest picked an upgrade — apply to guest's player on host side
+      const up=UPGRADE_POOL[msg.idx];
+      if(up&&players[1])up.apply(players[1]);
+      upgradePickedRemote=true;
+      checkBothPicked();
+    }
+  });
   conn.on('close',()=>{document.getElementById('error-msg').textContent='Partner disconnected'});});
   peer.on('error',e=>{document.getElementById('error-msg').textContent='Error: '+e.type});}
 
@@ -825,7 +900,21 @@ function joinGame(){initAudio();const code=document.getElementById('join-code').
   try{peer=new Peer()}catch(e){document.getElementById('error-msg').textContent='PeerJS error';return;}
   peer.on('open',()=>{conn=peer.connect('wcrawl-'+code,{reliable:true});
   conn.on('open',()=>{mode='guest';localIdx=1;document.getElementById('join-status').textContent='connected!';setTimeout(()=>showSelect(),400);});
-  conn.on('data',msg=>{if(msg.type==='state')applyState(msg);if(msg.type==='go')beginFromNet(msg);});
+  conn.on('data',msg=>{
+    if(msg.type==='state')applyState(msg);
+    if(msg.type==='go')beginFromNet(msg);
+    if(msg.type==='upgrade')showUpgradeFromHost(msg.indices);
+    if(msg.type==='host_picked'){
+      // Host picked — apply to host's player on guest side
+      const up=UPGRADE_POOL[msg.idx];
+      if(up&&players[0])up.apply(players[0]);
+    }
+    if(msg.type==='resume'){
+      document.getElementById('upgrade-screen').style.display='none';
+      document.body.classList.add('in-game');
+      gamePhase='playing';
+    }
+  });
   conn.on('close',()=>{document.getElementById('error-msg').textContent='Host disconnected'});});
   peer.on('error',e=>{document.getElementById('error-msg').textContent='Error: '+e.type});}
 
