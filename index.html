@@ -197,7 +197,7 @@ const UPGRADE_POOL=[
   {name:'Big Spells',desc:'Projectile size +30%',apply:p=>{for(const s of p.cls.spells)if(s.radius)s.radius*=1.3}},
   {name:'Efficiency',desc:'Mana costs -20%',apply:p=>{for(const s of p.cls.spells)s.mana*=0.8}},
   {name:'Vampirism',desc:'Heal 1 HP per 5 kills',apply:p=>{p.vampirism=(p.vampirism||0)+1}},
-  {name:'Blast Radius',desc:'Explosions +40% area',apply:p=>{for(const s of p.cls.spells)if(s.explode)s.explode*=1.4;if(s.radius&&s.type==='aoe_delayed')s.radius*=1.4}},
+  {name:'Blast Radius',desc:'Explosions +40% area',apply:p=>{for(const s of p.cls.spells){if(s.explode)s.explode*=1.4;if(s.radius&&s.type==='aoe_delayed')s.radius*=1.4;}}},
   {name:'Piercing',desc:'Primary passes through 1 enemy',apply:p=>{p.pierce=(p.pierce||0)+1}},
   {name:'Max Mana +25',desc:'Bigger mana pool',apply:p=>{p.maxMana+=25;p.mana+=25}},
   {name:'Armor',desc:'Take -1 damage (min 1)',apply:p=>{p.armor=(p.armor||0)+1}},
@@ -253,7 +253,7 @@ let dungeon=[],currentRoom=null;
 
 // Network
 let peer=null,conn=null;
-let remoteInput={angle:0,thrust:0,strafe:0,shoot:false,shoot2:false,ability:false};
+let remoteInput={angle:0,mx:0,my:0,shoot:false,shoot2:false,ability:false};
 
 // ═══════════════════════════════════
 //          UTILITIES
@@ -477,11 +477,11 @@ function updatePlayers(dt){
     const slow=p.slowTimer>0?0.5:1;if(p.slowTimer>0)p.slowTimer-=dt;
 
     // Aim follows mouse instantly
-    p.angle=input.angle;
+    if(!isNaN(input.angle))p.angle=input.angle;
 
     // Absolute movement: W=up S=down A=left D=right
     const ms=p.moveSpeed*slow;
-    let mvx=input.mx*ms,mvy=input.my*ms;
+    let mvx=(input.mx||0)*ms, mvy=(input.my||0)*ms;
     // Normalize diagonal
     const mvLen=Math.sqrt(mvx*mvx+mvy*mvy);
     if(mvLen>ms){mvx*=ms/mvLen;mvy*=ms/mvLen;}
@@ -680,11 +680,13 @@ function updateFx(dt){
 }
 
 function updateCamera(){
-  const p=players[localIdx];if(!p)return;
+  const p=players[localIdx];if(!p||!p.alive)return;
   let tx,ty;
   if(W>=RW){tx=(W-RW)/2;}else{tx=clamp(W/2-p.x,W-RW-20,20);}
-  if(H>=RH){ty=(H-RH)/2;}else{ty=clamp(H/2-p.y,H-RH-20,20);}
-  camX=lerp(camX,tx,.1);camY=lerp(camY,ty,.1);
+  if(H>=RH+60){ty=(H-60-RH)/2;}else{ty=clamp(H/2-p.y,H-RH-60,20);}
+  // Fast lerp for responsiveness, snap on first frame
+  if(camX===0&&camY===0){camX=tx;camY=ty;}
+  else{camX=lerp(camX,tx,.25);camY=lerp(camY,ty,.25);}
 }
 
 // ═══════════════════════════════════
@@ -860,6 +862,9 @@ function beginGame(c1,c2){
     doorsOpen=false;
   }
   gamePhase='countdown';countdownTimer=3;sfx('door');
+  // Snap camera to center immediately
+  if(W>=RW)camX=(W-RW)/2; else camX=20;
+  if(H>=RH+60)camY=(H-60-RH)/2; else camY=20;
 }
 
 let netTimer=0;
