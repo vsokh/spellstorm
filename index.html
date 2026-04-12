@@ -345,7 +345,13 @@ function generateRoomContent(room){
     doorsOpen=true;
   }
 
-  if(room.type==='start')doorsOpen=true;
+  // Start room: spawn a few easy enemies
+  if(room.type==='start'){
+    for(let i=0;i<4;i++){
+      enemies.push({type:'slime',x:rand(100,RW-100),y:rand(80,RH*0.4),vx:0,vy:0,hp:2,maxHp:2,alive:true,atkTimer:Math.random()*2,target:0,iframes:0,slowTimer:0,stunTimer:0});
+    }
+    doorsOpen=false;roomCleared=false;
+  }
 }
 
 // ═══════════════════════════════════
@@ -841,24 +847,86 @@ function beginGame(c1,c2){
   document.getElementById('hud').style.display='flex';
   document.getElementById('floor-display').style.display='block';
   document.getElementById('gold-display').style.display='block';
-  document.getElementById('minimap-wrap').style.display='block';
   document.body.classList.add('in-game');
   floor=1;roomsCleared=0;totalKills=0;gold=0;
   spawnPlayers(c1,c2);
-  const start=generateFloor();enterRoom(start);
+  if(mode!=='guest'){
+    // Host/local: generate dungeon and enter first room
+    document.getElementById('minimap-wrap').style.display='block';
+    const start=generateFloor();enterRoom(start);
+  } else {
+    // Guest: just set up a dummy room, state will come from host
+    currentRoom={doors:{n:false,s:false,e:false,w:false},visited:true,type:'combat',gx:2,gy:2};
+    doorsOpen=false;
+  }
   gamePhase='countdown';countdownTimer=3;sfx('door');
 }
 
 let netTimer=0;
-function sendState(){if(!conn||!conn.open||mode!=='host')return;conn.send({type:'state',
-  p:players.map(p=>({x:~~p.x,y:~~p.y,a:~~(p.angle*100)/100,hp:p.hp,mn:~~p.mana,al:p.alive,cd:p.cd.map(c=>~~(c*10)/10)})),
-  e:enemies.filter(e=>e.alive).map(e=>({t:e.type,x:~~e.x,y:~~e.y,hp:e.hp})),
-  sp:spells.map(s=>({x:~~s.x,y:~~s.y,vx:~~s.vx,vy:~~s.vy,r:s.radius,c:s.color})),
-  sc:score,w:wave,gp:gamePhase,fl:floor,rc:roomsCleared,g:gold});}
+function sendState(){if(!conn||!conn.open||mode!=='host')return;
+  const msg={type:'state',
+    p:players.map(p=>({x:~~p.x,y:~~p.y,a:Math.round(p.angle*100)/100,hp:p.hp,mhp:p.maxHp,mn:~~p.mana,mmn:p.maxMana,al:p.alive,
+      cd:p.cd.map(c=>Math.round(c*10)/10),if:p.iframes>0})),
+    e:enemies.map(e=>({t:e.type,x:~~e.x,y:~~e.y,hp:e.hp,mhp:e.maxHp,al:e.alive,tgt:e.target})),
+    sp:spells.map(s=>({x:~~s.x,y:~~s.y,vx:~~s.vx,vy:~~s.vy,r:s.radius,c:s.color,o:s.owner})),
+    ep:eProj.map(p=>({x:~~p.x,y:~~p.y,r:p.radius,c:p.color})),
+    zn:zones.map(z=>({x:~~z.x,y:~~z.y,r:z.radius,c:z.color,age:z.age,dur:z.duration})),
+    aoe:aoeMarkers.map(m=>({x:~~m.x,y:~~m.y,r:m.radius,c:m.color,age:m.age,del:m.delay})),
+    pk:pickups.filter(p=>!p.collected).map(p=>({x:~~p.x,y:~~p.y,t:p.type})),
+    pl:pillars.map(p=>({x:~~p.x,y:~~p.y,r:~~p.radius})),
+    doors:currentRoom?currentRoom.doors:null,
+    dOpen:doorsOpen,rClr:roomCleared,
+    fl:floor,rc:roomsCleared,g:gold,gp:gamePhase,ct:countdownTimer,
+    sc:screenFlash>0?screenFlash:0,sk:shakeI>0?shakeI:0,
+  };
+  try{conn.send(msg);}catch(e){}
+}
 
 function applyState(msg){
-  if(msg.p)msg.p.forEach((pd,i)=>{if(players[i])Object.assign(players[i],{x:pd.x,y:pd.y,angle:pd.a,hp:pd.hp,mana:pd.mn,alive:pd.al})});
-  if(msg.fl)floor=msg.fl;if(msg.rc)roomsCleared=msg.rc;if(msg.g)gold=msg.g;if(msg.gp)gamePhase=msg.gp;
+  // Players
+  if(msg.p)msg.p.forEach((pd,i)=>{
+    if(!players[i])return;
+    players[i].x=pd.x;players[i].y=pd.y;players[i].angle=pd.a;
+    players[i].hp=pd.hp;players[i].maxHp=pd.mhp;players[i].mana=pd.mn;players[i].maxMana=pd.mmn;
+    players[i].alive=pd.al;players[i].iframes=pd.if?0.1:0;
+    for(let j=0;j<3;j++)players[i].cd[j]=pd.cd[j]||0;
+  });
+  // Enemies — replace entirely
+  if(msg.e){enemies.length=0;for(const ed of msg.e){
+    enemies.push({type:ed.t,x:ed.x,y:ed.y,hp:ed.hp,maxHp:ed.mhp,alive:ed.al,target:ed.tgt,
+      vx:0,vy:0,atkTimer:1,iframes:0,slowTimer:0,stunTimer:0});}}
+  // Spells
+  if(msg.sp){spells.length=0;for(const sd of msg.sp){
+    spells.push({x:sd.x,y:sd.y,vx:sd.vx,vy:sd.vy,radius:sd.r,color:sd.c,owner:sd.o,
+      trail:sd.c,life:2,age:0,speed:0,dmg:0});}}
+  // Enemy projectiles
+  if(msg.ep){eProj.length=0;for(const pd of msg.ep){
+    eProj.push({x:pd.x,y:pd.y,vx:0,vy:0,radius:pd.r,color:pd.c,life:1,dmg:0});}}
+  // Zones
+  if(msg.zn){zones.length=0;for(const zd of msg.zn){
+    zones.push({x:zd.x,y:zd.y,radius:zd.r,color:zd.c,age:zd.age,duration:zd.dur,tickTimer:1,tickRate:1,dmg:0,owner:0,slow:0});}}
+  // AOE markers
+  if(msg.aoe){aoeMarkers.length=0;for(const ad of msg.aoe){
+    aoeMarkers.push({x:ad.x,y:ad.y,radius:ad.r,color:ad.c,age:ad.age,delay:ad.del,dmg:0,owner:0});}}
+  // Pickups
+  if(msg.pk){pickups.length=0;for(const pd of msg.pk){
+    pickups.push({x:pd.x,y:pd.y,type:pd.t,collected:false});}}
+  // Pillars
+  if(msg.pl){pillars.length=0;for(const pd of msg.pl){
+    pillars.push({x:pd.x,y:pd.y,radius:pd.r});}}
+  // Room state
+  if(msg.doors){if(!currentRoom)currentRoom={doors:msg.doors,visited:true,type:'combat',gx:2,gy:2};
+    else currentRoom.doors=msg.doors;}
+  if(msg.dOpen!==undefined)doorsOpen=msg.dOpen;
+  if(msg.rClr!==undefined)roomCleared=msg.rClr;
+  // Globals
+  if(msg.fl){floor=msg.fl;document.getElementById('floor-num').textContent=floor;}
+  if(msg.rc!==undefined){roomsCleared=msg.rc;document.getElementById('room-num').textContent=roomsCleared+1;}
+  if(msg.g!==undefined)gold=msg.g;
+  if(msg.gp)gamePhase=msg.gp;
+  if(msg.ct!==undefined)countdownTimer=msg.ct;
+  if(msg.sc>0)screenFlash=Math.max(screenFlash,msg.sc);
+  if(msg.sk>0)shake(msg.sk);
 }
 
 // ═══════════════════════════════════
@@ -875,7 +943,12 @@ function loop(now){
     updatePlayers(dt);updateSpells(dt);updateAoe(dt);updateZones(dt);updateEnemies(dt);updateEProj(dt);
     checkDoors();
     netTimer-=dt;if(netTimer<=0){netTimer=.05;sendState();}
-  } else {if(conn&&conn.open){const inp=getInput(localIdx);conn.send({type:'input',...inp});}}
+  }
+  // Guest: send input every frame
+  if(mode==='guest'&&conn&&conn.open){
+    const inp=getInput(localIdx);
+    try{conn.send({type:'input',...inp});}catch(e){}
+  }
 
   updateCamera();updateFx(dt);updateHUD();drawMinimap();
 
