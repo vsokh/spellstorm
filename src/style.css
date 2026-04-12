@@ -1,0 +1,360 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0a0812;
+  overflow: hidden;
+  font-family: 'Courier New', monospace;
+  color: #ccbbdd;
+}
+
+body.in-game {
+  cursor: none;
+}
+
+canvas {
+  display: block;
+}
+
+/* ── LOBBY ── */
+#lobby {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #0a0812;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#lobby h1 {
+  font-size: 42px;
+  letter-spacing: 4px;
+  margin-bottom: 4px;
+  background: linear-gradient(135deg, #ff6633, #bb44ff, #3399ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+#lobby .sub {
+  color: #443355;
+  font-size: 13px;
+  margin-bottom: 30px;
+}
+
+.lobby-box {
+  background: rgba(20, 14, 30, 0.8);
+  border: 1px solid rgba(120, 80, 180, 0.2);
+  border-radius: 8px;
+  padding: 20px;
+  width: 320px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.lobby-box h3 {
+  font-size: 14px;
+  color: #9977bb;
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+}
+
+.btn {
+  padding: 10px 24px;
+  font-family: inherit;
+  font-size: 13px;
+  background: rgba(40, 25, 60, 0.8);
+  color: #9977bb;
+  border: 1px solid rgba(120, 80, 180, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  background: rgba(60, 35, 90, 0.9);
+  color: #ccaaee;
+  border-color: rgba(150, 100, 220, 0.5);
+}
+
+.btn-primary {
+  background: rgba(80, 40, 140, 0.5);
+  color: #ccaaff;
+  border-color: rgba(150, 80, 255, 0.4);
+}
+
+input[type=text] {
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  background: rgba(15, 10, 25, 0.9);
+  color: #ccbbdd;
+  border: 1px solid rgba(100, 70, 160, 0.3);
+  border-radius: 4px;
+  text-align: center;
+  width: 140px;
+  letter-spacing: 3px;
+}
+
+.room-code {
+  font-size: 28px;
+  color: #bb88ff;
+  letter-spacing: 6px;
+  margin: 8px 0;
+  font-weight: bold;
+}
+
+.status {
+  font-size: 11px;
+  color: #554466;
+  margin-top: 6px;
+}
+
+#error-msg {
+  color: #ff6644;
+  font-size: 11px;
+  margin-top: 6px;
+  min-height: 14px;
+}
+
+/* ── CLASS SELECT ── */
+#select-screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: #0a0812;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#select-screen h2 {
+  font-size: 22px;
+  color: #bb88ff;
+  letter-spacing: 3px;
+  margin-bottom: 14px;
+}
+
+.class-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.class-card {
+  width: 155px;
+  padding: 12px;
+  border: 1px solid rgba(100, 60, 160, 0.2);
+  border-radius: 6px;
+  background: rgba(18, 12, 28, 0.8);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.class-card:hover {
+  border-color: rgba(150, 100, 220, 0.5);
+  background: rgba(25, 18, 40, 0.9);
+}
+
+.class-card.selected {
+  border-color: #bb88ff;
+  background: rgba(40, 25, 70, 0.5);
+}
+
+.class-card .cname {
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 3px;
+}
+
+.class-card .cdesc {
+  font-size: 10px;
+  color: #665577;
+  line-height: 1.4;
+}
+
+/* ── UPGRADE OVERLAY ── */
+#upgrade-screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(6, 4, 12, 0.92);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#upgrade-screen h2 {
+  font-size: 20px;
+  color: #bbaa44;
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+}
+
+.upgrade-grid {
+  display: flex;
+  gap: 12px;
+}
+
+.upgrade-card {
+  width: 180px;
+  padding: 16px;
+  border: 1px solid rgba(180, 150, 50, 0.25);
+  border-radius: 6px;
+  background: rgba(20, 16, 10, 0.9);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.upgrade-card:hover {
+  border-color: rgba(220, 180, 60, 0.5);
+  background: rgba(30, 25, 15, 0.95);
+  transform: translateY(-2px);
+}
+
+.upgrade-card .uname {
+  font-size: 13px;
+  color: #ddcc66;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.upgrade-card .udesc {
+  font-size: 10px;
+  color: #887744;
+  line-height: 1.4;
+}
+
+/* ── HUD ── */
+#hud {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to top, rgba(10, 8, 18, 0.95), rgba(10, 8, 18, 0.7));
+  border-top: 1px solid rgba(100, 60, 160, 0.12);
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.hud-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.bar-o {
+  width: 70px;
+  height: 5px;
+  background: rgba(20, 15, 30, 0.8);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bar-i {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.15s;
+}
+
+.spell-icons {
+  display: flex;
+  gap: 3px;
+}
+
+.sp-icon {
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(100, 60, 160, 0.3);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  background: rgba(15, 10, 25, 0.8);
+  position: relative;
+}
+
+.sp-icon .cd-ov {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 0 0 2px 2px;
+}
+
+#floor-display {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #554466;
+  z-index: 10;
+  display: none;
+  letter-spacing: 1px;
+}
+
+#minimap-wrap {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  display: none;
+}
+
+#gold-display {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  font-size: 12px;
+  color: #bbaa44;
+  z-index: 10;
+  display: none;
+}
+
+/* ── GAME OVER ── */
+#gameover {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(5, 3, 10, 0.95);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#gameover h2 {
+  font-size: 36px;
+  color: #cc4444;
+  letter-spacing: 3px;
+  margin-bottom: 8px;
+}
+
+#gameover .stats {
+  color: #665577;
+  font-size: 13px;
+  line-height: 1.8;
+  margin-bottom: 16px;
+  text-align: center;
+}
