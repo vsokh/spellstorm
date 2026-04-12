@@ -189,18 +189,62 @@ const ENEMIES={
 //           UPGRADES
 // ═══════════════════════════════════
 const UPGRADE_POOL=[
+  // ── DAMAGE ──
   {name:'Spell Power',desc:'All spells deal +1 damage',apply:p=>{for(const s of p.cls.spells)s.dmg=(s.dmg||0)+1}},
-  {name:'Swift Cast',desc:'Cooldowns -20%',apply:p=>{for(const s of p.cls.spells)s.cd*=0.8}},
-  {name:'Vitality',desc:'Max HP +2',apply:p=>{p.maxHp+=2;p.hp+=2}},
-  {name:'Mana Flow',desc:'Mana regen +40%',apply:p=>{p.manaRegen*=1.4}},
-  {name:'Quick Step',desc:'Move speed +20%',apply:p=>{p.moveSpeed*=1.2}},
+  {name:'Primary Boost',desc:'Primary spell +2 damage',apply:p=>{p.cls.spells[0].dmg+=2}},
+  {name:'Ultimate Power',desc:'Ultimate spell +3 damage',apply:p=>{if(p.cls.spells[2].dmg)p.cls.spells[2].dmg+=3}},
+  {name:'Glass Cannon',desc:'+3 spell damage, -2 max HP',apply:p=>{for(const s of p.cls.spells)s.dmg=(s.dmg||0)+3;p.maxHp=Math.max(1,p.maxHp-2);p.hp=Math.min(p.hp,p.maxHp)}},
+  {name:'Critical Strike',desc:'15% chance to deal 2x damage',apply:p=>{p.critChance=(p.critChance||0)+0.15}},
+  {name:'Overkill',desc:'Excess kill damage chains to nearby enemy',apply:p=>{p.overkill=true}},
+
+  // ── PROJECTILE MODIFIERS ──
+  {name:'Piercing',desc:'Primary passes through +1 enemy',apply:p=>{p.pierce=(p.pierce||0)+1}},
+  {name:'Split Shot',desc:'Primary fires 2 extra bolts at ±15°',apply:p=>{p.splitShot=(p.splitShot||0)+2}},
+  {name:'Ricochet',desc:'Projectiles bounce off walls once',apply:p=>{p.ricochet=(p.ricochet||0)+1}},
+  {name:'Velocity',desc:'Projectile speed +40%',apply:p=>{for(const s of p.cls.spells)if(s.speed)s.speed*=1.4}},
+  {name:'Chain Hit',desc:'Hits jump to 1 nearby enemy for 50% dmg',apply:p=>{p.chainHit=(p.chainHit||0)+1}},
+  {name:'Homing Bolts',desc:'Primary slightly tracks enemies',apply:p=>{const s=p.cls.spells[0];s.homing=(s.homing||0)+1.5}},
   {name:'Big Spells',desc:'Projectile size +30%',apply:p=>{for(const s of p.cls.spells)if(s.radius)s.radius*=1.3}},
-  {name:'Efficiency',desc:'Mana costs -20%',apply:p=>{for(const s of p.cls.spells)s.mana*=0.8}},
-  {name:'Vampirism',desc:'Heal 1 HP per 5 kills',apply:p=>{p.vampirism=(p.vampirism||0)+1}},
-  {name:'Blast Radius',desc:'Explosions +40% area',apply:p=>{for(const s of p.cls.spells){if(s.explode)s.explode*=1.4;if(s.radius&&s.type==='aoe_delayed')s.radius*=1.4;}}},
-  {name:'Piercing',desc:'Primary passes through 1 enemy',apply:p=>{p.pierce=(p.pierce||0)+1}},
-  {name:'Max Mana +25',desc:'Bigger mana pool',apply:p=>{p.maxMana+=25;p.mana+=25}},
+  {name:'Blast Radius',desc:'Explosions +50% area',apply:p=>{for(const s of p.cls.spells){if(s.explode)s.explode*=1.5;if(s.radius&&s.type==='aoe_delayed')s.radius*=1.5;}}},
+
+  // ── FIRE RATE / COOLDOWN ──
+  {name:'Swift Cast',desc:'All cooldowns -20%',apply:p=>{for(const s of p.cls.spells)s.cd*=0.8}},
+  {name:'Rapid Fire',desc:'Primary fires 40% faster',apply:p=>{p.cls.spells[0].cd*=0.6}},
+  {name:'Double Tap',desc:'Primary fires 2 shots per cast',apply:p=>{p.doubleTap=(p.doubleTap||0)+1}},
+  {name:'Trigger Happy',desc:'Kills reset primary cooldown',apply:p=>{p.killResetCD=true}},
+
+  // ── MANA ──
+  {name:'Efficiency',desc:'Mana costs -25%',apply:p=>{for(const s of p.cls.spells)s.mana*=0.75}},
+  {name:'Mana Flow',desc:'Mana regen +50%',apply:p=>{p.manaRegen*=1.5}},
+  {name:'Max Mana +30',desc:'Bigger mana pool',apply:p=>{p.maxMana+=30;p.mana+=30}},
+  {name:'Mana on Kill',desc:'Restore 8 mana per kill',apply:p=>{p.manaOnKill=(p.manaOnKill||0)+8}},
+  {name:'Spell Thief',desc:'Hits restore 2 mana',apply:p=>{p.manaOnHit=(p.manaOnHit||0)+2}},
+
+  // ── SURVIVABILITY ──
+  {name:'Vitality',desc:'Max HP +2, heal to full',apply:p=>{p.maxHp+=2;p.hp=p.maxHp}},
   {name:'Armor',desc:'Take -1 damage (min 1)',apply:p=>{p.armor=(p.armor||0)+1}},
+  {name:'Vampirism',desc:'Heal 1 HP per 4 kills',apply:p=>{p.vampirism=(p.vampirism||0)+1;p.vampKillReq=4}},
+  {name:'Life Steal',desc:'5% of damage dealt heals you',apply:p=>{p.lifeSteal=(p.lifeSteal||0)+0.05}},
+  {name:'Second Wind',desc:'Revive once per floor with 50% HP',apply:p=>{p.secondWind=(p.secondWind||0)+1}},
+  {name:'Thorns',desc:'Enemies take 1 damage when they hit you',apply:p=>{p.thorns=(p.thorns||0)+1}},
+  {name:'Dodge',desc:'15% chance to avoid damage entirely',apply:p=>{p.dodgeChance=(p.dodgeChance||0)+0.15}},
+
+  // ── MOBILITY ──
+  {name:'Quick Step',desc:'Move speed +25%',apply:p=>{p.moveSpeed*=1.25}},
+  {name:'Dash',desc:'Press SHIFT to dash. 2s cooldown.',apply:p=>{p.hasDash=true;p.dashCd=0}},
+  {name:'Momentum',desc:'Moving increases damage by up to 20%',apply:p=>{p.momentum=true}},
+
+  // ── AREA / ZONE ──
+  {name:'Lingering',desc:'Zones last 50% longer',apply:p=>{for(const s of p.cls.spells)if(s.duration)s.duration*=1.5}},
+  {name:'Deep Freeze',desc:'Slow effects 2x stronger',apply:p=>{for(const s of p.cls.spells)if(s.slow)s.slow*=2}},
+  {name:'Aftershock',desc:'AoE spells leave a damage zone for 2s',apply:p=>{p.aftershock=true}},
+
+  // ── WILD / FUN ──
+  {name:'Chaos Bolts',desc:'Primary deals random 1-4 damage',apply:p=>{p.chaosDmg=true}},
+  {name:'Magnet',desc:'Pickups fly to you from further away',apply:p=>{p.magnetRange=(p.magnetRange||30)+60}},
+  {name:'Gold Rush',desc:'Enemies drop 2x gold',apply:p=>{p.goldMul=(p.goldMul||1)*2}},
+  {name:'XP Boost',desc:'Gain upgrades 30% more often',apply:p=>{p.xpBoost=(p.xpBoost||0)+0.3}},
+  {name:'Friendly Fire',desc:'+4 dmg but your spells can hurt you',apply:p=>{for(const s of p.cls.spells)s.dmg=(s.dmg||0)+4;p.selfDmg=true}},
 ];
 
 // ═══════════════════════════════════
@@ -564,10 +608,31 @@ function updatePlayers(dt){
     if(p._snapTimer>=3){p._snapTimer=0;p._rewindSnap={hp:p.hp,mana:p.mana};}
 
     const sd=p.cls.spells;
-    if(input.shoot&&p.cd[0]<=0&&p.mana>=sd[0].mana)castSpell(p,0,input.angle);
+    if(input.shoot&&p.cd[0]<=0&&p.mana>=sd[0].mana){
+      castSpell(p,0,input.angle);
+      // Split shot: extra bolts at angles
+      if(p.splitShot){for(let ss=1;ss<=p.splitShot;ss++){const off=(Math.ceil(ss/2))*0.26*(ss%2===0?1:-1);castSpellSilent(p,0,input.angle+off);}}
+      // Double tap: fire again after short delay
+      if(p.doubleTap){for(let dt2=0;dt2<p.doubleTap;dt2++)setTimeout(()=>castSpellSilent(p,0,input.angle),60*(dt2+1));}
+    }
     if(input.shoot2&&p.cd[1]<=0&&p.mana>=sd[1].mana)castSpell(p,1,input.angle);
     if(input.ability&&p.cd[2]<=0&&p.mana>=sd[2].mana&&!keys[`_q${p.idx}`]){keys[`_q${p.idx}`]=true;castSpell(p,2,input.angle);}
     if(!input.ability)keys[`_q${p.idx}`]=false;
+
+    // Dash (SHIFT)
+    if(p.hasDash){
+      if(p.dashCd>0)p.dashCd-=dt;
+      const dashKey=p.idx===localIdx?(keys.ShiftLeft||keys.ShiftRight):input.dash;
+      if(dashKey&&p.dashCd<=0&&!keys[`_dash${p.idx}`]){
+        keys[`_dash${p.idx}`]=true;p.dashCd=2;
+        const dx=input.mx||0,dy=input.my||0;
+        const dLen=Math.sqrt(dx*dx+dy*dy)||1;
+        p.x+=dx/dLen*120;p.y+=dy/dLen*120;
+        p.x=clamp(p.x,WIZ_SZ,RW-WIZ_SZ);p.y=clamp(p.y,WIZ_SZ,RH-WIZ_SZ);
+        p.iframes=Math.max(p.iframes,0.2);sfx('blink');spawnP(p.x,p.y,p.cls.color,10);
+      }
+      if(!dashKey)keys[`_dash${p.idx}`]=false;
+    }
 
     // Pickup collection
     for(const pk of pickups){
@@ -585,6 +650,16 @@ function updatePlayers(dt){
 // ═══════════════════════════════════
 //       SPELL CASTING (same as before, trimmed)
 // ═══════════════════════════════════
+// Silent cast: no mana cost, no cooldown, no sound (for split shot / double tap)
+function castSpellSilent(p,idx,angle){
+  const def=p.cls.spells[idx];
+  if(def.type==='projectile'||def.type==='homing'){
+    const cos=Math.cos(angle),sin=Math.sin(angle);
+    const sx=p.x+cos*WIZ_SZ*1.5,sy=p.y+sin*WIZ_SZ*1.5;
+    spells.push({...def,x:sx,y:sy,vx:cos*def.speed,vy:sin*def.speed,owner:p.idx,age:0,zapTimer:0,pierceLeft:p.pierce||0});
+  }
+}
+
 function castSpell(p,idx,angle){
   const def=p.cls.spells[idx];p.mana-=def.mana;p.cd[idx]=def.cd;
   const cos=Math.cos(angle),sin=Math.sin(angle);
@@ -632,20 +707,65 @@ function castSpell(p,idx,angle){
 // ═══════════════════════════════════
 //       DAMAGE
 // ═══════════════════════════════════
-function damageEnemy(e,dmg,pIdx){
-  if(e.iframes>0)return;e.hp-=dmg;e.iframes=.1;spawnP(e.x,e.y,'#ff6644',5,.5);sfx('hit');
+function damageEnemy(e,rawDmg,pIdx){
+  if(e.iframes>0)return;
+  const p=players[pIdx];
+  let dmg=rawDmg;
+
+  // Chaos damage: random 1-4
+  if(p&&p.chaosDmg)dmg=1+Math.floor(Math.random()*4);
+  // Critical strike
+  if(p&&p.critChance&&Math.random()<p.critChance){dmg*=2;spawnText(e.x,e.y-25,'CRIT!','#ffcc44');}
+  // Momentum bonus
+  if(p&&p.momentum){const spd=Math.sqrt(p.vx*p.vx+p.vy*p.vy);dmg=Math.round(dmg*(1+Math.min(0.2,spd/1000)));}
+
+  e.hp-=dmg;e.iframes=.1;spawnP(e.x,e.y,'#ff6644',5,.5);sfx('hit');
+
+  // Mana on hit
+  if(p&&p.manaOnHit){p.mana=Math.min(p.maxMana,p.mana+p.manaOnHit);}
+  // Life steal
+  if(p&&p.lifeSteal){const heal=Math.floor(dmg*p.lifeSteal);if(heal>0){p.hp=Math.min(p.maxHp,p.hp+heal);}}
+
   if(e.hp<=0){
     e.alive=false;totalKills++;
-    const et=ENEMIES[e.type];gold+=et.gold;
-    const p=players[pIdx];if(p){p.killCount++;if(p.vampirism&&p.killCount%5===0){p.hp=Math.min(p.maxHp,p.hp+1);spawnText(p.x,p.y-20,'+1 HP','#44ff88');}}
+    const et=ENEMIES[e.type];
+    const goldDrop=et.gold*(p&&p.goldMul||1);
+    gold+=goldDrop;
+
+    if(p){
+      p.killCount++;
+      // Vampirism
+      if(p.vampirism&&p.killCount%(p.vampKillReq||5)===0){p.hp=Math.min(p.maxHp,p.hp+1);spawnText(p.x,p.y-20,'+1 HP','#44ff88');}
+      // Mana on kill
+      if(p.manaOnKill){p.mana=Math.min(p.maxMana,p.mana+p.manaOnKill);}
+      // Kill resets primary CD
+      if(p.killResetCD)p.cd[0]=0;
+    }
+
     spawnP(e.x,e.y,et.color,18,1);spawnSW(e.x,e.y,25);sfx('kill');
     if(et.boss){shake(10);spawnText(e.x,e.y-20,'BOSS SLAIN!','#ffcc44');screenFlash=.2;}
+
+    // Chain hit: damage jumps to nearby enemy
+    if(p&&p.chainHit){
+      let nearest=null,nd=Infinity;
+      for(const e2 of enemies){if(!e2.alive||e2===e)continue;const d=dist(e.x,e.y,e2.x,e2.y);if(d<120&&d<nd){nd=d;nearest=e2;}}
+      if(nearest){damageEnemy(nearest,Math.max(1,Math.floor(dmg*0.5)),pIdx);
+        beams.push({x:e.x,y:e.y,angle:Math.atan2(nearest.y-e.y,nearest.x-e.x),range:nd,width:2,color:p.cls.color,life:.12});}
+    }
+
+    // Overkill: excess damage chains
+    if(p&&p.overkill&&e.hp<0){
+      const excess=Math.abs(e.hp);let nearest2=null,nd2=Infinity;
+      for(const e2 of enemies){if(!e2.alive||e2===e)continue;const d=dist(e.x,e.y,e2.x,e2.y);if(d<100&&d<nd2){nd2=d;nearest2=e2;}}
+      if(nearest2)damageEnemy(nearest2,excess,pIdx);
+    }
+
     // Drop health sometimes
     if(Math.random()<0.15)pickups.push({x:e.x,y:e.y,type:'health',collected:false});
     // Check room clear
     if(enemies.every(en=>!en.alive)){roomCleared=true;doorsOpen=true;sfx('door');
       spawnText(RW/2,RH/2-50,'ROOM CLEARED','#88cc88');
-      if(currentRoom.type==='boss'){floor++;
+      if(currentRoom&&currentRoom.type==='boss'){floor++;
         const startRoom=generateFloor();enterRoom(startRoom);
         document.getElementById('floor-num').textContent=floor;
       }
@@ -653,13 +773,25 @@ function damageEnemy(e,dmg,pIdx){
   }
 }
 
-function damagePlayer(p,rawDmg){
+function damagePlayer(p,rawDmg,attacker){
   if(p.iframes>0)return;
+  // Dodge
+  if(p.dodgeChance&&Math.random()<p.dodgeChance){spawnText(p.x,p.y-20,'DODGE','#88ccff');return;}
   const dmg=Math.max(1,rawDmg-(p.armor||0));
   p.hp-=dmg;p.iframes=.4;shake(3);spawnP(p.x,p.y,'#ff4444',8);sfx('hit');spawnText(p.x,p.y-20,`-${dmg}`,'#ff4444');
+  // Thorns
+  if(p.thorns&&attacker&&attacker.alive!==undefined){
+    attacker.hp-=p.thorns;spawnP(attacker.x,attacker.y,'#aa88ff',4,.3);
+    if(attacker.hp<=0){attacker.alive=false;spawnP(attacker.x,attacker.y,ENEMIES[attacker.type].color,12);sfx('kill');}
+  }
   if(p.hp<=0){
+    // Second wind
+    if(p.secondWind&&p.secondWind>0){
+      p.secondWind--;p.hp=Math.floor(p.maxHp/2);p.iframes=1.5;
+      spawnP(p.x,p.y,'#ffcc44',20);spawnText(p.x,p.y-25,'SECOND WIND','#ffcc44');sfx('pickup');
+      return;
+    }
     p.alive=false;spawnP(p.x,p.y,'#ff6633',35,1.3);spawnSW(p.x,p.y,70,'rgba(255,100,50,.5)');sfx('boom');shake(10);screenFlash=.3;
-    // Check if all players dead
     if(players.every(pl=>!pl.alive)){
       gamePhase='gameover';
       setTimeout(()=>{
@@ -667,7 +799,6 @@ function damagePlayer(p,rawDmg){
         document.getElementById('gameover').style.display='flex';
       },1500);
     } else {
-      // Respawn after delay if partner alive
       setTimeout(()=>{if(gamePhase==='playing'&&players.some(pl=>pl.alive)){p.hp=Math.floor(p.maxHp/2);p.mana=p.maxMana;p.alive=true;p.iframes=2;p.x=RW/2;p.y=RH/2;}},3000);
     }
   }
@@ -715,7 +846,7 @@ function updateEnemies(dt){
     if(!et.phase)for(const pl of pillars){const pd=dist(e.x,e.y,pl.x,pl.y);if(pd<pl.radius+et.size){const nx=(e.x-pl.x)/pd,ny=(e.y-pl.y)/pd;e.x=pl.x+nx*(pl.radius+et.size+1);e.y=pl.y+ny*(pl.radius+et.size+1);}}
     e.atkTimer-=dt;
     if(e.atkTimer<=0&&d<et.atkR){e.atkTimer=et.atkCd;
-      if(et.ai==='chase'){if(target.iframes<=0)damagePlayer(target,et.dmg);}
+      if(et.ai==='chase'){if(target.iframes<=0)damagePlayer(target,et.dmg,e);}
       else if(et.projSpd){const a=Math.atan2(dy,dx);eProj.push({x:e.x,y:e.y,vx:Math.cos(a)*et.projSpd,vy:Math.sin(a)*et.projSpd,dmg:et.dmg,life:2,radius:5,color:et.projCol||'#cc8866'});}}
   }
 }
