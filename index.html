@@ -105,7 +105,7 @@ input[type=text]{padding:8px 12px;font-family:inherit;font-size:14px;background:
   <div style="text-align:center;font-size:10px;color:#443355" id="hud-room"></div>
   <div class="hud-side" id="hud-p2"></div>
 </div>
-<div id="floor-display">FLOOR <span id="floor-num">1</span> · ROOM <span id="room-num">1</span></div>
+<div id="floor-display">WAVE <span id="wave-num">1</span></div>
 <div id="gold-display">Gold: <span id="gold-val">0</span></div>
 <div id="minimap-wrap"><canvas id="minimap" width="140" height="140"></canvas></div>
 
@@ -389,87 +389,107 @@ function spawnSW(x,y,mr,c){shockwaves.push({x,y,radius:0,maxR:mr||60,life:1,colo
 function toWorld(sx,sy){return{x:sx-camX,y:sy-camY}}
 
 // ═══════════════════════════════════
-//       DUNGEON GENERATION
+//       WAVE SYSTEM
 // ═══════════════════════════════════
-function generateFloor(){
-  dungeon=[];
-  const size=5;
-  // Create grid of rooms
-  for(let y=0;y<size;y++)for(let x=0;x<size;x++){
-    dungeon.push({gx:x,gy:y,type:'empty',visited:false,doors:{n:false,s:false,e:false,w:false},enemies:[],pillars:[]});
+let waveActive=false, waveBreakTimer=0, waveEnemiesTotal=0;
+
+function generateArena(){
+  pillars.length=0;
+  enemies.length=0;spells.length=0;zones.length=0;aoeMarkers.length=0;eProj.length=0;pickups.length=0;
+  // Scatter pillars across the arena
+  const pCount=5+Math.floor(Math.random()*4);
+  for(let i=0;i<pCount;i++){
+    let px,py,tries=0;
+    do{px=80+Math.random()*(RW-160);py=80+Math.random()*(RH-160);tries++;}
+    while(tries<20&&dist(px,py,RW/2,RH/2)<100);
+    pillars.push({x:px,y:py,radius:16+Math.random()*12});
   }
-  // Carve path from start to boss
-  const start=dungeon[Math.floor(size/2)*size+Math.floor(size/2)]; // center
-  start.type='start';start.visited=true;
-  let path=[start];let current=start;
-  const roomCount=6+floor*2;
-  for(let i=0;i<roomCount;i++){
-    const neighbors=[];
-    const{gx,gy}=current;
-    if(gx>0){const r=dungeon[gy*size+gx-1];if(r.type==='empty')neighbors.push({r,dir:'w',opp:'e'});}
-    if(gx<size-1){const r=dungeon[gy*size+gx+1];if(r.type==='empty')neighbors.push({r,dir:'e',opp:'w'});}
-    if(gy>0){const r=dungeon[(gy-1)*size+gx];if(r.type==='empty')neighbors.push({r,dir:'n',opp:'s'});}
-    if(gy<size-1){const r=dungeon[(gy+1)*size+gx];if(r.type==='empty')neighbors.push({r,dir:'s',opp:'n'});}
-    if(neighbors.length===0){current=path[Math.floor(Math.random()*path.length)];i--;continue;}
-    const pick=neighbors[Math.floor(Math.random()*neighbors.length)];
-    current.doors[pick.dir]=true;
-    pick.r.doors[pick.opp]=true;
-    pick.r.type=i===roomCount-1?'boss':(Math.random()<0.2?'treasure':'combat');
-    path.push(pick.r);current=pick.r;
-  }
-  // Remove empty rooms
-  dungeon=dungeon.filter(r=>r.type!=='empty');
-  return start;
 }
 
-function generateRoomContent(room){
-  pillars.length=0;enemies.length=0;spells.length=0;zones.length=0;aoeMarkers.length=0;eProj.length=0;pickups.length=0;
-  roomCleared=false;doorsOpen=room.type==='start'||room.type==='treasure';
+function startWave(){
+  waveActive=true;
+  const isBoss=wave%5===0;
+  const hpScale=1+Math.floor(wave/4); // enemies get tankier
+  const spdScale=1+wave*0.02; // enemies get slightly faster
 
-  // Pillars
-  if(room.type==='combat'||room.type==='boss'){
-    const pCount=3+Math.floor(Math.random()*3);
-    for(let i=0;i<pCount;i++){
-      let px,py,tries=0;
-      do{px=80+Math.random()*(RW-160);py=80+Math.random()*(RH-160);tries++;}
-      while(tries<20&&(dist(px,py,RW/2,RH/2)<80));
-      pillars.push({x:px,y:py,radius:18+Math.random()*10});
-    }
-  }
-
-  // Enemies
-  if(room.type==='combat'){
-    const tier=floor;
-    const count=4+floor*2+roomsCleared;
-    const pool=tier<=1?['slime','bat']:tier<=2?['slime','bat','skeleton']:['slime','skeleton','wraith'];
-    for(let i=0;i<count;i++){
-      const type=pool[Math.floor(Math.random()*pool.length)];
-      const et=ENEMIES[type];
-      const ex=60+Math.random()*(RW-120),ey=60+Math.random()*(RH-120);
-      enemies.push({type,x:ex,y:ey,vx:0,vy:0,hp:et.hp+Math.floor(floor/3),maxHp:et.hp+Math.floor(floor/3),alive:true,atkTimer:et.atkCd*Math.random(),target:0,iframes:0,slowTimer:0,stunTimer:0});
-    }
-  }
-  else if(room.type==='boss'){
-    const bossType=floor%2===0?'demon':'golem';
+  if(isBoss){
+    // Boss wave
+    const bossType=wave%10===0?'demon':'golem';
     const et=ENEMIES[bossType];
-    const bossHp=et.hp+floor*5;
-    enemies.push({type:bossType,x:RW/2,y:RH*0.3,vx:0,vy:0,hp:bossHp,maxHp:bossHp,alive:true,atkTimer:2,target:0,iframes:0,slowTimer:0,stunTimer:0});
-    // Add some minions
-    for(let i=0;i<3+floor;i++){
-      enemies.push({type:'slime',x:rand(100,RW-100),y:rand(100,RH-100),vx:0,vy:0,hp:2,maxHp:2,alive:true,atkTimer:Math.random()*2,target:0,iframes:0,slowTimer:0,stunTimer:0});
+    const bossHp=et.hp+wave*4;
+    enemies.push({type:bossType,x:RW/2,y:60,vx:0,vy:0,hp:bossHp,maxHp:bossHp,alive:true,atkTimer:2,target:0,iframes:0,slowTimer:0,stunTimer:0});
+    // Minions scale with wave
+    const minionCount=2+Math.floor(wave/3);
+    for(let i=0;i<minionCount;i++){
+      spawnEnemy(pickWaveEnemy(),hpScale,spdScale);
     }
+    spawnText(RW/2,RH/2-60,`BOSS WAVE ${wave}!`,'#ff4444');
+    sfx('boom');shake(6);
+  } else {
+    // Normal wave — enemy count and variety scales up
+    const baseCount=4+wave*2;
+    const count=Math.min(baseCount,30); // cap at 30 to stay playable
+    for(let i=0;i<count;i++){
+      spawnEnemy(pickWaveEnemy(),hpScale,spdScale);
+    }
+    spawnText(RW/2,RH/2-60,`WAVE ${wave}`,'#bbaa44');
   }
-  else if(room.type==='treasure'){
-    pickups.push({x:RW/2,y:RH/2,type:'chest',collected:false});
-    doorsOpen=true;
-  }
+  waveEnemiesTotal=enemies.filter(e=>e.alive&&!e._friendly).length;
+  sfx('door');
+  document.getElementById('wave-num').textContent=wave;
+}
 
-  // Start room: spawn a few easy enemies
-  if(room.type==='start'){
-    for(let i=0;i<4;i++){
-      enemies.push({type:'slime',x:rand(100,RW-100),y:rand(80,RH*0.4),vx:0,vy:0,hp:2,maxHp:2,alive:true,atkTimer:Math.random()*2,target:0,iframes:0,slowTimer:0,stunTimer:0});
+function pickWaveEnemy(){
+  // Gradually introduce harder enemies
+  if(wave<=2) return ['slime','bat'][Math.floor(Math.random()*2)];
+  if(wave<=4) return ['slime','bat','skeleton'][Math.floor(Math.random()*3)];
+  if(wave<=7) return ['slime','bat','skeleton','wraith'][Math.floor(Math.random()*4)];
+  // Late game: weighted toward harder enemies
+  const pool=['slime','bat','skeleton','skeleton','wraith','wraith'];
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function spawnEnemy(type,hpScale,spdScale){
+  const et=ENEMIES[type];
+  // Spawn from edges
+  let ex,ey;
+  const side=Math.floor(Math.random()*4);
+  if(side===0){ex=rand(30,RW-30);ey=-20;}
+  else if(side===1){ex=RW+20;ey=rand(30,RH-30);}
+  else if(side===2){ex=rand(30,RW-30);ey=RH+20;}
+  else{ex=-20;ey=rand(30,RH-30);}
+  const hp=et.hp+hpScale-1;
+  enemies.push({type,x:ex,y:ey,vx:0,vy:0,hp,maxHp:hp,alive:true,
+    atkTimer:et.atkCd*Math.random()+0.5,target:Math.floor(Math.random()*2),iframes:0,slowTimer:0,stunTimer:0,
+    _spdMul:spdScale||1});
+}
+
+function checkWaveComplete(){
+  if(!waveActive)return;
+  const alive=enemies.filter(e=>e.alive&&!e._friendly).length;
+  if(alive<=0){
+    waveActive=false;
+    waveBreakTimer=2; // 2 second break between waves
+    // Drop some health pickups
+    if(Math.random()<0.4) pickups.push({x:rand(100,RW-100),y:rand(100,RH-100),type:'health',collected:false});
+    if(wave%5===0){
+      // Boss killed — drop extra rewards
+      pickups.push({x:RW/2+rand(-40,40),y:RH/2+rand(-40,40),type:'health',collected:false});
+      pickups.push({x:RW/2+rand(-40,40),y:RH/2+rand(-40,40),type:'health',collected:false});
     }
-    doorsOpen=false;roomCleared=false;
+    // Show upgrade every wave
+    showUpgradeScreen(null);
+  }
+}
+
+function updateWaves(dt){
+  if(gamePhase!=='playing')return;
+  if(waveActive){checkWaveComplete();return;}
+  // Between waves: countdown to next
+  waveBreakTimer-=dt;
+  if(waveBreakTimer<=0){
+    wave++;
+    startWave();
   }
 }
 
@@ -495,45 +515,7 @@ function spawnPlayers(cls1,cls2){
   }
 }
 
-// ═══════════════════════════════════
-//       ROOM TRANSITIONS
-// ═══════════════════════════════════
-function enterRoom(room){
-  currentRoom=room;room.visited=true;
-  generateRoomContent(room);
-  // Position players at center
-  for(const p of players){p.x=RW/2+(p.idx===0?-25:25);p.y=RH/2;p.iframes=1;}
-  document.getElementById('room-num').textContent=roomsCleared+1;
-}
-
-function checkDoors(){
-  if(!doorsOpen)return;
-  for(const p of players){
-    if(!p.alive)continue;
-    // Check if player walks through a door
-    if(currentRoom.doors.n&&p.y<15&&Math.abs(p.x-RW/2)<DOOR_W){goThroughDoor('n');return;}
-    if(currentRoom.doors.s&&p.y>RH-15&&Math.abs(p.x-RW/2)<DOOR_W){goThroughDoor('s');return;}
-    if(currentRoom.doors.w&&p.x<15&&Math.abs(p.y-RH/2)<DOOR_W){goThroughDoor('w');return;}
-    if(currentRoom.doors.e&&p.x>RW-15&&Math.abs(p.y-RH/2)<DOOR_W){goThroughDoor('e');return;}
-  }
-}
-
-function goThroughDoor(dir){
-  const{gx,gy}=currentRoom;
-  let nx=gx,ny=gy;
-  if(dir==='n')ny--;if(dir==='s')ny++;if(dir==='w')nx--;if(dir==='e')nx++;
-  const nextRoom=dungeon.find(r=>r.gx===nx&&r.gy===ny);
-  if(!nextRoom)return;
-
-  roomsCleared++;sfx('door');
-
-  // If just cleared a combat room, show upgrade
-  if(currentRoom.type==='combat'||currentRoom.type==='boss'||currentRoom.type==='start'){
-    showUpgradeScreen(nextRoom);
-    return;
-  }
-  enterRoom(nextRoom);
-}
+// Room transitions removed — wave-based survival now
 
 // ═══════════════════════════════════
 //       UPGRADE SCREEN
@@ -628,10 +610,8 @@ function finishUpgrade(){
   document.getElementById('upgrade-screen').style.display='none';
   document.body.classList.add('in-game');
   gamePhase='playing';
-  if(mode!=='guest'&&pendingNextRoom){
-    enterRoom(pendingNextRoom);
-    pendingNextRoom=null;
-  }
+  // Next wave starts after a brief break
+  if(mode!=='guest'){waveBreakTimer=2;}
   // Tell guest to resume
   if(mode==='host'&&conn&&conn.open){
     try{conn.send({type:'resume'});}catch(e){}
@@ -985,15 +965,8 @@ function damageEnemy(e,rawDmg,pIdx){
     }
 
     // Drop health sometimes
-    if(Math.random()<0.15)pickups.push({x:e.x,y:e.y,type:'health',collected:false});
-    // Check room clear
-    if(enemies.every(en=>!en.alive)){roomCleared=true;doorsOpen=true;sfx('door');
-      spawnText(RW/2,RH/2-50,'ROOM CLEARED','#88cc88');
-      if(currentRoom&&currentRoom.type==='boss'){floor++;
-        const startRoom=generateFloor();enterRoom(startRoom);
-        document.getElementById('floor-num').textContent=floor;
-      }
-    }
+    if(Math.random()<0.12)pickups.push({x:e.x,y:e.y,type:'health',collected:false});
+    // Wave completion is handled by checkWaveComplete()
   }
 }
 
@@ -1024,7 +997,7 @@ function damagePlayer(p,rawDmg,attacker){
     if(players.every(pl=>!pl.alive)){
       gamePhase='gameover';
       setTimeout(()=>{
-        document.getElementById('go-stats').innerHTML=`Floor ${floor} · Room ${roomsCleared+1}<br>Kills: ${totalKills}<br>Gold: ${gold}`;
+        document.getElementById('go-stats').innerHTML=`Survived to Wave ${wave}<br>Kills: ${totalKills}<br>Gold: ${gold}`;
         document.getElementById('gameover').style.display='flex';
       },1500);
     } else {
@@ -1079,8 +1052,9 @@ function updateEnemies(dt){
     let target=players[e.target];if(!target||!target.alive){target=players.find(p=>p.alive);if(!target)continue;e.target=target.idx;}
     if(Math.random()<dt*.5){const o=players[1-e.target];if(o&&o.alive&&dist(e.x,e.y,o.x,o.y)<dist(e.x,e.y,target.x,target.y)*.7){e.target=o.idx;target=o;}}
     const dx=target.x-e.x,dy=target.y-e.y,d=Math.max(1,Math.sqrt(dx*dx+dy*dy));
-    if(et.ai==='chase'){if(d>et.atkR*.8){e.vx=(dx/d)*et.speed*slow;e.vy=(dy/d)*et.speed*slow;}else{e.vx*=.8;e.vy*=.8;}}
-    else if(et.ai==='ranged'){if(d>et.atkR*.6){e.vx=(dx/d)*et.speed*slow;e.vy=(dy/d)*et.speed*slow;}else if(d<et.atkR*.3){e.vx=-(dx/d)*et.speed*slow*.5;e.vy=-(dy/d)*et.speed*slow*.5;}else{e.vx*=.9;e.vy*=.9;}}
+    const spd=et.speed*(e._spdMul||1)*slow;
+    if(et.ai==='chase'){if(d>et.atkR*.8){e.vx=(dx/d)*spd;e.vy=(dy/d)*spd;}else{e.vx*=.8;e.vy*=.8;}}
+    else if(et.ai==='ranged'){if(d>et.atkR*.6){e.vx=(dx/d)*spd;e.vy=(dy/d)*spd;}else if(d<et.atkR*.3){e.vx=-(dx/d)*spd*.5;e.vy=-(dy/d)*spd*.5;}else{e.vx*=.9;e.vy*=.9;}}
     e.x+=e.vx*dt;e.y+=e.vy*dt;
     e.x=clamp(e.x,et.size,RW-et.size);e.y=clamp(e.y,et.size,RH-et.size);
     if(!et.phase)for(const pl of pillars){const pd=dist(e.x,e.y,pl.x,pl.y);if(pd<pl.radius+et.size){const nx=(e.x-pl.x)/pd,ny=(e.y-pl.y)/pd;e.x=pl.x+nx*(pl.radius+et.size+1);e.y=pl.y+ny*(pl.radius+et.size+1);}}
@@ -1134,20 +1108,23 @@ function updateCamera(){
 // ═══════════════════════════════════
 function drawRoom(){
   ctx.fillStyle='#0d0a14';ctx.fillRect(0,0,RW,RH);
-  ctx.strokeStyle='rgba(60,40,80,.08)';ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(60,40,80,.06)';ctx.lineWidth=1;
   for(let x=0;x<RW;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,RH);ctx.stroke();}
   for(let y=0;y<RH;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(RW,y);ctx.stroke();}
-  // Walls
+  // Arena border
+  ctx.strokeStyle='rgba(120,80,180,.15)';ctx.lineWidth=3;ctx.strokeRect(2,2,RW-4,RH-4);
   ctx.fillStyle='#1a1428';
-  ctx.fillRect(0,0,RW,8);ctx.fillRect(0,RH-8,RW,8);ctx.fillRect(0,0,8,RH);ctx.fillRect(RW-8,0,8,RH);
-  // Doors
-  if(currentRoom){
-    const dc=doorsOpen?'#44cc44':'#663333';
-    ctx.fillStyle=dc;
-    if(currentRoom.doors.n){ctx.fillRect(RW/2-DOOR_W/2,0,DOOR_W,10);if(doorsOpen){ctx.fillStyle='rgba(60,200,80,.06)';ctx.fillRect(RW/2-DOOR_W/2,0,DOOR_W,30);}}
-    ctx.fillStyle=dc;if(currentRoom.doors.s)ctx.fillRect(RW/2-DOOR_W/2,RH-10,DOOR_W,10);
-    ctx.fillStyle=dc;if(currentRoom.doors.w)ctx.fillRect(0,RH/2-DOOR_W/2,10,DOOR_W);
-    ctx.fillStyle=dc;if(currentRoom.doors.e)ctx.fillRect(RW-10,RH/2-DOOR_W/2,10,DOOR_W);
+  ctx.fillRect(0,0,RW,6);ctx.fillRect(0,RH-6,RW,6);ctx.fillRect(0,0,6,RH);ctx.fillRect(RW-6,0,6,RH);
+  // Wave indicator in arena
+  if(!waveActive&&waveBreakTimer>0&&gamePhase==='playing'){
+    ctx.fillStyle='rgba(180,150,60,.3)';ctx.font='bold 24px Courier New';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(`NEXT WAVE IN ${Math.ceil(waveBreakTimer)}`,RW/2,RH/2-20);
+  }
+  // Enemy count during wave
+  if(waveActive){
+    const alive=enemies.filter(e=>e.alive&&!e._friendly).length;
+    ctx.fillStyle='rgba(150,80,80,.2)';ctx.font='12px Courier New';ctx.textAlign='center';
+    ctx.fillText(`${alive} enemies remaining`,RW/2,RH-16);
   }
 }
 
@@ -1256,7 +1233,8 @@ function updateHUD(){
     <div><div class="bar-o"><div class="bar-i" style="width:${p.hp/p.maxHp*100}%;background:${p.hp/p.maxHp>.5?'#33cc55':'#cc3333'}"></div></div>
     <div class="bar-o" style="margin-top:2px"><div class="bar-i" style="width:${p.mana/p.maxMana*100}%;background:#4488ff"></div></div>
     <div class="bar-o" style="margin-top:1px"><div class="bar-i" style="width:${p.ultCharge}%;background:${p.ultCharge>=100?'#ffcc44':'#886633'}"></div></div></div>${spH}`;
-  document.getElementById('hud-room').textContent=`F${floor} R${roomsCleared+1} · ${enemies.filter(e=>e.alive).length} enemies`;
+  const alive=enemies.filter(e=>e.alive&&!e._friendly).length;
+  document.getElementById('hud-room').textContent=`Wave ${wave} · ${alive} enemies · ${totalKills} kills`;
   document.getElementById('gold-val').textContent=gold;
   const p2=players[1];
   document.getElementById('hud-p2').innerHTML=p2?`<span style="color:${p2.cls.color}">${p2.cls.name}</span><div><div class="bar-o"><div class="bar-i" style="width:${p2.hp/p2.maxHp*100}%;background:${p2.hp/p2.maxHp>.5?'#33cc55':'#cc3333'}"></div></div></div>`:'';
@@ -1330,17 +1308,11 @@ function beginGame(c1,c2){
   document.getElementById('floor-display').style.display='block';
   document.getElementById('gold-display').style.display='block';
   document.body.classList.add('in-game');
-  floor=1;roomsCleared=0;totalKills=0;gold=0;
+  totalKills=0;gold=0;wave=1;waveActive=false;waveBreakTimer=0;
   spawnPlayers(c1,c2);
-  document.getElementById('minimap-wrap').style.display='block';
   if(mode!=='guest'){
-    // Host/local: generate dungeon and enter first room
-    const start=generateFloor();enterRoom(start);
-  } else {
-    // Guest: dummy room, state comes from host. Minimap shows what host sends.
-    currentRoom={doors:{n:false,s:false,e:false,w:false},visited:true,type:'combat',gx:2,gy:2};
-    doorsOpen=false;
-    dungeon=[currentRoom]; // will be updated by host state
+    generateArena();
+    waveBreakTimer=3; // first wave starts after countdown
   }
   gamePhase='countdown';countdownTimer=3;sfx('door');
   // Snap camera to center immediately
@@ -1360,12 +1332,8 @@ function sendState(){if(!conn||!conn.open||mode!=='host')return;
     aoe:aoeMarkers.map(m=>({x:~~m.x,y:~~m.y,r:m.radius,c:m.color,age:m.age,del:m.delay})),
     pk:pickups.filter(p=>!p.collected).map(p=>({x:~~p.x,y:~~p.y,t:p.type})),
     pl:pillars.map(p=>({x:~~p.x,y:~~p.y,r:~~p.radius})),
-    doors:currentRoom?currentRoom.doors:null,
-    crType:currentRoom?currentRoom.type:null,
-    crGx:currentRoom?currentRoom.gx:0,crGy:currentRoom?currentRoom.gy:0,
-    dOpen:doorsOpen,rClr:roomCleared,
-    dng:dungeon.map(r=>({gx:r.gx,gy:r.gy,type:r.type,visited:r.visited,doors:r.doors})),
-    fl:floor,rc:roomsCleared,g:gold,gp:gamePhase,ct:countdownTimer,
+    w:wave,wA:waveActive,wBr:Math.round(waveBreakTimer*10)/10,
+    g:gold,gp:gamePhase,ct:countdownTimer,tk:totalKills,
     sc:screenFlash>0?screenFlash:0,sk:shakeI>0?shakeI:0,
   };
   try{conn.send(msg);}catch(e){}
@@ -1403,19 +1371,12 @@ function applyState(msg){
   // Pillars
   if(msg.pl){pillars.length=0;for(const pd of msg.pl){
     pillars.push({x:pd.x,y:pd.y,radius:pd.r});}}
-  // Room state
-  if(msg.doors){
-    if(!currentRoom)currentRoom={doors:msg.doors,visited:true,type:msg.crType||'combat',gx:msg.crGx||2,gy:msg.crGy||2};
-    else{currentRoom.doors=msg.doors;currentRoom.type=msg.crType||currentRoom.type;currentRoom.gx=msg.crGx;currentRoom.gy=msg.crGy;}
-  }
-  if(msg.dOpen!==undefined)doorsOpen=msg.dOpen;
-  if(msg.rClr!==undefined)roomCleared=msg.rClr;
-  // Dungeon layout for minimap
-  if(msg.dng&&msg.dng.length>0){dungeon=msg.dng;}
-  // Globals
-  if(msg.fl){floor=msg.fl;document.getElementById('floor-num').textContent=floor;}
-  if(msg.rc!==undefined){roomsCleared=msg.rc;document.getElementById('room-num').textContent=roomsCleared+1;}
+  // Wave state
+  if(msg.w){wave=msg.w;document.getElementById('wave-num').textContent=wave;}
+  if(msg.wA!==undefined)waveActive=msg.wA;
+  if(msg.wBr!==undefined)waveBreakTimer=msg.wBr;
   if(msg.g!==undefined)gold=msg.g;
+  if(msg.tk!==undefined)totalKills=msg.tk;
   if(msg.gp)gamePhase=msg.gp;
   if(msg.ct!==undefined)countdownTimer=msg.ct;
   if(msg.sc>0)screenFlash=Math.max(screenFlash,msg.sc);
@@ -1434,7 +1395,7 @@ function loop(now){
 
   if(mode!=='guest'){
     updatePlayers(dt);updateSpells(dt);updateAoe(dt);updateZones(dt);updateEnemies(dt);updateEProj(dt);
-    checkDoors();
+    updateWaves(dt);
     netTimer-=dt;if(netTimer<=0){netTimer=.05;sendState();}
   }
   // Guest: send input every frame
@@ -1443,7 +1404,7 @@ function loop(now){
     try{conn.send({type:'input',...inp});}catch(e){}
   }
 
-  updateCamera();updateFx(dt);updateHUD();drawMinimap();
+  updateCamera();updateFx(dt);updateHUD();
 
   ctx.fillStyle='#04030a';ctx.fillRect(0,0,W,H);
   ctx.save();ctx.translate(camX+shakeX,camY+shakeY);
