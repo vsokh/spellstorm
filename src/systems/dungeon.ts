@@ -1,5 +1,5 @@
 import { GameState, dist, rand, spawnParticles, spawnText, shake } from '../state';
-import { PickupType, Enemy, SfxName } from '../types';
+import { GamePhase, PickupType, Enemy, SfxName } from '../types';
 import {
   ROOM_WIDTH,
   ROOM_HEIGHT,
@@ -199,7 +199,7 @@ export function checkWaveComplete(state: GameState): void {
 
 /** Tick wave system: count down break timer, start next wave */
 export function updateWaves(state: GameState, dt: number): void {
-  if (state.gamePhase !== 'playing') return;
+  if (state.gamePhase !== GamePhase.Playing) return;
   if (state.waveActive) {
     checkWaveComplete(state);
     return;
