@@ -16,6 +16,7 @@ import {
   DUNGEON_TIMING,
   BOSS_HP_EXPONENT,
   BOSS_HP_EXPONENT_DIVISOR,
+  TIME_SCALING_FACTOR,
 } from '../constants';
 
 import { sfx } from '../audio';
@@ -122,7 +123,7 @@ export function startWave(state: GameState): void {
   const isBoss = wave % 5 === 0;
   const hpScale = 1 + Math.floor(wave * 0.6);
   const spdScale = 1 + wave * 0.03;
-  const timeMul = 1 + (state.time / 60) * 0.05;
+  const timeMul = 1 + (state.time / 60) * TIME_SCALING_FACTOR;
 
   // FINALE — The Archlord (wave 20)
   if (wave === MAX_WAVES) {
@@ -316,7 +317,7 @@ export function updateWaves(state: GameState, dt: number): void {
       if (state.waveSpawnTimer <= 0) {
         const hpScale = 1 + Math.floor(state.wave * 0.6);
         const spdScale = 1 + state.wave * DUNGEON_TIMING.TRICKLE_SPEED_SCALE;
-        const timeMul = 1 + (state.time / 60) * 0.05;
+        const timeMul = 1 + (state.time / 60) * TIME_SCALING_FACTOR;
         const batch = Math.min(2 + Math.floor(Math.random() * 2), state.waveSpawnQueue); // 2-3
         for (let i = 0; i < batch; i++) {
           spawnEnemy(state, pickWaveEnemy(state.wave), hpScale, spdScale, timeMul);

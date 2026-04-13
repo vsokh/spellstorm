@@ -467,6 +467,7 @@ export const CLASS_ORDER: string[] = [
 
 export const BOSS_HP_EXPONENT = 1.4;
 export const BOSS_HP_EXPONENT_DIVISOR = 5;
+export const TIME_SCALING_FACTOR = 0.12;
 
 // ═══════════════════════════════════
 //        ENEMY TYPES
