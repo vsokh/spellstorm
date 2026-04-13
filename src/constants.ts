@@ -61,7 +61,24 @@ export const GAME_OVER_DELAY_MS = 1500;
 export const MAX_WAVES = 20;
 
 /** Health drop chance on enemy kill */
-export const HEALTH_DROP_CHANCE = 0.15;
+export const HEALTH_DROP_CHANCE = 0.18;
+
+/** Health pickup healing scales with wave progression */
+export function healthPickupAmount(wave: number): number {
+  if (wave >= 15) return 4;
+  if (wave >= 8) return 3;
+  return 2;
+}
+
+/** Health drop chance scales in late game */
+export function scaledHealthDropChance(wave: number): number {
+  const base = 0.18;
+  if (wave <= 10) return base;
+  return base + (wave - 10) * 0.01; // wave 15 = 0.23, wave 20 = 0.28
+}
+
+/** Player gains +1 max HP every 3 levels */
+export const HP_LEVEL_INTERVAL = 3;
 
 /** XP system constants */
 export const XP_BASE_THRESHOLD = 18;
@@ -266,7 +283,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
   spiderling: { name: 'Spiderling', hp: 1, speed: 110, size: 6, color: '#887766', dmg: 1, xp: 2, gold: 0, ai: EnemyAI.Chase, atkR: 14, atkCd: 0.5 },
   necro: { name: 'Necro', hp: 5, speed: 50, size: 12, color: '#55aa77', dmg: 1, xp: 8, gold: 3, ai: EnemyAI.Ranged, atkR: 250, atkCd: 1.6, projSpd: 250, projCol: '#77cc99' },
   shieldbearer: { name: 'Shield Bearer', hp: 8, speed: 40, size: 14, color: '#7788aa', dmg: 2, xp: 10, gold: 4, ai: EnemyAI.Chase, atkR: 24, atkCd: 1.5 },
-  assassin: { name: 'Assassin', hp: 2, speed: 160, size: 8, color: '#334455', dmg: 4, xp: 8, gold: 3, ai: EnemyAI.Chase, atkR: 16, atkCd: 1.2 },
+  assassin: { name: 'Assassin', hp: 2, speed: 160, size: 8, color: '#334455', dmg: 3, xp: 8, gold: 3, ai: EnemyAI.Chase, atkR: 16, atkCd: 1.2 },
   swarm_bat: { name: 'Swarm Bat', hp: 1, speed: 140, size: 6, color: '#9977bb', dmg: 1, xp: 2, gold: 0, ai: EnemyAI.Chase, atkR: 14, atkCd: 0.6 },
   archlord: { name: 'Archlord', hp: 60, speed: 45, size: 28, color: '#ffaa00', dmg: 4, xp: 50, gold: 25, ai: EnemyAI.Ranged, atkR: 280, atkCd: 1.0, projSpd: 400, projCol: '#ffcc44', boss: true },
   _ally: { name: 'Skeleton', hp: 4, speed: 80, size: 9, color: '#55cc55', dmg: 2, xp: 0, gold: 0, ai: EnemyAI.Chase, atkR: 20, atkCd: 0.8 },

@@ -6,6 +6,8 @@ import {
   ROOM_HEIGHT,
   DEFAULT_MOVE_SPEED,
   getXpStep,
+  healthPickupAmount,
+  HP_LEVEL_INTERVAL,
 } from '../constants';
 import { Enemy, PickupType, SfxName } from '../types';
 import { sfx } from '../audio';
@@ -265,8 +267,9 @@ export function updatePlayers(state: GameState, dt: number): void {
         if (pk.type === PickupType.Chest) {
           if (onChestPickup) onChestPickup(state);
         } else if (pk.type === PickupType.Health) {
-          p.hp = Math.min(p.maxHp, p.hp + 2);
-          spawnText(state, pk.x, pk.y - 15, '+2 HP', '#44ff88');
+          const healAmt = healthPickupAmount(state.wave);
+          p.hp = Math.min(p.maxHp, p.hp + healAmt);
+          spawnText(state, pk.x, pk.y - 15, '+' + healAmt + ' HP', '#44ff88');
         } else if (pk.type === PickupType.Gold) {
           state.gold += pk.value;
           spawnText(state, pk.x, pk.y - 10, '+' + pk.value + 'g', '#ddcc44');
@@ -277,6 +280,11 @@ export function updatePlayers(state: GameState, dt: number): void {
           while (p.xp >= p.xpToNext) {
             p.xp -= p.xpToNext;
             p.level++;
+            // Passive max HP growth: +1 every 3 levels
+            if (p.level > 0 && p.level % HP_LEVEL_INTERVAL === 0) {
+              p.maxHp += 1;
+              p.hp = Math.min(p.maxHp, p.hp + 1); // also heal 1 when max increases
+            }
             p.xpToNext += getXpStep(p.level);
             if (onChestPickup) onChestPickup(state);
           }

@@ -28,7 +28,7 @@ import {
   ROOM_HEIGHT,
   GAME_OVER_DELAY_MS,
   RESPAWN_DELAY_MS,
-  HEALTH_DROP_CHANCE,
+  scaledHealthDropChance,
 } from '../constants';
 import { sfx } from '../audio';
 import { createFriendlyEnemy } from './dungeon';
@@ -321,7 +321,7 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
     }
 
     // Drop health sometimes
-    if (Math.random() < HEALTH_DROP_CHANCE) {
+    if (Math.random() < scaledHealthDropChance(state.wave)) {
       state.pickups.push({
         x: e.x, y: e.y, type: PickupType.Health, collected: false,
         value: 0, _owner: 0, _dmg: 0, _radius: 0, _slow: 0, _color: '',

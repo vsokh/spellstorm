@@ -241,8 +241,9 @@ export function checkWaveComplete(state: GameState): void {
     state.waveActive = false;
     state.waveBreakTimer = 2; // 2 second break between waves
 
-    // Drop some health pickups
-    if (Math.random() < 0.4) {
+    // Drop some health pickups — more reliable in later waves
+    const isBossWave = state.wave % 5 === 0;
+    if (isBossWave || Math.random() < 0.55) {
       state.pickups.push({
         x: rand(100, ROOM_WIDTH - 100),
         y: rand(100, ROOM_HEIGHT - 100),
@@ -256,7 +257,7 @@ export function checkWaveComplete(state: GameState): void {
         _color: '',
       });
     }
-    if (state.wave % 5 === 0) {
+    if (isBossWave) {
       // Boss killed — drop extra rewards
       for (let i = 0; i < 2; i++) {
         state.pickups.push({
