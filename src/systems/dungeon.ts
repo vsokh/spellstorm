@@ -201,11 +201,11 @@ export function startWave(state: GameState): void {
       _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
       _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
     });
-    // Minions scale with wave
+    // Minions trickle-spawn over 10 seconds
     const minionCount = 5 + Math.floor(wave / 3);
-    for (let i = 0; i < minionCount; i++) {
-      spawnEnemy(state, pickWaveEnemy(wave), hpScale, spdScale, timeMul);
-    }
+    state.bossMinionQueue = minionCount;
+    state.bossMinionInterval = DUNGEON_TIMING.BOSS_MINION_SPAWN_DURATION / minionCount;
+    state.bossMinionTimer = state.bossMinionInterval;
     spawnText(state, ROOM_WIDTH / 2, ROOM_HEIGHT / 2 - 60, `BOSS WAVE ${wave}!`, '#ff4444');
     sfx(SfxName.Boom);
     shake(state, 6);
@@ -244,6 +244,7 @@ export function startWave(state: GameState): void {
 export function checkWaveComplete(state: GameState): void {
   if (!state.waveActive) return;
   if (state.waveSpawnQueue > 0) return; // still trickle spawning
+  if (state.bossMinionQueue > 0) return; // still spawning boss minions
   const alive = state.enemies.filter(e => e.alive && !e._friendly && e._deathTimer < 0).length;
   if (alive <= 0) {
     state.waveActive = false;
@@ -313,6 +314,18 @@ export function checkWaveComplete(state: GameState): void {
 export function updateWaves(state: GameState, dt: number): void {
   if (state.gamePhase !== GamePhase.Playing) return;
   if (state.waveActive) {
+    // Trickle spawn boss minions
+    if (state.bossMinionQueue > 0) {
+      state.bossMinionTimer -= dt;
+      if (state.bossMinionTimer <= 0) {
+        const hpScale = 1 + Math.floor(state.wave * 0.6);
+        const spdScale = 1 + state.wave * DUNGEON_TIMING.TRICKLE_SPEED_SCALE;
+        const timeMul = 1 + (state.time / 60) * TIME_SCALING_FACTOR;
+        spawnEnemy(state, pickWaveEnemy(state.wave), hpScale, spdScale, timeMul);
+        state.bossMinionQueue--;
+        state.bossMinionTimer = state.bossMinionInterval;
+      }
+    }
     // Trickle spawn queued enemies
     if (state.waveSpawnQueue > 0) {
       state.waveSpawnTimer -= dt;

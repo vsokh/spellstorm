@@ -93,6 +93,9 @@ export interface GameState {
   // Wave trickle spawn
   waveSpawnQueue: number;
   waveSpawnTimer: number;
+  bossMinionQueue: number;
+  bossMinionTimer: number;
+  bossMinionInterval: number;
 
   // Combo & hitstop
   comboCount: number;
@@ -162,6 +165,9 @@ export function createInitialState(): GameState {
     countdownTimer: 0,
     waveSpawnQueue: 0,
     waveSpawnTimer: 0,
+    bossMinionQueue: 0,
+    bossMinionTimer: 0,
+    bossMinionInterval: 0,
     comboCount: 0,
     comboTimer: 0,
     hitStop: 0,
