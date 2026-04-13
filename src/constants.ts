@@ -64,10 +64,10 @@ export const MAX_WAVES = 20;
 export const HEALTH_DROP_CHANCE = 0.15;
 
 /** XP system constants */
-export const XP_BASE_THRESHOLD = 15;
+export const XP_BASE_THRESHOLD = 18;
 /** XP stepped-linear tier config: [maxLevel, xpIncrement] */
 export const XP_STEPS: [number, number][] = [
-  [5, 12],   // levels 1-5: +12 per level
+  [5, 14],   // levels 1-5: +14 per level
   [10, 18],  // levels 6-10: +18 per level
   [15, 25],  // levels 11-15: +25 per level
   [Infinity, 35], // levels 16+: +35 per level
@@ -193,8 +193,8 @@ export const CLASSES: Record<string, ClassDefInput> = {
     desc: 'Ranged DPS. Fast attacks, high mobility.',
     passive: { name: 'Eagle Eye', desc: 'Primary range +30%, crits at max range' },
     spells: [
-      { name: 'Arrow', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 600, radius: 5, mana: 4, cd: 0.18, life: 1.4, color: '#88cc44', trail: '#668833', pierce: 1 },
-      { name: 'Volley', key: 'RMB', type: SpellType.Barrage, dmg: 1, speed: 500, radius: 5, mana: 18, cd: 2.5, count: 5, spread: 0.6, life: 1, color: '#88cc44', trail: '#556622' },
+      { name: 'Arrow', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 600, radius: 5, mana: 4, cd: 0.25, life: 1.4, color: '#88cc44', trail: '#668833' },
+      { name: 'Volley', key: 'RMB', type: SpellType.Barrage, dmg: 1, speed: 500, radius: 5, mana: 18, cd: 2.5, count: 4, spread: 0.6, life: 1, color: '#88cc44', trail: '#556622' },
       { name: 'Trap', key: 'Q', type: SpellType.Trap, mana: 15, cd: 4, dmg: 3, radius: 50, slow: 2, color: '#aadd55' },
       { name: 'Arrow Rain', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#88cc44', mana: 0, cd: 0 },
     ],
@@ -471,8 +471,8 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p: Player) => { p.resurrection = true; } },
 
   // ── Ranger ──
-  { name: 'Multishot', desc: 'Arrows fire in a 3-arrow spread', forClass: 'ranger', color: '#88cc44',
-    apply: (p: Player) => { p.splitShot = (p.splitShot || 0) + 2; } },
+  { name: 'Multishot', desc: 'Arrows fire in a 2-arrow spread', forClass: 'ranger', color: '#88cc44',
+    apply: (p: Player) => { p.splitShot = (p.splitShot || 0) + 1; } },
   { name: 'Poison Arrows', desc: 'All arrows poison (2 dmg over 2s)', forClass: 'ranger', color: '#88cc44',
     apply: (p: Player) => { p.cls.spells[0].burn = 2; } },
   { name: 'Trap Master', desc: 'Traps do 2x damage, slow 2x longer, place 5 instead of 3', forClass: 'ranger', color: '#88cc44',
