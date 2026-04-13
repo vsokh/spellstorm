@@ -7,6 +7,7 @@ import {
   NetStateMessage,
   PickupType,
   Enemy,
+  PlayerInput,
 } from './types';
 import { UPGRADE_POOL, CLASSES } from './constants';
 import { initAudio } from './audio';
@@ -162,6 +163,7 @@ export function hostGame(state: GameState): void {
 
     conn.on('close', () => {
       if (errorMsg) errorMsg.textContent = 'Partner disconnected';
+      resetInputDedup();
     });
   });
 
@@ -239,6 +241,7 @@ export function joinGame(state: GameState): void {
 
     conn.on('close', () => {
       if (errorMsg) errorMsg.textContent = 'Host disconnected';
+      resetInputDedup();
     });
   });
 
@@ -521,11 +524,41 @@ function applyState(state: GameState, msg: NetStateMessage): void {
 //       SEND INPUT (guest)
 // ═══════════════════════════════════
 
+const INPUT_HEARTBEAT_INTERVAL = 0.2; // 200ms — resend unchanged input 5x/sec as heartbeat
+const ANGLE_EPSILON = 0.01;           // ~0.57 degrees — ignore angle jitter below this
+
+let lastSentInput: PlayerInput | null = null;
+let lastSendTime = 0;
+
+function inputChanged(input: PlayerInput): boolean {
+  if (!lastSentInput) return true;
+  if (input.mx !== lastSentInput.mx || input.my !== lastSentInput.my) return true;
+  if (input.shoot !== lastSentInput.shoot) return true;
+  if (input.shoot2 !== lastSentInput.shoot2) return true;
+  if (input.ability !== lastSentInput.ability) return true;
+  if (input.ult !== lastSentInput.ult) return true;
+  if (input.dash !== lastSentInput.dash) return true;
+  if (Math.abs(input.angle - lastSentInput.angle) > ANGLE_EPSILON) return true;
+  return false;
+}
+
+export function resetInputDedup(): void {
+  lastSentInput = null;
+  lastSendTime = 0;
+}
+
 export function sendInput(state: GameState, input: {
   angle: number; mx: number; my: number;
   shoot: boolean; shoot2: boolean; ability: boolean; ult: boolean; dash: boolean;
 }): void {
   if (!conn || !conn.open || state.mode !== NetworkMode.Guest) return;
+
+  const now = performance.now() / 1000;
+  if (!inputChanged(input) && (now - lastSendTime) < INPUT_HEARTBEAT_INTERVAL) return;
+
+  lastSentInput = { ...input };
+  lastSendTime = now;
+
   try {
     conn.send({ type: 'input', ...input });
     sendFailCount = 0;
