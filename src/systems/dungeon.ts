@@ -207,15 +207,8 @@ export function startWave(state: GameState): void {
     sfx(SfxName.Boom);
     shake(state, 6);
   } else {
-    // Normal wave — difficulty curve: gentle early, steep late
-    let count: number;
-    if (wave <= 7) {
-      count = 5 + wave * 2;       // 7-19 enemies
-    } else if (wave <= 14) {
-      count = 10 + wave * 3;      // 34-52 enemies
-    } else {
-      count = 15 + wave * 4;      // 75-91 enemies
-    }
+    // Normal wave — smooth difficulty curve
+    const count = Math.floor(5 + wave * 2.5 + Math.floor(wave / 8) * wave);
     const immediateCount = Math.ceil(count * 0.6);
     for (let i = 0; i < immediateCount; i++) {
       spawnEnemy(state, pickWaveEnemy(wave), hpScale, spdScale, timeMul);
