@@ -81,13 +81,13 @@ export function scaledHealthDropChance(wave: number): number {
 export const HP_LEVEL_INTERVAL = 3;
 
 /** XP system constants */
-export const XP_BASE_THRESHOLD = 18;
+export const XP_BASE_THRESHOLD = 28;
 /** XP stepped-linear tier config: [maxLevel, xpIncrement] */
 export const XP_STEPS: [number, number][] = [
-  [5, 14],   // levels 1-5: +14 per level
-  [10, 18],  // levels 6-10: +18 per level
-  [15, 25],  // levels 11-15: +25 per level
-  [Infinity, 35], // levels 16+: +35 per level
+  [5, 22],   // levels 1-5: +22 per level
+  [10, 28],  // levels 6-10: +28 per level
+  [15, 38],  // levels 11-15: +38 per level
+  [Infinity, 50], // levels 16+: +50 per level
 ];
 /** Get the XP increment for a given level (stepped linear) */
 export function getXpStep(level: number): number {
