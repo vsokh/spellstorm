@@ -27,6 +27,23 @@ const SPELL_TYPE_LABELS: Record<string, string> = {
   ultimate: 'Ultimate',
 };
 
+const ULTIMATE_DESCRIPTIONS: Record<string, string> = {
+  pyromancer: 'Rain 8 meteors across the battlefield, leaving lingering burn zones.',
+  cryomancer: 'Freeze all enemies and deal damage to each.',
+  stormcaller: 'Chain lightning bounces between up to 8 enemies.',
+  arcanist: 'Launch a spiral of 20 homing arcane missiles.',
+  necromancer: 'Summon 6 skeletal allies to fight by your side.',
+  chronomancer: 'Freeze all enemies in time while you move at increased speed.',
+  knight: 'Become invulnerable for 3 seconds and reflect all damage.',
+  berserker: 'Enter a blood frenzy: double damage and speed for 5 seconds, but take double damage.',
+  paladin: 'Heal all players for 75% max HP and smite all enemies.',
+  ranger: 'Unleash a barrage of 20 arrows in a wide cone.',
+  druid: 'Summon a ring of 6 thorn zones and 2 treant allies.',
+  warlock: 'Mark all enemies with Doom — after 3 seconds, they take 35% max HP damage.',
+  monk: 'Deliver 20 rapid melee strikes in a cone with knockback.',
+  engineer: 'Deploy a powerful Mega Turret with 20 HP that fires for 12 seconds.',
+};
+
 const EFFECT_DEFS: { key: keyof SpellDefInput; label: string; cssClass: string }[] = [
   { key: 'burn', label: 'Burn', cssClass: 'tag-burn' },
   { key: 'slow', label: 'Slow', cssClass: 'tag-slow' },
@@ -47,10 +64,11 @@ function buildSpellEffects(spell: SpellDefInput): string {
   return tags ? `<div class="cd-spell-effects">${tags}</div>` : '';
 }
 
-function generateSpellDescription(spell: SpellDefInput): string {
+function generateSpellDescription(spell: SpellDefInput, classKey?: string): string {
   // Ultimate abilities
   if (spell.ultCharge && spell.mana === 0) {
-    return 'Ultimate ability. Charges through combat.';
+    const desc = classKey ? ULTIMATE_DESCRIPTIONS[classKey] : undefined;
+    return desc || 'Ultimate ability. Charges through combat.';
   }
 
   const parts: string[] = [];
@@ -171,7 +189,7 @@ function updateDetailPanel(state: GameState): void {
         <span class="cd-spell-type">${typeLabel}</span>
       </div>
       ${buildSpellStats(spell)}
-      <div class="cd-spell-desc">${generateSpellDescription(spell)}</div>
+      <div class="cd-spell-desc">${generateSpellDescription(spell, key)}</div>
       ${buildSpellEffects(spell)}
       <canvas class="cd-spell-preview" width="250" height="36"></canvas>
     </div>`;
