@@ -15,12 +15,34 @@ export function showUpgradeScreen(state: GameState): void {
   state.upgradePickedLocal = false;
   state.upgradePickedRemote = false;
 
-  // Pick 3 random upgrade indices
+  // Pick 3 upgrades: guarantee at least 1 class-specific if available
+  const localPlayer = state.players[state.localIdx];
+  const clsKey = localPlayer?.clsKey || '';
+
+  // Separate generic and class-specific upgrades
+  const genericIndices: number[] = [];
+  const classIndices: number[] = [];
+  for (let i = 0; i < UPGRADE_POOL.length; i++) {
+    const up = UPGRADE_POOL[i];
+    if (!up.forClass) genericIndices.push(i);
+    else if (up.forClass === clsKey) classIndices.push(i);
+    // Skip upgrades for other classes
+  }
+
   const indices: number[] = [];
-  const available = Array.from({ length: UPGRADE_POOL.length }, (_, i) => i);
-  for (let i = 0; i < 3 && available.length > 0; i++) {
-    const pick = Math.floor(Math.random() * available.length);
-    indices.push(available.splice(pick, 1)[0]);
+
+  // 1 guaranteed class-specific (if available)
+  if (classIndices.length > 0) {
+    const pick = Math.floor(Math.random() * classIndices.length);
+    indices.push(classIndices.splice(pick, 1)[0]);
+  }
+
+  // Fill remaining with mix of generic + class-specific
+  const remaining = [...genericIndices, ...classIndices];
+  while (indices.length < 3 && remaining.length > 0) {
+    const pick = Math.floor(Math.random() * remaining.length);
+    const idx = remaining.splice(pick, 1)[0];
+    if (!indices.includes(idx)) indices.push(idx);
   }
   state.pendingUpgradeChoices = indices;
 
@@ -52,7 +74,11 @@ function showUpgradeUI(state: GameState, indices: number[]): void {
     const up = UPGRADE_POOL[idx];
     const card = document.createElement('div');
     card.className = 'upgrade-card';
-    card.innerHTML = `<div class="uname">${up.name}</div><div class="udesc">${up.desc}</div>`;
+    const isClassSpecific = !!up.forClass;
+    const nameColor = up.color || (isClassSpecific ? '#ffcc44' : '#ddcc66');
+    const tag = isClassSpecific ? `<span style="font-size:8px;color:${up.color || '#888'};opacity:.7"> ★ CLASS</span>` : '';
+    card.innerHTML = `<div class="uname" style="color:${nameColor}">${up.name}${tag}</div><div class="udesc">${up.desc}</div>`;
+    if (isClassSpecific) card.style.borderColor = (up.color || '#ffcc44') + '44';
     card.onclick = () => {
       if (state.upgradePickedLocal) return;
       state.upgradePickedLocal = true;

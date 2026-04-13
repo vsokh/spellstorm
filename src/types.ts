@@ -224,6 +224,41 @@ export interface Player {
   fullRotationSpells: number;
   fullRotationBuff: number;
 
+  // Class-specific upgrade flags
+  burnSpread: boolean;
+  magmaArmor: boolean;
+  fireZoneOnExplode: boolean;
+  shatter: boolean;
+  permafrost: boolean;
+  iceArmor: boolean;
+  chainLightning: number;
+  overcharge: boolean;
+  stormShield: boolean;
+  blinkExplode: boolean;
+  spellMirror: number;
+  raiseDead: number;
+  deathMark: boolean;
+  soulWell: boolean;
+  timeLoop: number;
+  hasteZone: boolean;
+  temporalEcho: boolean;
+  shieldBounce: number;
+  tauntAura: boolean;
+  bloodlust: boolean;
+  undyingRage: number;
+  reflectShield: boolean;
+  resurrection: boolean;
+  packLeader: boolean;
+  overgrowthHeal: boolean;
+  barkSkinRegen: boolean;
+  soulSiphon: boolean;
+  demonicPact: boolean;
+  hexChain: number;
+  zenMana: boolean;
+  turretArmy: boolean;
+  laserTurret: boolean;
+  turretExplode: boolean;
+
   // Internal timers / state
   _snapTimer: number;
   _rewindSnap: { hp: number; mana: number } | null;
@@ -412,6 +447,10 @@ export interface UpgradeDef {
   name: string;
   desc: string;
   apply: (p: Player) => void;
+  /** If set, only offered to this class */
+  forClass?: string;
+  /** Color hint for UI */
+  color?: string;
 }
 
 // ── Network message types ──

@@ -334,4 +334,120 @@ export const UPGRADE_POOL: UpgradeDef[] = [
   { name: 'Gold Rush', desc: 'Enemies drop 2x gold', apply: (p: Player) => { p.goldMul = (p.goldMul || 1) * 2; } },
   { name: 'XP Boost', desc: 'Gain upgrades 30% more often', apply: (p: Player) => { p.xpBoost = (p.xpBoost || 0) + 0.3; } },
   { name: 'Friendly Fire', desc: '+2 dmg but your spells can hurt you', apply: (p: Player) => { for (const s of p.cls.spells) s.dmg = (s.dmg || 0) + 2; p.selfDmg = true; } },
+
+  // ══════════════════════════════════════
+  //     CLASS-SPECIFIC UPGRADES (3 each)
+  // ══════════════════════════════════════
+
+  // ── Pyromancer ──
+  { name: 'Wildfire', desc: 'Burn spreads to nearby enemies', forClass: 'pyromancer', color: '#ff6633',
+    apply: (p: Player) => { p.burnSpread = true; } },
+  { name: 'Magma Armor', desc: 'Enemies that hit you catch fire (3 dmg)', forClass: 'pyromancer', color: '#ff6633',
+    apply: (p: Player) => { p.magmaArmor = true; } },
+  { name: 'Pyroclasm', desc: 'Fireball explosions are 2x bigger and leave fire zones', forClass: 'pyromancer', color: '#ff6633',
+    apply: (p: Player) => { const s = p.cls.spells[0]; if (s.explode) s.explode *= 2; p.fireZoneOnExplode = true; } },
+
+  // ── Cryomancer ──
+  { name: 'Shatter', desc: 'Frozen enemies explode on death, dealing 3 AoE dmg', forClass: 'cryomancer', color: '#44bbff',
+    apply: (p: Player) => { p.shatter = true; } },
+  { name: 'Permafrost', desc: 'Slow effects never expire (permanent until enemy dies)', forClass: 'cryomancer', color: '#44bbff',
+    apply: (p: Player) => { p.permafrost = true; } },
+  { name: 'Ice Armor', desc: '+3 armor. Melee attackers get frozen 1s', forClass: 'cryomancer', color: '#44bbff',
+    apply: (p: Player) => { p.armor = (p.armor || 0) + 3; p.iceArmor = true; } },
+
+  // ── Stormcaller ──
+  { name: 'Chain Lightning', desc: 'Lightning beam bounces to 2 more enemies', forClass: 'stormcaller', color: '#bb66ff',
+    apply: (p: Player) => { p.chainLightning = (p.chainLightning || 0) + 2; } },
+  { name: 'Overcharge', desc: 'Every 3rd spell deals 3x damage', forClass: 'stormcaller', color: '#bb66ff',
+    apply: (p: Player) => { p.overcharge = true; } },
+  { name: 'Storm Shield', desc: 'Lightning randomly strikes enemies near you (120px, 1 dmg/s)', forClass: 'stormcaller', color: '#bb66ff',
+    apply: (p: Player) => { p.stormShield = true; } },
+
+  // ── Arcanist ──
+  { name: 'Arcane Amplifier', desc: 'Homing gets 3x stronger, projectiles are 50% faster', forClass: 'arcanist', color: '#ff55aa',
+    apply: (p: Player) => { const s = p.cls.spells[0]; s.homing = (s.homing || 0) * 3; if (s.speed) s.speed *= 1.5; } },
+  { name: 'Phase Shift', desc: 'Blink leaves behind an explosion (4 dmg, 60px radius)', forClass: 'arcanist', color: '#ff55aa',
+    apply: (p: Player) => { p.blinkExplode = true; } },
+  { name: 'Spell Mirror', desc: '30% chance to copy any spell you cast for free', forClass: 'arcanist', color: '#ff55aa',
+    apply: (p: Player) => { p.spellMirror = (p.spellMirror || 0) + 0.3; } },
+
+  // ── Necromancer ──
+  { name: 'Raise Dead', desc: 'Killed enemies have 25% chance to fight for you (5s)', forClass: 'necromancer', color: '#55cc55',
+    apply: (p: Player) => { p.raiseDead = (p.raiseDead || 0) + 0.25; } },
+  { name: 'Death Mark', desc: 'Enemies below 20% HP take 3x damage', forClass: 'necromancer', color: '#55cc55',
+    apply: (p: Player) => { p.deathMark = true; } },
+  { name: 'Soul Well', desc: 'Kills create a healing zone (heals 2 HP/s, 3s, 50px)', forClass: 'necromancer', color: '#55cc55',
+    apply: (p: Player) => { p.soulWell = true; } },
+
+  // ── Chronomancer ──
+  { name: 'Time Loop', desc: 'When you die, rewind 5s instead (once per wave)', forClass: 'chronomancer', color: '#ffcc44',
+    apply: (p: Player) => { p.timeLoop = (p.timeLoop || 0) + 1; } },
+  { name: 'Haste Zone', desc: 'Time Warp now also boosts ally speed 2x for 3s', forClass: 'chronomancer', color: '#ffcc44',
+    apply: (p: Player) => { p.hasteZone = true; } },
+  { name: 'Temporal Echo', desc: 'Spells fire a delayed copy 0.5s later at 50% damage', forClass: 'chronomancer', color: '#ffcc44',
+    apply: (p: Player) => { p.temporalEcho = true; } },
+
+  // ── Knight ──
+  { name: 'Shield Mastery', desc: 'Shield Throw bounces between 3 enemies', forClass: 'knight', color: '#aabbcc',
+    apply: (p: Player) => { p.shieldBounce = (p.shieldBounce || 0) + 3; } },
+  { name: 'Fortify', desc: '+5 max HP, +2 armor, move 15% slower', forClass: 'knight', color: '#aabbcc',
+    apply: (p: Player) => { p.maxHp += 5; p.hp += 5; p.armor = (p.armor || 0) + 2; p.moveSpeed *= 0.85; } },
+  { name: 'Taunt Aura', desc: 'Enemies within 100px target you instead of your ally', forClass: 'knight', color: '#aabbcc',
+    apply: (p: Player) => { p.tauntAura = true; } },
+
+  // ── Berserker ──
+  { name: 'Bloodlust', desc: 'Each kill gives +5% attack speed (permanent, stacks)', forClass: 'berserker', color: '#ff4444',
+    apply: (p: Player) => { p.bloodlust = true; } },
+  { name: 'Undying Rage', desc: 'Cannot die for 3s after reaching 1 HP (once per wave)', forClass: 'berserker', color: '#ff4444',
+    apply: (p: Player) => { p.undyingRage = (p.undyingRage || 0) + 1; } },
+  { name: 'Cleave', desc: 'Axe Swing hits 360° around you and +2 damage', forClass: 'berserker', color: '#ff4444',
+    apply: (p: Player) => { p.cls.spells[0].angle = Math.PI * 2; p.cls.spells[0].dmg += 2; } },
+
+  // ── Paladin ──
+  { name: 'Blessed Weapons', desc: 'Both players deal +2 damage', forClass: 'paladin', color: '#ffddaa',
+    apply: (p: Player) => { for (const s of p.cls.spells) s.dmg = (s.dmg || 0) + 2; } },
+  { name: 'Divine Shield', desc: 'Holy Shield lasts 5s and reflects projectiles', forClass: 'paladin', color: '#ffddaa',
+    apply: (p: Player) => { if (p.cls.spells[1]) p.cls.spells[1].duration = 5; p.reflectShield = true; } },
+  { name: 'Resurrection', desc: 'If your ally dies, auto-revive them at 50% HP (45s cd)', forClass: 'paladin', color: '#ffddaa',
+    apply: (p: Player) => { p.resurrection = true; } },
+
+  // ── Ranger ──
+  { name: 'Multishot', desc: 'Arrows fire in a 3-arrow spread', forClass: 'ranger', color: '#88cc44',
+    apply: (p: Player) => { p.splitShot = (p.splitShot || 0) + 2; } },
+  { name: 'Poison Arrows', desc: 'All arrows poison (2 dmg over 2s)', forClass: 'ranger', color: '#88cc44',
+    apply: (p: Player) => { p.cls.spells[0].burn = 2; } },
+  { name: 'Trap Master', desc: 'Traps do 2x damage, slow 2x longer, place 5 instead of 3', forClass: 'ranger', color: '#88cc44',
+    apply: (p: Player) => { if (p.cls.spells[2]) { p.cls.spells[2].dmg = (p.cls.spells[2].dmg || 0) * 2; p.cls.spells[2].count = 5; } } },
+
+  // ── Druid ──
+  { name: 'Pack Leader', desc: 'Spirit Wolf is 2x stronger and you can have 2 wolves', forClass: 'druid', color: '#44aa33',
+    apply: (p: Player) => { p.packLeader = true; } },
+  { name: 'Overgrowth', desc: 'Entangle radius 2x, also heals allies inside for 2 HP/s', forClass: 'druid', color: '#44aa33',
+    apply: (p: Player) => { if (p.cls.spells[1]) { p.cls.spells[1].radius = (p.cls.spells[1].radius || 60) * 2; } p.overgrowthHeal = true; } },
+  { name: 'Bark Skin', desc: '+3 armor, regen 1 HP every 5s (stacks with passive)', forClass: 'druid', color: '#44aa33',
+    apply: (p: Player) => { p.armor = (p.armor || 0) + 3; p.barkSkinRegen = true; } },
+
+  // ── Warlock ──
+  { name: 'Soul Siphon', desc: 'Dark Pact HP cost becomes healing instead (pay mana, gain HP)', forClass: 'warlock', color: '#6622aa',
+    apply: (p: Player) => { p.soulSiphon = true; } },
+  { name: 'Demonic Pact', desc: 'Imps are permanent and you can have 3 at once', forClass: 'warlock', color: '#6622aa',
+    apply: (p: Player) => { p.demonicPact = true; } },
+  { name: 'Hex', desc: 'Drain Life chains to 3 targets', forClass: 'warlock', color: '#6622aa',
+    apply: (p: Player) => { p.hexChain = (p.hexChain || 0) + 3; } },
+
+  // ── Monk ──
+  { name: 'Way of the Fist', desc: 'Chi Blast fires 3 projectiles in a fan', forClass: 'monk', color: '#eedd88',
+    apply: (p: Player) => { p.splitShot = (p.splitShot || 0) + 2; } },
+  { name: 'Iron Skin', desc: 'Dodge chance +25%, take -1 damage from all sources', forClass: 'monk', color: '#eedd88',
+    apply: (p: Player) => { p.dodgeChance = (p.dodgeChance || 0) + 0.25; p.armor = (p.armor || 0) + 1; } },
+  { name: 'Zen Master', desc: 'Meditation heals 3x faster and also restores mana', forClass: 'monk', color: '#eedd88',
+    apply: (p: Player) => { if (p.cls.spells[2]) { p.cls.spells[2].heal = (p.cls.spells[2].heal || 1) * 3; } p.zenMana = true; } },
+
+  // ── Engineer ──
+  { name: 'Turret Army', desc: 'Can have 3 turrets at once, each lasts 25s', forClass: 'engineer', color: '#dd8833',
+    apply: (p: Player) => { p.turretArmy = true; if (p.cls.spells[1]) p.cls.spells[1].duration = 25; } },
+  { name: 'Laser Turret', desc: 'Turrets fire beams instead of shots (2x damage, hits instantly)', forClass: 'engineer', color: '#dd8833',
+    apply: (p: Player) => { p.laserTurret = true; } },
+  { name: 'Self-Destruct', desc: 'Turrets explode when they expire (6 dmg, 80px radius)', forClass: 'engineer', color: '#dd8833',
+    apply: (p: Player) => { p.turretExplode = true; } },
 ];
