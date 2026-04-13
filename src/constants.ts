@@ -370,6 +370,16 @@ export const UPGRADE_POOL: UpgradeDef[] = [
   { name: 'XP Boost', desc: 'Gain upgrades 30% more often', apply: (p: Player) => { p.xpBoost = hyperStack(p, 'xpBoost', 0.3); } },
   { name: 'Friendly Fire', desc: '+2 dmg but your spells can hurt you', apply: (p: Player) => { for (const s of p.cls.spells) s.dmg = (s.dmg || 0) + 2; p.selfDmg = true; } },
 
+  // -- QUALITATIVE (behavior-changing) --
+  { name: 'Boomerang', desc: 'Projectiles return to you at half range, hitting enemies twice', apply: (p: Player) => { p.boomerang = true; } },
+  { name: 'Volatile', desc: 'Projectiles explode when they expire (40px, 2 dmg)', apply: (p: Player) => { p.volatile = true; } },
+  { name: 'Fork', desc: 'Kills spawn 2 mini-projectiles from the corpse', apply: (p: Player) => { p.forkOnKill = true; } },
+  { name: 'Gravity Pull', desc: 'Projectiles pull nearby enemies toward their path', apply: (p: Player) => { p.gravityWell = true; } },
+  { name: 'Spectral', desc: 'Projectiles pass through walls and pillars', apply: (p: Player) => { p.spectral = true; } },
+  { name: 'Frozen Touch', desc: '25% chance any attack freezes enemies for 1s', apply: (p: Player) => { p.frozenTouch = true; } },
+  { name: 'Seeker Mines', desc: 'Kills drop explosive proximity mines (3 dmg, 50px)', apply: (p: Player) => { p.seekerMines = true; } },
+  { name: 'Barrage Mode', desc: 'Primary fires a 3-shot burst at reduced damage', apply: (p: Player) => { p.burstFire = true; const s = p.cls.spells[0]; s.dmg = Math.max(1, Math.ceil(s.dmg * 0.4)); s.cd *= 1.5; } },
+
   // ══════════════════════════════════════
   //     CLASS-SPECIFIC UPGRADES (3 each)
   // ══════════════════════════════════════

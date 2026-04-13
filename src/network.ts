@@ -286,7 +286,7 @@ function applyState(state: GameState, msg: NetStateMessage): void {
         x: sd.x, y: sd.y, vx: sd.vx, vy: sd.vy, radius: sd.r, color: sd.c, owner: sd.o,
         trail: sd.c, life: 2, age: 0, speed: 0, dmg: 0, type: '',
         homing: 0, zap: 0, zapRate: 0, slow: 0, drain: 0, explode: 0, burn: 0,
-        zapTimer: 0, pierceLeft: 0, stun: 0, clsKey: '',
+        zapTimer: 0, pierceLeft: 0, stun: 0, clsKey: '', _reversed: false,
       });
     }
   }

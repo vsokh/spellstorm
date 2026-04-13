@@ -33,9 +33,29 @@ export function updateSpells(state: GameState, dt: number): void {
       }
     }
 
+    // Boomerang: reverse projectile at half lifetime
+    if (!s._reversed && state.players[s.owner]?.boomerang && s.age > s.life * 0.5) {
+      s.vx = -s.vx;
+      s.vy = -s.vy;
+      s._reversed = true;
+    }
+
     s.x += s.vx * dt;
     s.y += s.vy * dt;
     s.age += dt;
+
+    // Gravity Well: pull nearby enemies toward projectile path
+    if (state.players[s.owner]?.gravityWell) {
+      for (const e of state.enemies) {
+        if (!e.alive) continue;
+        const d = dist(s.x, s.y, e.x, e.y);
+        if (d < 60 && d > 5) {
+          const pullAngle = Math.atan2(s.y - e.y, s.x - e.x);
+          e.x += Math.cos(pullAngle) * 40 * dt;
+          e.y += Math.sin(pullAngle) * 40 * dt;
+        }
+      }
+    }
 
     // Trail particles
     if (s.trail && Math.random() > 0.3) {
@@ -96,10 +116,12 @@ export function updateSpells(state: GameState, dt: number): void {
 
     // Collision with pillars
     let hitP = false;
-    for (const pl of state.pillars) {
-      if (dist(s.x, s.y, pl.x, pl.y) < pl.radius + s.radius) {
-        hitP = true;
-        break;
+    if (!state.players[s.owner]?.spectral) {
+      for (const pl of state.pillars) {
+        if (dist(s.x, s.y, pl.x, pl.y) < pl.radius + s.radius) {
+          hitP = true;
+          break;
+        }
       }
     }
 
@@ -111,6 +133,10 @@ export function updateSpells(state: GameState, dt: number): void {
         damageEnemy(state, e, s.dmg, s.owner);
         if (s.slow) e.slowTimer = (e.slowTimer || 0) + s.slow;
         if (s.stun) e.stunTimer = (e.stunTimer || 0) + s.stun;
+        if (state.players[s.owner]?.frozenTouch && Math.random() < 0.25) {
+          e.stunTimer = (e.stunTimer || 0) + 1;
+          spawnText(state, e.x, e.y - 15, 'FREEZE', '#88ddff');
+        }
         if (s.drain) {
           const p = state.players[s.owner];
           if (p) {
@@ -138,6 +164,16 @@ export function updateSpells(state: GameState, dt: number): void {
         }
       } else if (hitP || hitE) {
         spawnParticles(state, s.x, s.y, s.color, 4, 0.3);
+      } else if (!hitP && !hitE && state.players[s.owner]?.volatile) {
+        // Volatile: explode on expiry
+        spawnParticles(state, s.x, s.y, s.color, 12, 0.6);
+        spawnShockwave(state, s.x, s.y, 40, s.color);
+        for (const e of state.enemies) {
+          if (!e.alive) continue;
+          if (dist(s.x, s.y, e.x, e.y) < 40) {
+            damageEnemy(state, e, 2, s.owner);
+          }
+        }
       }
       state.spells.splice(i, 1);
     }

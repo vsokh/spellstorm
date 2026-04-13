@@ -271,6 +271,16 @@ export interface Player {
   laserTurret: boolean;
   turretExplode: boolean;
 
+  // Qualitative upgrade flags
+  boomerang: boolean;
+  volatile: boolean;
+  forkOnKill: boolean;
+  gravityWell: boolean;
+  spectral: boolean;
+  frozenTouch: boolean;
+  seekerMines: boolean;
+  burstFire: boolean;
+
   // Hyperbolic stacking accumulators (raw sums before diminishing returns)
   _hyperAcc: Record<string, number>;
 
@@ -347,6 +357,7 @@ export interface Spell {
   burn: number;
   stun: number;
   clsKey: string;
+  _reversed: boolean;
 }
 
 export interface Particle {

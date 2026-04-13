@@ -186,6 +186,36 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
 
       // Kill resets primary CD
       if (p.killResetCD) p.cd[0] = 0;
+
+      // Fork: spawn 2 projectiles from corpse
+      if (p.forkOnKill) {
+        const baseAngle = Math.random() * Math.PI * 2;
+        for (let fi = 0; fi < 2; fi++) {
+          const fa = baseAngle + (fi === 0 ? -0.8 : 0.8);
+          const fDef = p.cls.spells[0];
+          state.spells.push({
+            ...spellToRuntime(fDef),
+            x: e.x, y: e.y,
+            vx: Math.cos(fa) * fDef.speed, vy: Math.sin(fa) * fDef.speed,
+            owner: p.idx, age: 0, zapTimer: 0,
+            pierceLeft: 0,
+            clsKey: p.clsKey,
+            _reversed: false,
+            dmg: Math.max(1, Math.ceil(fDef.dmg * 0.5)),
+          });
+        }
+      }
+
+      // Seeker Mines: drop explosive mine on kill
+      if (p.seekerMines) {
+        state.zones.push({
+          x: e.x, y: e.y, radius: 50, duration: 4,
+          dmg: 3, color: '#ff8844', owner: p.idx,
+          slow: 0, tickRate: 4, tickTimer: 0, age: 0,
+          drain: 0, heal: 0, pull: 0, freezeAfter: 0,
+        });
+        spawnParticles(state, e.x, e.y, '#ff8844', 5, 0.3);
+      }
     }
 
     // Explode on death — damage nearby players
@@ -398,6 +428,7 @@ export function castSpellSilent(state: GameState, p: Player, idx: number, angle:
       vx: cos * def.speed, vy: sin * def.speed,
       owner: p.idx, age: 0, zapTimer: 0, pierceLeft: (p.pierce || 0) + (def.pierce || 0),
       clsKey: p.clsKey,
+      _reversed: false,
     });
   }
 }
@@ -422,6 +453,7 @@ function spellToRuntime(def: SpellDef): Spell {
     burn: def.burn,
     stun: def.stun,
     clsKey: '',
+    _reversed: false,
   };
 }
 
@@ -555,7 +587,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
             vy: Math.sin(sa) * def.speed,
             owner: p.idx, age: 0, zapTimer: 0, pierceLeft: 0,
             zap: 0, zapRate: 0, slow: 0, drain: 0, explode: 0, burn: 0,
-            stun: 0, clsKey: p.clsKey,
+            stun: 0, clsKey: p.clsKey, _reversed: false,
           });
           sfx(SfxName.Arcane);
         }, i * 80);
@@ -616,6 +648,24 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     };
     spell.dmg = Math.round(spell.dmg * echoDmgMul);
     state.spells.push(spell);
+    // Barrage Mode: fire 2 extra burst shots for primary
+    if (idx === 0 && p.burstFire) {
+      for (const bOff of [-0.12, 0.12]) {
+        const ba = angle + bOff;
+        const bcos = Math.cos(ba);
+        const bsin = Math.sin(ba);
+        state.spells.push({
+          ...spellToRuntime(def),
+          x: p.x + bcos * WIZARD_SIZE * 1.5,
+          y: p.y + bsin * WIZARD_SIZE * 1.5,
+          vx: bcos * def.speed, vy: bsin * def.speed,
+          owner: p.idx, age: 0, zapTimer: 0,
+          pierceLeft: (p.pierce || 0) + (def.pierce || 0),
+          clsKey: p.clsKey,
+          _reversed: false,
+        });
+      }
+    }
     sfx(sType);
   } else if (def.type === SpellType.Beam) {
     state.beams.push({ x: p.x, y: p.y, angle, range: def.range, width: def.width, color: def.color, life: 0.15 });
@@ -958,7 +1008,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
           vx: Math.cos(sa) * 200, vy: Math.sin(sa) * 200,
           owner: p.idx, age: 0, zapTimer: 0, pierceLeft: 0,
           zap: 0, zapRate: 0, slow: 0, drain: 0, explode: 0, burn: 0,
-          stun: 0, clsKey: p.clsKey,
+          stun: 0, clsKey: p.clsKey, _reversed: false,
         });
         sfx(SfxName.Arcane);
       }, i * 50);
@@ -1026,7 +1076,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
           vx: aCos * 400, vy: aSin * 400,
           owner: p.idx, age: 0, zapTimer: 0, pierceLeft: 2,
           homing: 0, zap: 0, zapRate: 0, slow: 0, drain: 0, explode: 0, burn: 0,
-          stun: 0, clsKey: p.clsKey,
+          stun: 0, clsKey: p.clsKey, _reversed: false,
         });
         sfx(SfxName.Hit);
       }, i * 30);
