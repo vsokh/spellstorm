@@ -18,6 +18,7 @@ import {
   BOSS_HP_EXPONENT_DIVISOR,
   TIME_SCALING_FACTOR,
   ENEMY_HP_WAVE_MULT,
+  CO_OP_HP_MULTIPLIER,
 } from '../constants';
 
 import { sfx } from '../audio';
@@ -125,12 +126,13 @@ export function startWave(state: GameState): void {
   const hpScale = 1 + Math.floor(wave * 0.6);
   const spdScale = 1 + wave * 0.03;
   const baseTimeMul = 1 + (state.time / 60) * TIME_SCALING_FACTOR;
-  const timeMul = baseTimeMul * (1 + wave * ENEMY_HP_WAVE_MULT);
+  const coopMul = state.players.length >= 2 ? CO_OP_HP_MULTIPLIER : 1;
+  const timeMul = baseTimeMul * (1 + wave * ENEMY_HP_WAVE_MULT) * coopMul;
 
   // FINALE — The Archlord (wave 20)
   if (wave === MAX_WAVES) {
     const et = ENEMIES['archlord'];
-    const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR) * baseTimeMul);
+    const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR) * baseTimeMul * coopMul);
     state.enemies.push({
       id: nextEnemyId(state),
       type: 'archlord',
@@ -173,7 +175,7 @@ export function startWave(state: GameState): void {
     // Boss wave
     const bossType = wave % 10 === 0 ? 'demon' : 'golem';
     const et = ENEMIES[bossType];
-    const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR) * baseTimeMul);
+    const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR) * baseTimeMul * coopMul);
     state.enemies.push({
       id: nextEnemyId(state),
       type: bossType,
@@ -320,7 +322,8 @@ export function updateWaves(state: GameState, dt: number): void {
       if (state.bossMinionTimer <= 0) {
         const hpScale = 1 + Math.floor(state.wave * 0.6);
         const spdScale = 1 + state.wave * DUNGEON_TIMING.TRICKLE_SPEED_SCALE;
-        const timeMul = 1 + (state.time / 60) * TIME_SCALING_FACTOR;
+        const coopMul = state.players.length >= 2 ? CO_OP_HP_MULTIPLIER : 1;
+        const timeMul = (1 + (state.time / 60) * TIME_SCALING_FACTOR) * coopMul;
         spawnEnemy(state, pickWaveEnemy(state.wave), hpScale, spdScale, timeMul);
         state.bossMinionQueue--;
         state.bossMinionTimer = state.bossMinionInterval;
@@ -332,7 +335,8 @@ export function updateWaves(state: GameState, dt: number): void {
       if (state.waveSpawnTimer <= 0) {
         const hpScale = 1 + Math.floor(state.wave * 0.6);
         const spdScale = 1 + state.wave * DUNGEON_TIMING.TRICKLE_SPEED_SCALE;
-        const timeMul = (1 + (state.time / 60) * TIME_SCALING_FACTOR) * (1 + state.wave * ENEMY_HP_WAVE_MULT);
+        const coopMul = state.players.length >= 2 ? CO_OP_HP_MULTIPLIER : 1;
+        const timeMul = (1 + (state.time / 60) * TIME_SCALING_FACTOR) * (1 + state.wave * ENEMY_HP_WAVE_MULT) * coopMul;
         const batch = Math.min(2 + Math.floor(Math.random() * 2), state.waveSpawnQueue); // 2-3
         for (let i = 0; i < batch; i++) {
           spawnEnemy(state, pickWaveEnemy(state.wave), hpScale, spdScale, timeMul);
