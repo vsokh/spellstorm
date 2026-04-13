@@ -1,11 +1,100 @@
 import { GameState } from '../state';
-import { NetworkMode } from '../types';
+import { NetworkMode, SpellDefInput } from '../types';
 import { CLASSES, CLASS_ORDER } from '../constants';
 import { sendMessage } from '../network';
 
 // ═══════════════════════════════════
 //       CLASS SELECTION SCREEN
 // ═══════════════════════════════════
+
+const SPELL_TYPE_LABELS: Record<string, string> = {
+  projectile: 'Projectile',
+  homing: 'Homing',
+  beam: 'Beam',
+  cone: 'Cone',
+  nova: 'Nova',
+  aoe_delayed: 'Area (Delayed)',
+  blink: 'Dash',
+  barrage: 'Barrage',
+  zone: 'Zone',
+  rewind: 'Rewind',
+  leap: 'Leap',
+  ally_shield: 'Ally Shield',
+  trap: 'Trap',
+  ultimate: 'Ultimate',
+};
+
+const EFFECT_DEFS: { key: keyof SpellDefInput; label: string; cssClass: string }[] = [
+  { key: 'burn', label: 'Burn', cssClass: 'tag-burn' },
+  { key: 'slow', label: 'Slow', cssClass: 'tag-slow' },
+  { key: 'stun', label: 'Stun', cssClass: 'tag-stun' },
+  { key: 'drain', label: 'Drain', cssClass: 'tag-drain' },
+  { key: 'explode', label: 'Explode', cssClass: 'tag-explode' },
+  { key: 'homing', label: 'Homing', cssClass: 'tag-homing' },
+  { key: 'pierce', label: 'Pierce', cssClass: 'tag-pierce' },
+  { key: 'heal', label: 'Heal', cssClass: 'tag-heal' },
+  { key: 'zap', label: 'Chain', cssClass: 'tag-chain' },
+];
+
+function buildSpellEffects(spell: SpellDefInput): string {
+  const tags = EFFECT_DEFS
+    .filter(e => spell[e.key])
+    .map(e => `<span class="cd-effect-tag ${e.cssClass}">${e.label}</span>`)
+    .join('');
+  return tags ? `<div class="cd-spell-effects">${tags}</div>` : '';
+}
+
+function buildSpellStats(spell: SpellDefInput): string {
+  // Ultimate spells with ultCharge show a different note
+  if (spell.ultCharge && spell.mana === 0 && spell.cd === 0) {
+    return `<div class="cd-ult-note">Charges in combat</div>`;
+  }
+
+  const parts: string[] = [];
+  if (spell.dmg) {
+    parts.push(`<span><span class="cd-stat-label">DMG</span>${spell.dmg}</span>`);
+  }
+  parts.push(`<span><span class="cd-stat-label">MANA</span>${spell.mana}</span>`);
+  if (spell.cd > 0) {
+    parts.push(`<span><span class="cd-stat-label">CD</span>${spell.cd}s</span>`);
+  }
+  return `<div class="cd-spell-stats">${parts.join('')}</div>`;
+}
+
+function updateDetailPanel(state: GameState): void {
+  const panel = document.getElementById('class-detail');
+  if (!panel) return;
+
+  const key = CLASS_ORDER[state.selectedClassIndex];
+  const cls = CLASSES[key];
+  if (!cls) { panel.innerHTML = ''; return; }
+
+  const spellCards = cls.spells.map(spell => {
+    const typeLabel = SPELL_TYPE_LABELS[spell.type] || spell.type;
+    const badgeColor = spell.color || cls.color;
+    return `<div class="cd-spell">
+      <div class="cd-spell-top">
+        <span class="cd-key-badge" style="color:${badgeColor};border-color:${badgeColor}">${spell.key}</span>
+        <span class="cd-spell-name">${spell.name}</span>
+        <span class="cd-spell-type">${typeLabel}</span>
+      </div>
+      ${buildSpellStats(spell)}
+      ${buildSpellEffects(spell)}
+    </div>`;
+  }).join('');
+
+  panel.innerHTML =
+    `<div class="cd-header" style="color:${cls.color}">${cls.name}</div>` +
+    `<div class="cd-desc">${cls.desc}</div>` +
+    `<div class="cd-section-label">Passive</div>` +
+    `<div class="cd-passive">` +
+      `<div class="cd-passive-name">${cls.passive.name}</div>` +
+      `<div class="cd-passive-desc">${cls.passive.desc}</div>` +
+    `</div>` +
+    `<div class="cd-divider"></div>` +
+    `<div class="cd-section-label">Spells</div>` +
+    spellCards;
+}
 
 export function showSelect(state: GameState): void {
   const lobby = document.getElementById('lobby');
@@ -40,6 +129,8 @@ function buildGrid(state: GameState): void {
     };
     grid.appendChild(card);
   });
+
+  updateDetailPanel(state);
 }
 
 /**
