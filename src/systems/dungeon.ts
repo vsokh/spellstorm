@@ -50,13 +50,20 @@ export function generateArena(state: GameState): void {
 export function pickWaveEnemy(wave: number): string {
   if (wave <= 2) return ['slime', 'bat'][Math.floor(Math.random() * 2)];
   if (wave <= 4) return ['slime', 'bat', 'skeleton'][Math.floor(Math.random() * 3)];
-  if (wave <= 7) return ['slime', 'bat', 'skeleton', 'wraith', 'spider'][Math.floor(Math.random() * 5)];
-  if (wave <= 12) {
-    const pool = ['slime', 'bat', 'skeleton', 'skeleton', 'wraith', 'wraith', 'spider', 'necro', 'shieldbearer'];
+  if (wave <= 7) {
+    const pool = ['slime', 'bat', 'skeleton', 'wraith', 'spider', 'bomber'];
     return pool[Math.floor(Math.random() * pool.length)];
   }
-  // Late game: weighted toward harder enemies + assassins
-  const pool = ['skeleton', 'skeleton', 'wraith', 'wraith', 'spider', 'necro', 'shieldbearer', 'assassin', 'assassin'];
+  if (wave <= 9) {
+    const pool = ['skeleton', 'skeleton', 'wraith', 'wraith', 'spider', 'necro', 'shieldbearer', 'bomber', 'splitter'];
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+  if (wave <= 12) {
+    const pool = ['skeleton', 'wraith', 'wraith', 'spider', 'necro', 'shieldbearer', 'bomber', 'splitter', 'teleporter', 'teleporter'];
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+  // Late game: all enemy types with weighting toward threats
+  const pool = ['skeleton', 'wraith', 'necro', 'shieldbearer', 'assassin', 'assassin', 'bomber', 'splitter', 'teleporter', 'teleporter', 'berserker', 'berserker'];
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -93,6 +100,7 @@ export function spawnEnemy(state: GameState, type: string, hpScale: number, spdS
     _lifespan: 0,
     _spdMul: spdScale,
     _dmgMul: timeMul,
+    _teleportTimer: 0,
   });
 }
 
@@ -124,6 +132,7 @@ export function startWave(state: GameState): void {
       _friendly: false, _owner: 0, _lifespan: 0,
       _spdMul: 1,
       _dmgMul: timeMul,
+      _teleportTimer: 0,
     });
     // Elite guard — spawn 8 mixed elites
     const elitePool = ['shieldbearer', 'necro', 'assassin', 'wraith'];
@@ -170,6 +179,7 @@ export function startWave(state: GameState): void {
       _lifespan: 0,
       _spdMul: 1,
       _dmgMul: timeMul,
+      _teleportTimer: 0,
     });
     // Minions scale with wave
     const minionCount = 2 + Math.floor(wave / 3);
@@ -334,5 +344,6 @@ export function createFriendlyEnemy(x: number, y: number, ownerIdx: number): Ene
     _lifespan: 8,
     _spdMul: 1,
     _dmgMul: 1,
+    _teleportTimer: 0,
   };
 }

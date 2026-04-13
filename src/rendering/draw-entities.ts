@@ -1293,7 +1293,7 @@ function drawImp(ctx: CanvasRenderingContext2D, x: number, y: number, size: numb
 }
 
 // ── Type-specific enemy body rendering ──
-function drawEnemyBody(ctx: CanvasRenderingContext2D, e: { x: number; y: number; type: string }, et: { size: number; color: string; boss?: boolean; phase?: boolean }, eyeAngle: number, time: number): void {
+function drawEnemyBody(ctx: CanvasRenderingContext2D, e: { x: number; y: number; type: string; hp?: number; maxHp?: number }, et: { size: number; color: string; boss?: boolean; phase?: boolean }, eyeAngle: number, time: number): void {
   const { x, y } = e;
   const { size, color } = et;
   const eType = e.type;
@@ -1733,6 +1733,142 @@ function drawEnemyBody(ctx: CanvasRenderingContext2D, e: { x: number; y: number;
     ctx.beginPath(); ctx.arc(x + Math.cos(eyeAngle - 0.3) * ed4, y + Math.sin(eyeAngle - 0.3) * ed4, 1, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(x + Math.cos(eyeAngle + 0.3) * ed4, y + Math.sin(eyeAngle + 0.3) * ed4, 1, 0, Math.PI * 2); ctx.fill();
 
+  } else if (eType === 'bomber') {
+    // ── BOMBER: pulsing body with fuse spark ──
+    const pulse = 1 + Math.sin(time * 8) * 0.1;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, size * pulse, 0, Math.PI * 2);
+    ctx.fill();
+    // Warning glow
+    const glow = ctx.createRadialGradient(x, y, size * 0.3, x, y, size * 1.5);
+    glow.addColorStop(0, 'rgba(255,120,0,0.3)');
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(x, y, size * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Fuse spark on top
+    const sparkY = y - size - 3 + Math.sin(time * 12) * 2;
+    ctx.fillStyle = '#ffdd44';
+    ctx.beginPath();
+    ctx.arc(x, sparkY, 2, 0, Math.PI * 2);
+    ctx.fill();
+    // Eyes
+    const bomberEd = size * 0.3;
+    ctx.fillStyle = '#ffcc00';
+    ctx.beginPath();
+    ctx.arc(x - bomberEd, y - bomberEd * 0.3, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + bomberEd, y - bomberEd * 0.3, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+  } else if (eType === 'teleporter') {
+    // ── TELEPORTER: flickering ghostly body ──
+    const flicker = 0.6 + Math.sin(time * 15) * 0.2;
+    ctx.globalAlpha = flicker;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    // Inner glow
+    const tpGlow = ctx.createRadialGradient(x, y, 0, x, y, size);
+    tpGlow.addColorStop(0, 'rgba(170,51,204,0.5)');
+    tpGlow.addColorStop(1, 'transparent');
+    ctx.fillStyle = tpGlow;
+    ctx.beginPath();
+    ctx.arc(x, y, size * 1.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    // Eyes
+    const tpEd = size * 0.3;
+    ctx.fillStyle = '#dd88ff';
+    ctx.beginPath();
+    ctx.arc(x + Math.cos(eyeAngle - 0.4) * tpEd, y + Math.sin(eyeAngle - 0.4) * tpEd, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + Math.cos(eyeAngle + 0.4) * tpEd, y + Math.sin(eyeAngle + 0.4) * tpEd, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+  } else if (eType === 'splitter') {
+    // ── SPLITTER: two-toned blob with split line ──
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    // Split line down the middle
+    ctx.strokeStyle = '#66aa66';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y - size);
+    ctx.lineTo(x, y + size);
+    ctx.stroke();
+    // Two pairs of eyes
+    const spEd = size * 0.35;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(x - spEd, y - spEd * 0.5, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + spEd, y - spEd * 0.5, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#224422';
+    ctx.beginPath();
+    ctx.arc(x - spEd, y - spEd * 0.5, 1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + spEd, y - spEd * 0.5, 1, 0, Math.PI * 2);
+    ctx.fill();
+
+  } else if (eType === 'splitling') {
+    // ── SPLITLING: tiny bouncing blob ──
+    const bounce = Math.abs(Math.sin(time * 10)) * 2;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y - bounce, size, 0, Math.PI * 2);
+    ctx.fill();
+    // Single eye
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(x + Math.cos(eyeAngle) * size * 0.2, y - bounce + Math.sin(eyeAngle) * size * 0.2, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+  } else if (eType === 'berserker') {
+    // ── BERSERKER: angular body that grows redder as HP drops ──
+    const hpRatio = (e.hp !== undefined && e.maxHp !== undefined) ? e.hp / e.maxHp : 1;
+    const rage = 1 - hpRatio;
+    const rageSize = size * (1 + rage * 0.3);
+    // Angular body (diamond-ish)
+    const r = rageSize;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x, y - r);
+    ctx.lineTo(x + r * 0.8, y);
+    ctx.lineTo(x, y + r * 0.7);
+    ctx.lineTo(x - r * 0.8, y);
+    ctx.closePath();
+    ctx.fill();
+    // Rage aura
+    if (rage > 0.3) {
+      const rageGlow = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 2);
+      rageGlow.addColorStop(0, `rgba(255,0,0,${rage * 0.3})`);
+      rageGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = rageGlow;
+      ctx.beginPath();
+      ctx.arc(x, y, r * 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Angry eyes
+    const bEd = r * 0.25;
+    ctx.fillStyle = `rgb(255,${Math.floor(200 * hpRatio)},0)`;
+    ctx.beginPath();
+    ctx.arc(x - bEd, y - bEd * 0.5, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + bEd, y - bEd * 0.5, 2, 0, Math.PI * 2);
+    ctx.fill();
+
   } else {
     // ── DEFAULT ENEMY: gradient circle with eyes ──
     const defG = ctx.createRadialGradient(x - size * 0.2, y - size * 0.2, size * 0.1, x, y, size);
@@ -1824,7 +1960,7 @@ export function drawEnemies(ctx: CanvasRenderingContext2D, state: GameState): vo
     const ea = target ? Math.atan2(target.y - e.y, target.x - e.x) : 0;
 
     // Type-specific body rendering
-    drawEnemyBody(ctx, e, et, ea, state.time);
+    drawEnemyBody(ctx, { x: e.x, y: e.y, type: e.type, hp: e.hp, maxHp: e.maxHp }, et, ea, state.time);
 
     // Health bar (only when damaged)
     if (e.hp < e.maxHp) {

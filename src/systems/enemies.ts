@@ -78,12 +78,29 @@ export function updateEnemies(state: GameState, dt: number): void {
       }
     }
 
+    // Teleport behavior
+    if (et.teleport) {
+      e._teleportTimer = (e._teleportTimer || 0) - dt;
+      if (e._teleportTimer <= 0) {
+        e._teleportTimer = 3 + Math.random() * 2; // 3-5 second cooldown
+        // Teleport to random position near target
+        const angle = Math.random() * Math.PI * 2;
+        const teleportDist = 60 + Math.random() * 40; // 60-100 units from target
+        e.x = clamp(target.x + Math.cos(angle) * teleportDist, et.size, ROOM_WIDTH - et.size);
+        e.y = clamp(target.y + Math.sin(angle) * teleportDist, et.size, ROOM_HEIGHT - et.size);
+        e.vx = 0;
+        e.vy = 0;
+        spawnParticles(state, e.x, e.y, '#aa33cc', 10, 0.4);
+      }
+    }
+
     const dx = target.x - e.x;
     const dy = target.y - e.y;
     const d = Math.max(1, Math.sqrt(dx * dx + dy * dy));
 
     // Movement AI
-    const spd = et.speed * spdMul * slow;
+    const enrageMul = et.enrage ? 1 + (1 - e.hp / e.maxHp) * 1.5 : 1;
+    const spd = et.speed * spdMul * slow * enrageMul;
     if (et.ai === EnemyAI.Chase) {
       if (d > et.atkR * 0.8) {
         e.vx = (dx / d) * spd;

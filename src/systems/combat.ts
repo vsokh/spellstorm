@@ -188,6 +188,57 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
       if (p.killResetCD) p.cd[0] = 0;
     }
 
+    // Explode on death — damage nearby players
+    if (et.explodeOnDeath) {
+      const explR = et.explodeOnDeath;
+      for (const pl of state.players) {
+        if (!pl.alive || pl.iframes > 0) continue;
+        if (dist(e.x, e.y, pl.x, pl.y) < explR + WIZARD_SIZE) {
+          damagePlayer(state, pl, 2);
+        }
+      }
+      spawnParticles(state, e.x, e.y, '#ff8833', 25, 0.8);
+      spawnShockwave(state, e.x, e.y, explR, '#ff6622');
+      shake(state, 4);
+    }
+
+    // Split on death — spawn 2 smaller copies
+    if (et.splitInto && ENEMIES[et.splitInto]) {
+      const hpScale = 1 + Math.floor(state.wave / 4);
+      const spdScale = 1 + state.wave * 0.02;
+      for (let i = 0; i < 2; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const splitDist = 20;
+        const splitEt = ENEMIES[et.splitInto];
+        const splitHp = splitEt.hp + hpScale - 1;
+        state.enemies.push({
+          type: et.splitInto,
+          x: e.x + Math.cos(angle) * splitDist,
+          y: e.y + Math.sin(angle) * splitDist,
+          vx: Math.cos(angle) * 50,
+          vy: Math.sin(angle) * 50,
+          hp: splitHp,
+          maxHp: splitHp,
+          alive: true,
+          atkTimer: splitEt.atkCd * Math.random() + 0.5,
+          target: Math.floor(Math.random() * 2),
+          iframes: 0.3,
+          slowTimer: 0,
+          stunTimer: 0,
+          _burnTimer: 0,
+          _burnTick: 0,
+          _burnOwner: 0,
+          _friendly: false,
+          _owner: 0,
+          _lifespan: 0,
+          _spdMul: spdScale,
+          _dmgMul: e._dmgMul || 1,
+          _teleportTimer: 0,
+        });
+      }
+      spawnText(state, e.x, e.y - 15, 'SPLIT!', '#66aa66');
+    }
+
     // Scale particles with combo
     const particleCount = 18 + Math.min(state.comboCount, 30);
     spawnParticles(state, e.x, e.y, et.color, particleCount, 1);

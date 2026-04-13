@@ -149,6 +149,10 @@ export interface EnemyDef {
   projCol?: string;
   phase?: boolean;
   boss?: boolean;
+  explodeOnDeath?: number;  // explosion radius on death (damages players)
+  teleport?: boolean;       // periodically teleports near target
+  splitInto?: string;       // spawns 2 of this enemy type on death
+  enrage?: boolean;         // speeds up as HP decreases
 }
 
 // ── Runtime entities ──
@@ -312,6 +316,9 @@ export interface Enemy {
   _spdMul: number;
   // Wave damage multiplier
   _dmgMul: number;
+
+  // Teleport ability timer
+  _teleportTimer: number;
 }
 
 export interface Spell {
