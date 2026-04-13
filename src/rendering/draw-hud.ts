@@ -48,8 +48,11 @@ export function updateHUD(state: GameState): void {
           <span class="xp-lv">Lv${p.level}</span>
           <div class="bar-o bar-xp"><div class="bar-i" style="width:${xpRatio}%;background:#bb77ff"></div></div>
         </div>
-      </div>${spH}`;
+      </div>`;
   }
+
+  const skillBar = document.getElementById('skill-bar');
+  if (skillBar) skillBar.innerHTML = spH;
 
   const hudRoom = document.getElementById('hud-room');
   if (hudRoom) {

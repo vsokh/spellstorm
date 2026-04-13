@@ -292,28 +292,35 @@ input[type=text]:focus {
 .bar-i { height: 100%; border-radius: 2px; transition: width 0.15s; }
 .xp-lv { font-size: 8px; color: #bb77ff; min-width: 22px; }
 .bar-xp { flex: 1; }
-.spell-icons { display: flex; gap: 3px; }
+#skill-bar {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  display: none;
+  z-index: 100;
+}
+.spell-icons { display: flex; gap: 6px; }
 .sp-icon {
-  width: 24px; height: 24px;
-  border: 1px solid rgba(80, 50, 130, 0.25);
-  border-radius: 3px;
+  width: 48px; height: 48px;
+  border: 2px solid rgba(80, 50, 130, 0.25);
+  border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 8px;
-  background: rgba(12, 8, 20, 0.8);
+  font-size: 14px;
+  background: rgba(12, 8, 20, 0.85);
   position: relative;
 }
 .sp-icon .cd-ov {
   position: absolute; bottom: 0; left: 0; right: 0;
   background: rgba(0, 0, 0, 0.55);
-  border-radius: 0 0 2px 2px;
+  border-radius: 0 0 5px 5px;
 }
 .sp-icon .cd-txt {
   position: absolute;
   z-index: 1;
-  font-size: 8px;
+  font-size: 13px;
   font-weight: 700;
   color: #ccbbee;
-  text-shadow: 0 0 3px rgba(0,0,0,0.9);
+  text-shadow: 0 0 4px rgba(0,0,0,0.9);
   pointer-events: none;
 }
 

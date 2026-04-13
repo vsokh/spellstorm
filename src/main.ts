@@ -71,9 +71,11 @@ function beginGame(c1: string, c2: string): void {
   const hud = document.getElementById('hud');
   const floorDisplay = document.getElementById('floor-display');
   const goldDisplay = document.getElementById('gold-display');
+  const skillBar = document.getElementById('skill-bar');
 
   if (selectScreen) selectScreen.style.display = 'none';
   if (hud) hud.style.display = 'flex';
+  if (skillBar) skillBar.style.display = 'flex';
   if (floorDisplay) floorDisplay.style.display = 'block';
   if (goldDisplay) goldDisplay.style.display = 'block';
   document.body.classList.add('in-game');
