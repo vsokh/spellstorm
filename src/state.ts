@@ -18,6 +18,7 @@ import {
   ClassDef,
   SpellDef,
   SpellDefInput,
+  NetFxEvent,
 } from './types';
 import {
   WIZARD_HP,
@@ -126,6 +127,9 @@ export interface GameState {
   // Lives system
   lives: number;
   maxLives: number;
+
+  // Network fx queue (host collects, sends to guest)
+  pendingFx: NetFxEvent[];
 }
 
 export function createInitialState(): GameState {
@@ -189,6 +193,7 @@ export function createInitialState(): GameState {
     synergyBannerTimer: 0,
     lives: 0,
     maxLives: 0,
+    pendingFx: [],
   };
 }
 
@@ -416,6 +421,10 @@ export function spawnParticles(
   state: GameState, x: number, y: number, col: string, n: number, scale: number = 1
 ): void {
   if (state.particles.length >= 150) return;
+  // Collect fx event for guest when hosting
+  if (state.mode === NetworkMode.Host) {
+    state.pendingFx.push({ t: 'p', x: ~~x, y: ~~y, c: col, n, s: scale });
+  }
   for (let i = 0; i < n; i++) {
     const a = Math.random() * Math.PI * 2;
     const s = (25 + Math.random() * 100) * scale;
@@ -433,12 +442,20 @@ export function spawnParticles(
 export function spawnText(
   state: GameState, x: number, y: number, text: string, color: string
 ): void {
+  // Collect fx event for guest when hosting
+  if (state.mode === NetworkMode.Host) {
+    state.pendingFx.push({ t: 't', x: ~~x, y: ~~y, c: color, tx: text });
+  }
   state.texts.push({ x, y, text, color, life: 1.5, vy: -35 });
 }
 
 export function spawnShockwave(
   state: GameState, x: number, y: number, maxR: number = 60, color: string = 'rgba(255,200,100,.4)'
 ): void {
+  // Collect fx event for guest when hosting
+  if (state.mode === NetworkMode.Host) {
+    state.pendingFx.push({ t: 'sw', x: ~~x, y: ~~y, c: color, mr: maxR });
+  }
   state.shockwaves.push({ x, y, radius: 0, maxR, life: 1, color });
 }
 

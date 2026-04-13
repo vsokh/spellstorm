@@ -66,6 +66,7 @@ export function createTestState(): GameState {
     synergyBannerTimer: 0,
     lives: 0,
     maxLives: 0,
+    pendingFx: [],
   };
 }
 

@@ -1,5 +1,5 @@
 import Peer, { DataConnection } from 'peerjs';
-import { GameState, shake } from './state';
+import { GameState, shake, spawnParticles, spawnText, spawnShockwave } from './state';
 import {
   GamePhase,
   NetworkMode,
@@ -7,6 +7,7 @@ import {
   NetStateMessage,
   NetInputMessage,
   PickupType,
+  Enemy,
 } from './types';
 import { UPGRADE_POOL, CLASSES } from './constants';
 import { initAudio } from './audio';
@@ -260,7 +261,11 @@ export function sendState(state: GameState): void {
     sk: state.shakeIntensity > 0 ? state.shakeIntensity : 0,
     lv: state.lives,
     mlv: state.maxLives,
+    fx: state.pendingFx.length > 0 ? state.pendingFx.slice() : undefined,
   };
+
+  // Clear the fx queue after copying into the message
+  state.pendingFx.length = 0;
 
   try { conn.send(msg); } catch (_e) { /* silently ignore */ }
 }
@@ -270,38 +275,99 @@ export function sendState(state: GameState): void {
 // ═══════════════════════════════════
 
 function applyState(state: GameState, msg: NetStateMessage): void {
-  // Players
+  // Players — set interpolation targets instead of snapping
   if (msg.p) {
     msg.p.forEach((pd, i) => {
       if (!state.players[i]) return;
-      state.players[i].x = pd.x;
-      state.players[i].y = pd.y;
-      state.players[i].angle = pd.a;
-      state.players[i].hp = pd.hp;
-      state.players[i].maxHp = pd.mhp;
-      state.players[i].mana = pd.mn;
-      state.players[i].maxMana = pd.mmn;
-      state.players[i].alive = pd.al;
-      state.players[i].iframes = pd.if ? 0.1 : 0;
-      for (let j = 0; j < 3; j++) state.players[i].cd[j] = pd.cd[j] || 0;
+      const p = state.players[i];
+      const isLocal = (i === state.localIdx);
+
+      if (isLocal) {
+        // Local player: blend toward authoritative position (client-side prediction correction)
+        // Store the host's authoritative position as target, keep current predicted pos as prev
+        p._prevX = p.x;
+        p._prevY = p.y;
+        p._targetX = pd.x;
+        p._targetY = pd.y;
+        p._lerpT = 0;
+      } else {
+        // Remote player: standard interpolation from current to new target
+        p._prevX = p.x;
+        p._prevY = p.y;
+        p._targetX = pd.x;
+        p._targetY = pd.y;
+        p._lerpT = 0;
+      }
+
+      p.angle = pd.a;
+      p.hp = pd.hp;
+      p.maxHp = pd.mhp;
+      p.mana = pd.mn;
+      p.maxMana = pd.mmn;
+      p.alive = pd.al;
+      p.iframes = pd.if ? 0.1 : 0;
+      for (let j = 0; j < 3; j++) p.cd[j] = pd.cd[j] || 0;
     });
   }
 
-  // Enemies - replace entirely
+  // Enemies — match existing enemies to preserve visual state, then interpolate
   if (msg.e) {
+    const oldEnemies = state.enemies.slice(); // snapshot of current enemies
     state.enemies.length = 0;
+
     for (const ed of msg.e) {
-      state.enemies.push({
-        type: ed.t, x: ed.x, y: ed.y, hp: ed.hp, maxHp: ed.mhp, alive: ed.al, target: ed.tgt,
-        vx: 0, vy: 0, atkTimer: 1, iframes: 0, slowTimer: 0, stunTimer: 0,
-        _burnTimer: 0, _burnTick: 0, _burnOwner: 0, _friendly: false, _owner: 0, _lifespan: 0,
-        _spdMul: 1, _dmgMul: 1, _teleportTimer: 0,
-        _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
-      });
+      // Try to find a matching old enemy: same type, closest distance within 50px
+      let bestMatch: Enemy | null = null;
+      let bestDist = 50; // max matching distance
+      let bestIdx = -1;
+      for (let j = 0; j < oldEnemies.length; j++) {
+        const old = oldEnemies[j];
+        if (old.type !== ed.t) continue;
+        const dx = old.x - ed.x;
+        const dy = old.y - ed.y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < bestDist) {
+          bestDist = d;
+          bestMatch = old;
+          bestIdx = j;
+        }
+      }
+      // Remove the matched enemy from candidates so it can't match again
+      if (bestIdx >= 0) oldEnemies.splice(bestIdx, 1);
+
+      if (bestMatch) {
+        // Reuse matched enemy: set interpolation targets, preserve visual timers
+        bestMatch._prevX = bestMatch.x;
+        bestMatch._prevY = bestMatch.y;
+        bestMatch._targetX = ed.x;
+        bestMatch._targetY = ed.y;
+        bestMatch._lerpT = 0;
+        bestMatch.hp = ed.hp;
+        bestMatch.maxHp = ed.mhp;
+        bestMatch.alive = ed.al;
+        bestMatch.target = ed.tgt;
+        // Visual timers (_hitFlash, _deathTimer, _atkAnim) are preserved from match
+        state.enemies.push(bestMatch);
+      } else {
+        // New enemy — no interpolation, snap to position
+        const newEnemy: Enemy = {
+          type: ed.t, x: ed.x, y: ed.y, hp: ed.hp, maxHp: ed.mhp, alive: ed.al, target: ed.tgt,
+          vx: 0, vy: 0, atkTimer: 1, iframes: 0, slowTimer: 0, stunTimer: 0,
+          _burnTimer: 0, _burnTick: 0, _burnOwner: 0, _friendly: false, _owner: 0, _lifespan: 0,
+          _spdMul: 1, _dmgMul: 1, _teleportTimer: 0,
+          _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
+        };
+        newEnemy._prevX = ed.x;
+        newEnemy._prevY = ed.y;
+        newEnemy._targetX = ed.x;
+        newEnemy._targetY = ed.y;
+        newEnemy._lerpT = 1;
+        state.enemies.push(newEnemy);
+      }
     }
   }
 
-  // Spells
+  // Spells — use velocity extrapolation between updates (snap position, keep vx/vy for local extrapolation)
   if (msg.sp) {
     state.spells.length = 0;
     for (const sd of msg.sp) {
@@ -384,6 +450,23 @@ function applyState(state: GameState, msg: NetStateMessage): void {
   if (msg.sk > 0) shake(state, msg.sk);
   if (msg.lv !== undefined) state.lives = msg.lv;
   if (msg.mlv !== undefined) state.maxLives = msg.mlv;
+
+  // Replay visual effects from host
+  if (msg.fx) {
+    for (const ev of msg.fx) {
+      switch (ev.t) {
+        case 'p':
+          spawnParticles(state, ev.x, ev.y, ev.c, ev.n || 5, ev.s || 1);
+          break;
+        case 't':
+          spawnText(state, ev.x, ev.y, ev.tx || '', ev.c);
+          break;
+        case 'sw':
+          spawnShockwave(state, ev.x, ev.y, ev.mr || 60, ev.c);
+          break;
+      }
+    }
+  }
 }
 
 // ═══════════════════════════════════

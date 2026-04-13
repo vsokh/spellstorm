@@ -4,6 +4,7 @@ import {
   createInitialState,
   createPlayer,
   clamp,
+  lerp,
 } from './state';
 import {
   GamePhase,
@@ -17,6 +18,8 @@ import {
   MAX_WAVES,
   WAVE_PHYSICS,
   DEFAULT_LIVES,
+  WIZARD_SIZE,
+  DEFAULT_MOVE_SPEED,
 } from './constants';
 import { sfx } from './audio';
 import { SfxName } from './types';
@@ -226,10 +229,70 @@ function loop(now: number): void {
     }
   }
 
-  // Guest: send input every frame
+  // Guest: send input, predict local movement, interpolate entities
   if (state.mode === NetworkMode.Guest) {
     const inp = getInput(state, state.localIdx);
     sendInput(state, inp);
+
+    // Client-side prediction: move local player immediately using same logic as host
+    const lp = state.players[state.localIdx];
+    if (lp && lp.alive && lp.stunTimer <= 0) {
+      const slow = lp.slowTimer > 0 ? WAVE_PHYSICS.SLOW_MOVE_MULT : 1;
+      const ms = (lp.moveSpeed || DEFAULT_MOVE_SPEED) * slow;
+      let mvx = (inp.mx || 0) * ms;
+      let mvy = (inp.my || 0) * ms;
+      const mvLen = Math.sqrt(mvx * mvx + mvy * mvy);
+      if (mvLen > ms) { mvx *= ms / mvLen; mvy *= ms / mvLen; }
+      lp.x += mvx * dt;
+      lp.y += mvy * dt;
+      lp.x = clamp(lp.x, WIZARD_SIZE, ROOM_WIDTH - WIZARD_SIZE);
+      lp.y = clamp(lp.y, WIZARD_SIZE, ROOM_HEIGHT - WIZARD_SIZE);
+      if (!isNaN(inp.angle)) lp.angle = inp.angle;
+      lp._animMoving = (Math.abs(mvx) > 1 || Math.abs(mvy) > 1);
+    }
+
+    // Interpolation speed: advance lerpT so we reach target in ~50ms (one net tick)
+    const lerpSpeed = 1 / NET_SEND_INTERVAL; // lerpT advances 0→1 over one tick interval
+
+    // Interpolate all players except local (local uses prediction above)
+    for (let i = 0; i < state.players.length; i++) {
+      if (i === state.localIdx) {
+        // Local player: gently correct toward host authoritative position
+        const p = state.players[i];
+        if (p._targetX !== undefined && p._targetY !== undefined) {
+          p._lerpT = Math.min(1, (p._lerpT || 0) + dt * lerpSpeed * 0.5);
+          // Blend predicted position toward authoritative with soft correction
+          p.x = lerp(p.x, p._targetX, 0.15);
+          p.y = lerp(p.y, p._targetY, 0.15);
+        }
+        continue;
+      }
+      const p = state.players[i];
+      if (p._targetX !== undefined && p._targetY !== undefined) {
+        p._lerpT = Math.min(1, (p._lerpT || 0) + dt * lerpSpeed);
+        p.x = lerp(p._prevX ?? p.x, p._targetX, p._lerpT);
+        p.y = lerp(p._prevY ?? p.y, p._targetY, p._lerpT);
+      }
+    }
+
+    // Interpolate enemies
+    for (const e of state.enemies) {
+      if (e._targetX !== undefined && e._targetY !== undefined) {
+        e._lerpT = Math.min(1, (e._lerpT || 0) + dt * lerpSpeed);
+        e.x = lerp(e._prevX ?? e.x, e._targetX, e._lerpT);
+        e.y = lerp(e._prevY ?? e.y, e._targetY, e._lerpT);
+      }
+      // Decay visual timers on guest (host no longer does this for guest)
+      if (e._hitFlash > 0) e._hitFlash -= dt;
+      if (e._deathTimer > 0) e._deathTimer -= dt;
+      if (e._atkAnim > 0) e._atkAnim -= dt;
+    }
+
+    // Extrapolate spell positions using velocity between network updates
+    for (const s of state.spells) {
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+    }
 
     // Guest: generate spell trails locally for visual parity
     for (const s of state.spells) {

@@ -305,6 +305,13 @@ export interface Player {
   _animDeathFade: number;     // 1.0 → 0.0 fade out on death (-1 when not dying)
   _animMoving: boolean;       // true when velocity is non-zero
   respawnTimer: number;
+
+  // Network interpolation (guest only)
+  _targetX?: number;
+  _targetY?: number;
+  _prevX?: number;
+  _prevY?: number;
+  _lerpT?: number;
 }
 
 export interface Enemy {
@@ -344,6 +351,13 @@ export interface Enemy {
   _hitFlash: number;    // timer for white flash on hit (starts at 0.12, counts down)
   _deathTimer: number;  // death animation timer (-1 = alive, 0.4 = just died, counts down to 0)
   _atkAnim: number;     // attack wind-up animation timer (starts at 0.2, counts down)
+
+  // Network interpolation (guest only)
+  _targetX?: number;
+  _targetY?: number;
+  _prevX?: number;
+  _prevY?: number;
+  _lerpT?: number;
 }
 
 export interface Spell {
@@ -642,6 +656,17 @@ export interface NetStatePillarData {
   r: number;
 }
 
+export interface NetFxEvent {
+  t: 'p' | 't' | 'sw';  // particle, text, shockwave
+  x: number;
+  y: number;
+  c: string;  // color
+  n?: number;  // count (particles)
+  s?: number;  // scale (particles)
+  tx?: string; // text content
+  mr?: number; // maxR (shockwave)
+}
+
 export interface NetStateMessage {
   type: 'state';
   p: NetStatePlayerData[];
@@ -663,6 +688,7 @@ export interface NetStateMessage {
   sk: number;
   lv: number;   // lives remaining
   mlv: number;  // max lives
+  fx?: NetFxEvent[];  // visual effect events for guest replay
 }
 
 export type NetMessage =
