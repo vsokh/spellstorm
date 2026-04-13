@@ -287,7 +287,7 @@ function loop(now: number): void {
         let iy = lerp(p._prevY ?? p.y, p._targetY, lerpParam);
         // Extrapolate past target using server velocity to reduce stutter between updates
         if (p._lerpT > 1 && (p._serverVx || p._serverVy)) {
-          const overTime = (p._lerpT - 1) * NET_SEND_INTERVAL;
+          const overTime = (p._lerpT - 1) * getAdaptiveInterval();
           ix += (p._serverVx || 0) * overTime;
           iy += (p._serverVy || 0) * overTime;
         }
