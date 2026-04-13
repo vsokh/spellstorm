@@ -71,7 +71,11 @@ function generateSpellDescription(spell: SpellDefInput): string {
       parts.push(`Emits a nova dealing ${spell.dmg || 0} dmg`);
       break;
     case 'zone':
-      parts.push(`Creates a zone dealing ${spell.dmg || 0} dmg/tick`);
+      if (spell.dmg) {
+        parts.push(`Creates a zone dealing ${spell.dmg} dmg/tick`);
+      } else {
+        parts.push('Creates an area of effect');
+      }
       break;
     case 'leap':
       parts.push(`Leaps and slams dealing ${spell.dmg || 0} dmg`);
@@ -80,10 +84,18 @@ function generateSpellDescription(spell: SpellDefInput): string {
       parts.push(`Fires ${spell.count || 0} projectiles in a spread dealing ${spell.dmg || 0} dmg`);
       break;
     case 'trap':
-      parts.push('Places a trap that triggers on enemies');
+      if (spell.dmg) {
+        parts.push(`Places a trap dealing ${spell.dmg} dmg`);
+      } else {
+        parts.push('Places a trap that triggers on enemies');
+      }
       break;
     case 'aoe_delayed':
       parts.push(`Summons a delayed area dealing ${spell.dmg || 0} dmg`);
+      break;
+    case 'ultimate':
+      // Summon-type spells (Spirit Wolf, Summon Imp) use ultimate type but have mana cost
+      parts.push('Summons a companion to fight for you');
       break;
     default: {
       const dmg = spell.dmg || 0;
