@@ -179,6 +179,15 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
         spawnText(state, p.x, p.y - 15, '+1 HP', '#44ff88');
       }
 
+      // Raise Dead: chance to convert killed enemy into friendly minion
+      if (p.raiseDead > 0 && !et.boss && !e._friendly && Math.random() < p.raiseDead) {
+        const minion = createFriendlyEnemy(e.x, e.y, p.idx);
+        minion._lifespan = 5;
+        state.enemies.push(minion);
+        spawnText(state, e.x, e.y - 20, 'RAISED!', '#55cc55');
+        spawnParticles(state, e.x, e.y, '#55cc55', 8);
+      }
+
       // Vampirism
       if (p.vampirism && p.killCount % (p.vampKillReq || 5) === 0) {
         p.hp = Math.min(p.maxHp, p.hp + 1);
