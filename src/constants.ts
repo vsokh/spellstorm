@@ -79,6 +79,12 @@ export const CD_FLOORS = [CD_FLOOR_PRIMARY, CD_FLOOR_SECONDARY, CD_FLOOR_Q, 0];
 /** Fixed run length — 20 waves with a finale boss */
 export const MAX_WAVES = 20;
 
+/** Number of normal (non-cursed) upgrade choices per wave tier */
+export function upgradeChoiceCount(wave: number): number {
+  if (wave >= 12) return 4;
+  return 3;
+}
+
 /** Health drop chance on enemy kill */
 export const HEALTH_DROP_CHANCE = 0.18;
 

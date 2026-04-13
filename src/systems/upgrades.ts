@@ -1,6 +1,6 @@
 import { GameState } from '../state';
 import { GamePhase, NetworkMode, SfxName } from '../types';
-import { UPGRADE_POOL } from '../constants';
+import { UPGRADE_POOL, upgradeChoiceCount } from '../constants';
 import { sfx } from '../audio';
 import { sendMessage } from '../network';
 
@@ -8,7 +8,7 @@ import { sendMessage } from '../network';
 //       UPGRADE SYSTEM
 // ═══════════════════════════════════
 
-/** Generate 3 upgrade indices filtered by class and already-taken upgrades. */
+/** Generate upgrade indices filtered by class and already-taken upgrades. */
 export function generateUpgradeIndices(clsKey: string, taken: Map<number, number>, wave?: number): number[] {
   // Filter: skip other classes, skip already-taken non-stackable, handle evolutions
   const genericIndices: number[] = [];
@@ -55,7 +55,8 @@ export function generateUpgradeIndices(clsKey: string, taken: Map<number, number
 
   // Fill remaining with mix of generic + class-specific
   const remaining = [...genericIndices, ...classIndices];
-  while (indices.length < 3 && remaining.length > 0) {
+  const numChoices = upgradeChoiceCount(wave || 1);
+  while (indices.length < numChoices && remaining.length > 0) {
     const pick = Math.floor(Math.random() * remaining.length);
     const idx = remaining.splice(pick, 1)[0];
     if (!indices.includes(idx)) indices.push(idx);
@@ -86,7 +87,7 @@ export function showUpgradeScreen(state: GameState): void {
   state.upgradePickedLocal = false;
   state.upgradePickedRemote = false;
 
-  // Pick 3 upgrades filtered by the local player's class and taken upgrades
+  // Pick upgrades filtered by the local player's class and taken upgrades
   const localPlayer = state.players[state.localIdx];
   const clsKey = localPlayer?.clsKey || '';
   const taken = localPlayer?.takenUpgrades || new Map<number, number>();
