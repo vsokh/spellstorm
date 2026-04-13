@@ -454,6 +454,8 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       const a2 = Math.atan2(e.y - p.y, e.x - p.x);
       if (Math.abs(wrapAngle(a2 - angle)) <= def.angle / 2) {
         damageEnemy(state, e, Math.round(def.dmg * echoDmgMul), p.idx);
+        if (def.slow) e.slowTimer = (e.slowTimer || 0) + def.slow;
+        if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
       }
     }
     sfx(SfxName.Fire);
@@ -554,6 +556,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       if (!e.alive) continue;
       if (dist(p.x, p.y, e.x, e.y) < def.aoeR + ENEMIES[e.type].size) {
         damageEnemy(state, e, def.dmg, p.idx);
+        if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
       }
     }
   } else if (def.type === SpellType.AllyShield) {

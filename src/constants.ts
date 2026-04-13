@@ -90,7 +90,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
     passive: { name: 'Frostbite', desc: 'Slowed enemies take +1 damage' },
     spells: [
       { name: 'Ice Shard', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 520, radius: 7, mana: 6, cd: 0.22, life: 1, slow: 0.6, color: '#88ddff', trail: '#44aadd' },
-      { name: 'Frost Nova', key: 'RMB', type: SpellType.Nova, dmg: 2, range: 95, mana: 22, cd: 3.5, slow: 1.5, color: '#44bbff' },
+      { name: 'Freeze Breath', key: 'RMB', type: SpellType.Cone, dmg: 2, range: 120, mana: 22, cd: 3.5, angle: 0.7, slow: 1.5, color: '#88ddff' },
       { name: 'Blizzard', key: 'Q', type: SpellType.Zone, dmg: 1, mana: 35, cd: 10, radius: 90, duration: 4, tickRate: 0.7, slow: 0.8, color: '#2288dd' },
       { name: 'Absolute Zero', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#2288dd', mana: 0, cd: 0 },
     ],
@@ -123,7 +123,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
     passive: { name: 'Soul Harvest', desc: 'Kills heal 1 HP' },
     spells: [
       { name: 'Soul Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 360, radius: 9, mana: 8, cd: 0.35, life: 1.2, color: '#55cc55', trail: '#228822', drain: 1 },
-      { name: 'Death Wave', key: 'RMB', type: SpellType.Nova, dmg: 2, range: 90, mana: 28, cd: 4, drain: 1, color: '#44aa44' },
+      { name: 'Death Coil', key: 'RMB', type: SpellType.Homing, dmg: 2, speed: 280, radius: 10, mana: 28, cd: 4, life: 2.5, homing: 3.5, drain: 2, color: '#44aa44', trail: '#228822' },
       { name: 'Plague', key: 'Q', type: SpellType.Zone, dmg: 1, mana: 40, cd: 10, radius: 80, duration: 4, tickRate: 0.8, slow: 0.3, color: '#338833' },
       { name: 'Army of Dead', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#228822', mana: 0, cd: 0 },
     ],
@@ -134,7 +134,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
     passive: { name: 'Haste Aura', desc: '+10% move speed for nearby ally' },
     spells: [
       { name: 'Time Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 480, radius: 8, mana: 6, cd: 0.25, life: 1, stun: 0.15, color: '#ffcc44', trail: '#cc9922' },
-      { name: 'Time Warp', key: 'RMB', type: SpellType.Nova, dmg: 1, range: 110, mana: 22, cd: 4, slow: 2.5, stun: 0.5, color: '#ffdd66' },
+      { name: 'Temporal Field', key: 'RMB', type: SpellType.Zone, dmg: 0, mana: 22, cd: 4, radius: 70, duration: 3.5, tickRate: 0.5, slow: 2.5, stun: 0.3, color: '#ffdd66' },
       { name: 'Rewind', key: 'Q', type: SpellType.Rewind, mana: 45, cd: 12, color: '#ffcc44' },
       { name: 'Time Stop', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#ffdd66', mana: 0, cd: 0 },
     ],
@@ -145,7 +145,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
     passive: { name: 'Bulwark', desc: 'Take 25% less damage' },
     spells: [
       { name: 'Shield Throw', key: 'LMB', type: SpellType.Projectile, dmg: 2, speed: 350, radius: 10, mana: 4, cd: 0.4, life: 0.8, color: '#ccddee', trail: '#8899aa', pierce: 1 },
-      { name: 'Shield Bash', key: 'RMB', type: SpellType.Nova, dmg: 3, range: 60, mana: 15, cd: 2, stun: 1.5, color: '#8899aa' },
+      { name: 'Shield Rush', key: 'RMB', type: SpellType.Leap, range: 100, mana: 15, cd: 2, dmg: 3, aoeR: 60, stun: 1.5, color: '#8899aa' },
       { name: 'Charge', key: 'Q', type: SpellType.Blink, range: 200, mana: 20, cd: 3.5, color: '#aabbcc' },
       { name: 'Shield Wall', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#ccddee', mana: 0, cd: 0 },
     ],
