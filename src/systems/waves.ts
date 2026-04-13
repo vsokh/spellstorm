@@ -47,6 +47,7 @@ export function updateSpells(state: GameState, dt: number): void {
       s.zapTimer -= dt;
       if (s.zapTimer <= 0) {
         s.zapTimer = s.zapRate;
+        let firstTarget: typeof state.enemies[0] | null = null;
         for (const e of state.enemies) {
           if (!e.alive) continue;
           if (dist(s.x, s.y, e.x, e.y) < s.zap) {
@@ -57,7 +58,37 @@ export function updateSpells(state: GameState, dt: number): void {
               width: 2, color: '#bb88ff', life: 0.1,
             });
             damageEnemy(state, e, s.dmg, s.owner);
+            firstTarget = e;
             break;
+          }
+        }
+        // Chain lightning: bounce to additional enemies
+        const chainCount = state.players[s.owner]?.chainLightning ?? 0;
+        if (firstTarget && chainCount > 0) {
+          const zapped = new Set([firstTarget]);
+          let prev = firstTarget;
+          const chainRange = 120;
+          for (let i = 0; i < chainCount; i++) {
+            let nearest: typeof state.enemies[0] | null = null;
+            let nearestDist = Infinity;
+            for (const e of state.enemies) {
+              if (!e.alive || zapped.has(e)) continue;
+              const d = dist(prev.x, prev.y, e.x, e.y);
+              if (d < chainRange && d < nearestDist) {
+                nearest = e;
+                nearestDist = d;
+              }
+            }
+            if (!nearest) break;
+            state.beams.push({
+              x: prev.x, y: prev.y,
+              angle: Math.atan2(nearest.y - prev.y, nearest.x - prev.x),
+              range: nearestDist,
+              width: 2, color: '#bb88ff', life: 0.1,
+            });
+            damageEnemy(state, nearest, s.dmg, s.owner);
+            zapped.add(nearest);
+            prev = nearest;
           }
         }
       }
