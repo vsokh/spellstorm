@@ -268,20 +268,20 @@ export function sendState(state: GameState): void {
       t: e.type, x: ~~e.x, y: ~~e.y, hp: e.hp, mhp: e.maxHp, al: e.alive, tgt: e.target,
     })),
     sp: state.spells.map(s => ({
-      x: ~~s.x, y: ~~s.y, vx: ~~s.vx, vy: ~~s.vy, r: s.radius, c: s.color, o: s.owner,
+      x: ~~s.x, y: ~~s.y, vx: ~~s.vx, vy: ~~s.vy, r: ~~s.radius, c: s.color, o: s.owner,
       k: s.clsKey, t: s.type, tr: s.trail,
       ex: s.explode, sl: s.slow, ho: s.homing, z: s.zap,
       dr: s.drain, bn: s.burn, st: s.stun,
       l: Math.round(s.life * 100) / 100, ag: Math.round(s.age * 100) / 100,
     })),
     ep: state.eProj.map(p => ({
-      x: ~~p.x, y: ~~p.y, r: p.radius, c: p.color,
+      x: ~~p.x, y: ~~p.y, r: ~~p.radius, c: p.color,
     })),
     zn: state.zones.map(z => ({
-      x: ~~z.x, y: ~~z.y, r: z.radius, c: z.color, age: z.age, dur: z.duration,
+      x: ~~z.x, y: ~~z.y, r: ~~z.radius, c: z.color, age: Math.round(z.age * 10) / 10, dur: Math.round(z.duration * 10) / 10,
     })),
     aoe: state.aoeMarkers.map(m => ({
-      x: ~~m.x, y: ~~m.y, r: m.radius, c: m.color, age: m.age, del: m.delay,
+      x: ~~m.x, y: ~~m.y, r: ~~m.radius, c: m.color, age: Math.round(m.age * 10) / 10, del: Math.round(m.delay * 10) / 10,
     })),
     pk: state.pickups.filter(p => !p.collected).map(p => ({
       x: ~~p.x, y: ~~p.y, t: p.type,
@@ -295,9 +295,9 @@ export function sendState(state: GameState): void {
     g: state.gold,
     tk: state.totalKills,
     gp: state.gamePhase,
-    ct: state.countdownTimer,
-    sc: state.screenFlash > 0 ? state.screenFlash : 0,
-    sk: state.shakeIntensity > 0 ? state.shakeIntensity : 0,
+    ct: Math.round(state.countdownTimer * 10) / 10,
+    sc: state.screenFlash > 0 ? Math.round(state.screenFlash * 10) / 10 : 0,
+    sk: state.shakeIntensity > 0 ? Math.round(state.shakeIntensity * 10) / 10 : 0,
     lv: state.lives,
     mlv: state.maxLives,
     fx: state.pendingFx.length > 0 ? state.pendingFx.slice() : undefined,
@@ -560,7 +560,17 @@ export function sendInput(state: GameState, input: {
   lastSendTime = now;
 
   try {
-    conn.send({ type: 'input', ...input });
+    conn.send({
+      type: 'input',
+      angle: Math.round(input.angle * 100) / 100,
+      mx: ~~input.mx,
+      my: ~~input.my,
+      shoot: input.shoot,
+      shoot2: input.shoot2,
+      ability: input.ability,
+      ult: input.ult,
+      dash: input.dash,
+    });
     sendFailCount = 0;
   } catch (e) {
     console.warn('sendInput failed:', e);
