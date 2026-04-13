@@ -131,9 +131,15 @@ export function updatePlayers(state: GameState, dt: number): void {
     if (!input.ability) state.keys[`_q${p.idx}`] = false;
 
     // Ultimate (R) - needs full charge
-    if (input.ult && p.ultCharge >= 100 && !state.keys[`_r${p.idx}`]) {
+    const ultThreshold = p.ultOverflow ? 200 : 100;
+    if (input.ult && p.ultCharge >= ultThreshold && !state.keys[`_r${p.idx}`]) {
       state.keys[`_r${p.idx}`] = true;
+      const wasOverflowed = p.ultOverflow && p.ultCharge >= 200;
       castUltimate(state, p, input.angle);
+      if (wasOverflowed) {
+        // Overflow: cast a second time
+        castUltimate(state, p, input.angle);
+      }
     }
     if (!input.ult) state.keys[`_r${p.idx}`] = false;
 
