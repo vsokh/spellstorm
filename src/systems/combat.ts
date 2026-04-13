@@ -29,7 +29,6 @@ import {
   GAME_OVER_DELAY_MS,
   RESPAWN_DELAY_MS,
   HEALTH_DROP_CHANCE,
-  XP_GEM_COUNT,
 } from '../constants';
 import { sfx } from '../audio';
 import { createFriendlyEnemy } from './dungeon';
@@ -133,14 +132,14 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
     // ── Spawn XP gems ──
     const isBoss = !!et.boss;
     if (isBoss) {
-      // Boss: single large gem worth 3x
+      // Boss: single large gem worth 2x
       state.pickups.push({
         x: e.x, y: e.y, type: PickupType.Xp, collected: false,
-        value: et.xp * 3, _owner: 0, _dmg: 0, _radius: 0, _slow: 0, _color: '',
+        value: et.xp * 2, _owner: 0, _dmg: 0, _radius: 0, _slow: 0, _color: '',
       });
     } else {
       const gemCount = 3 + Math.floor(Math.random() * 4); // 3-6 gems
-      const xpPerGem = Math.max(1, Math.ceil(et.xp / gemCount * XP_GEM_COUNT));
+      const xpPerGem = Math.max(1, Math.ceil(et.xp / gemCount));
       for (let i = 0; i < gemCount; i++) {
         state.pickups.push({
           x: e.x + rand(-15, 15), y: e.y + rand(-15, 15),

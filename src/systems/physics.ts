@@ -274,10 +274,10 @@ export function updatePlayers(state: GameState, dt: number): void {
           const xpGain = Math.ceil(pk.value * (1 + p.xpBoost));
           p.xp += xpGain;
           spawnText(state, pk.x, pk.y - 10, '+' + xpGain + ' XP', '#88ccff');
-          if (p.xp >= p.xpToNext) {
-            p.xp = 0;
+          while (p.xp >= p.xpToNext) {
+            p.xp -= p.xpToNext;
             p.level++;
-            p.xpToNext = p.xpToNext + getXpStep(p.level);
+            p.xpToNext += getXpStep(p.level);
             if (onChestPickup) onChestPickup(state);
           }
         }
