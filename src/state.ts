@@ -249,9 +249,10 @@ function normalizeSpellDef(input: SpellDefInput): SpellDef {
 
 /** Create a fresh Player from a class key */
 export function createPlayer(idx: number, clsKey: string): Player {
+  const cls = cloneClassDef(clsKey);
   return {
     idx,
-    cls: cloneClassDef(clsKey),
+    cls,
     clsKey,
     x: ROOM_WIDTH / 2 + (idx === 0 ? -30 : 30),
     y: ROOM_HEIGHT * 0.6,
@@ -365,6 +366,7 @@ export function createPlayer(idx: number, clsKey: string): Player {
     frozenTouch: false,
     seekerMines: false,
     burstFire: false,
+    _baseSpellDmg: cls.spells.map(s => s.dmg),
     _hyperAcc: {},
     _snapTimer: 0,
     _rewindSnap: null,

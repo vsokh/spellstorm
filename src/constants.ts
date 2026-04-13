@@ -170,6 +170,8 @@ export const COMBAT = {
   BOSS_DMG_REDUCTION_DURATION: 3,     // 3 seconds
   BOSS_DMG_REDUCTION_HP_THRESHOLD: 0.5, // triggers at 50% HP
   BOSS_DMG_REDUCTION_MIN_WAVE: 15,    // only wave 15+ bosses
+  BONUS_DMG_SOFT_CAP_THRESHOLD: 6,
+  BONUS_DMG_SOFT_CAP_KNEE: 6,
 } as const;
 
 export const TIMING = {
@@ -500,6 +502,16 @@ function hyperStack(p: Player, key: string, base: number): number {
 export function flatScaling(baseValue: number, stacks: number): number {
   if (stacks <= 3) return baseValue;
   return baseValue * Math.log(4) / Math.log(stacks + 1);
+}
+
+/** Hyperbolic soft cap for total flat bonus damage.
+ *  First THRESHOLD points uncapped; beyond that, diminishing returns.
+ *  Example: +15 raw → ~9.7 effective, +30 raw → ~14.2 effective. */
+export function softCapBonusDmg(rawBonus: number): number {
+  if (rawBonus <= COMBAT.BONUS_DMG_SOFT_CAP_THRESHOLD) return rawBonus;
+  const excess = rawBonus - COMBAT.BONUS_DMG_SOFT_CAP_THRESHOLD;
+  const knee = COMBAT.BONUS_DMG_SOFT_CAP_KNEE;
+  return COMBAT.BONUS_DMG_SOFT_CAP_THRESHOLD + excess * (1 - 1 / (1 + excess / knee));
 }
 
 export const UPGRADE_POOL: UpgradeDef[] = [
