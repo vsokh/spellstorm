@@ -179,7 +179,7 @@ export interface Player {
   xp: number;
   xpToNext: number;
   level: number;
-  takenUpgrades: Set<number>;
+  takenUpgrades: Map<number, number>;
 
   // Upgrade-applied properties
   vampirism: number;
@@ -464,6 +464,8 @@ export interface UpgradeDef {
   color?: string;
   /** If true, can be picked multiple times (stacks) */
   stackable?: boolean;
+  /** Maximum number of times this upgrade can be stacked (only relevant if stackable) */
+  maxStacks?: number;
 }
 
 // ── Network message types ──

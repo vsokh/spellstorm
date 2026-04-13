@@ -18,7 +18,7 @@ export function showUpgradeScreen(state: GameState): void {
   // Pick 3 upgrades: filter already-taken, guarantee 1 class-specific
   const localPlayer = state.players[state.localIdx];
   const clsKey = localPlayer?.clsKey || '';
-  const taken = localPlayer?.takenUpgrades || new Set<number>();
+  const taken = localPlayer?.takenUpgrades || new Map<number, number>();
 
   // Filter: skip other classes, skip already-taken non-stackable
   const genericIndices: number[] = [];
@@ -27,6 +27,8 @@ export function showUpgradeScreen(state: GameState): void {
     const up = UPGRADE_POOL[i];
     // Skip if already taken and not stackable
     if (taken.has(i) && !up.stackable) continue;
+    // Skip if stackable but at max stacks
+    if (up.stackable && up.maxStacks && (taken.get(i) || 0) >= up.maxStacks) continue;
     // Skip if for another class
     if (up.forClass && up.forClass !== clsKey) continue;
 
@@ -69,7 +71,7 @@ export function showUpgradeFromHost(state: GameState, indices: number[]): void {
 }
 
 function showUpgradeUI(state: GameState, indices: number[]): void {
-  const taken = state.players[state.localIdx]?.takenUpgrades || new Set<number>();
+  const taken = state.players[state.localIdx]?.takenUpgrades || new Map<number, number>();
   const screen = document.getElementById('upgrade-screen');
   const grid = document.getElementById('upgrade-grid');
   if (!screen || !grid) return;
@@ -83,8 +85,9 @@ function showUpgradeUI(state: GameState, indices: number[]): void {
     const isClassSpecific = !!up.forClass;
     const nameColor = up.color || (isClassSpecific ? '#ffcc44' : '#ddcc66');
     const classTag = isClassSpecific ? `<span style="font-size:8px;color:${up.color || '#888'};opacity:.7"> ★ CLASS</span>` : '';
-    const stackCount = taken.has(idx) ? ` <span style="font-size:9px;color:#88aa66">+${Array.from(taken).filter(t => t === idx).length + 1}</span>` : '';
-    const stackTag = up.stackable ? `<span style="font-size:8px;color:#556644;opacity:.6"> ∞</span>` : '';
+    const count = taken.get(idx) || 0;
+    const stackCount = count > 0 ? ` <span style="font-size:9px;color:#88aa66">${count}/${up.maxStacks || '∞'}</span>` : '';
+    const stackTag = up.stackable ? `<span style="font-size:8px;color:#556644;opacity:.6"> ×${up.maxStacks || '∞'}</span>` : '';
     card.innerHTML = `<div class="uname" style="color:${nameColor}">${up.name}${classTag}${stackTag}${stackCount}</div><div class="udesc">${up.desc}</div>`;
     if (isClassSpecific) card.style.borderColor = (up.color || '#ffcc44') + '44';
     card.onclick = () => {
@@ -92,7 +95,7 @@ function showUpgradeUI(state: GameState, indices: number[]): void {
       state.upgradePickedLocal = true;
       // Apply to local player only
       const myPlayer = state.players[state.localIdx];
-      if (myPlayer) { up.apply(myPlayer); myPlayer.takenUpgrades.add(idx); }
+      if (myPlayer) { up.apply(myPlayer); myPlayer.takenUpgrades.set(idx, (myPlayer.takenUpgrades.get(idx) || 0) + 1); }
       sfx(SfxName.Pickup);
       card.style.borderColor = '#44cc44';
 

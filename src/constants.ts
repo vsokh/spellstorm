@@ -275,19 +275,19 @@ export const ENEMIES: Record<string, EnemyDef> = {
 
 export const UPGRADE_POOL: UpgradeDef[] = [
   // -- DAMAGE --
-  { name: 'Spell Power', desc: 'All spells deal +1 damage', stackable: true, apply: (p: Player) => { for (const s of p.cls.spells) s.dmg = (s.dmg || 0) + 1; } },
-  { name: 'Primary Boost', desc: 'Primary spell +2 damage', stackable: true, apply: (p: Player) => { p.cls.spells[0].dmg += 2; } },
+  { name: 'Spell Power', desc: 'All spells deal +1 damage', stackable: true, maxStacks: 5, apply: (p: Player) => { for (const s of p.cls.spells) s.dmg = (s.dmg || 0) + 1; } },
+  { name: 'Primary Boost', desc: 'Primary spell +2 damage', stackable: true, maxStacks: 4, apply: (p: Player) => { p.cls.spells[0].dmg += 2; } },
   { name: 'Ultimate Power', desc: 'Ultimate spell +3 damage', apply: (p: Player) => { if (p.cls.spells[2].dmg) p.cls.spells[2].dmg += 3; } },
   { name: 'Glass Cannon', desc: '+3 spell damage, -2 max HP', apply: (p: Player) => { for (const s of p.cls.spells) s.dmg = (s.dmg || 0) + 3; p.maxHp = Math.max(1, p.maxHp - 2); p.hp = Math.min(p.hp, p.maxHp); } },
-  { name: 'Critical Strike', desc: '15% chance to deal 2x damage', stackable: true, apply: (p: Player) => { p.critChance = (p.critChance || 0) + 0.15; } },
+  { name: 'Critical Strike', desc: '15% chance to deal 2x damage', stackable: true, maxStacks: 3, apply: (p: Player) => { p.critChance = (p.critChance || 0) + 0.15; } },
   { name: 'Overkill', desc: 'Excess kill damage chains to nearby enemy', apply: (p: Player) => { p.overkill = true; } },
 
   // -- PROJECTILE MODIFIERS --
-  { name: 'Piercing', desc: 'Primary passes through +1 enemy', stackable: true, apply: (p: Player) => { p.pierce = (p.pierce || 0) + 1; } },
+  { name: 'Piercing', desc: 'Primary passes through +1 enemy', stackable: true, maxStacks: 4, apply: (p: Player) => { p.pierce = (p.pierce || 0) + 1; } },
   { name: 'Split Shot', desc: 'Primary fires 2 extra bolts at +/-15 deg', apply: (p: Player) => { p.splitShot = (p.splitShot || 0) + 2; } },
   { name: 'Ricochet', desc: 'Projectiles bounce off walls once', apply: (p: Player) => { p.ricochet = (p.ricochet || 0) + 1; } },
   { name: 'Velocity', desc: 'Projectile speed +40%', apply: (p: Player) => { for (const s of p.cls.spells) if (s.speed) s.speed *= 1.4; } },
-  { name: 'Chain Hit', desc: 'Hits jump to 1 nearby enemy for 50% dmg', stackable: true, apply: (p: Player) => { p.chainHit = (p.chainHit || 0) + 1; } },
+  { name: 'Chain Hit', desc: 'Hits jump to 1 nearby enemy for 50% dmg', stackable: true, maxStacks: 3, apply: (p: Player) => { p.chainHit = (p.chainHit || 0) + 1; } },
   { name: 'Homing Bolts', desc: 'Primary slightly tracks enemies', apply: (p: Player) => { const s = p.cls.spells[0]; s.homing = (s.homing || 0) + 1.5; } },
   { name: 'Big Spells', desc: 'Projectile size +30%', apply: (p: Player) => { for (const s of p.cls.spells) if (s.radius) s.radius *= 1.3; } },
   { name: 'Blast Radius', desc: 'Explosions +50% area', apply: (p: Player) => { for (const s of p.cls.spells) { if (s.explode) s.explode *= 1.5; if (s.radius && s.type === SpellType.AoeDelayed) s.radius *= 1.5; } } },
@@ -306,13 +306,13 @@ export const UPGRADE_POOL: UpgradeDef[] = [
   { name: 'Spell Thief', desc: 'Hits restore 2 mana', apply: (p: Player) => { p.manaOnHit = (p.manaOnHit || 0) + 2; } },
 
   // -- SURVIVABILITY --
-  { name: 'Vitality', desc: 'Max HP +2, heal to full', stackable: true, apply: (p: Player) => { p.maxHp += 2; p.hp = p.maxHp; } },
-  { name: 'Armor', desc: 'Take -1 damage (min 1)', stackable: true, apply: (p: Player) => { p.armor = (p.armor || 0) + 1; } },
+  { name: 'Vitality', desc: 'Max HP +2, heal to full', stackable: true, maxStacks: 5, apply: (p: Player) => { p.maxHp += 2; p.hp = p.maxHp; } },
+  { name: 'Armor', desc: 'Take -1 damage (min 1)', stackable: true, maxStacks: 4, apply: (p: Player) => { p.armor = (p.armor || 0) + 1; } },
   { name: 'Vampirism', desc: 'Heal 1 HP per 4 kills', apply: (p: Player) => { p.vampirism = (p.vampirism || 0) + 1; p.vampKillReq = 4; } },
   { name: 'Life Steal', desc: '5% of damage dealt heals you', apply: (p: Player) => { p.lifeSteal = (p.lifeSteal || 0) + 0.05; } },
   { name: 'Second Wind', desc: 'Revive once per floor with 50% HP', apply: (p: Player) => { p.secondWind = (p.secondWind || 0) + 1; } },
   { name: 'Thorns', desc: 'Enemies take 1 damage when they hit you', apply: (p: Player) => { p.thorns = (p.thorns || 0) + 1; } },
-  { name: 'Dodge', desc: '15% chance to avoid damage entirely', stackable: true, apply: (p: Player) => { p.dodgeChance = (p.dodgeChance || 0) + 0.15; } },
+  { name: 'Dodge', desc: '15% chance to avoid damage entirely', stackable: true, maxStacks: 3, apply: (p: Player) => { p.dodgeChance = (p.dodgeChance || 0) + 0.15; } },
 
   // -- MOBILITY --
   { name: 'Quick Step', desc: 'Move speed +25%', apply: (p: Player) => { p.moveSpeed *= 1.25; } },
@@ -374,7 +374,7 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p: Player) => { p.armor = (p.armor || 0) + 3; p.iceArmor = true; } },
 
   // ── Stormcaller ──
-  { name: 'Chain Lightning', desc: 'Lightning beam bounces to 2 more enemies', forClass: 'stormcaller', color: '#bb66ff', stackable: true,
+  { name: 'Chain Lightning', desc: 'Lightning beam bounces to 2 more enemies', forClass: 'stormcaller', color: '#bb66ff', stackable: true, maxStacks: 3,
     apply: (p: Player) => { p.chainLightning = (p.chainLightning || 0) + 2; } },
   { name: 'Overcharge', desc: 'Every 3rd spell deals 3x damage', forClass: 'stormcaller', color: '#bb66ff',
     apply: (p: Player) => { p.overcharge = true; } },
@@ -390,7 +390,7 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p: Player) => { p.spellMirror = (p.spellMirror || 0) + 0.3; } },
 
   // ── Necromancer ──
-  { name: 'Raise Dead', desc: 'Killed enemies have 25% chance to fight for you (5s)', forClass: 'necromancer', color: '#55cc55', stackable: true,
+  { name: 'Raise Dead', desc: 'Killed enemies have 25% chance to fight for you (5s)', forClass: 'necromancer', color: '#55cc55', stackable: true, maxStacks: 3,
     apply: (p: Player) => { p.raiseDead = (p.raiseDead || 0) + 0.25; } },
   { name: 'Death Mark', desc: 'Enemies below 20% HP take 3x damage', forClass: 'necromancer', color: '#55cc55',
     apply: (p: Player) => { p.deathMark = true; } },

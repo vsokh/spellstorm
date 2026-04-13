@@ -246,7 +246,7 @@ export function createPlayer(idx: number, clsKey: string): Player {
     xp: 0,
     xpToNext: 20,
     level: 0,
-    takenUpgrades: new Set<number>(),
+    takenUpgrades: new Map<number, number>(),
     vampirism: 0,
     vampKillReq: 5,
     pierce: 0,
