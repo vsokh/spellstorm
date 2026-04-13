@@ -35,6 +35,7 @@ export function updateHUD(state: GameState): void {
   const hpRatio = p.hp / p.maxHp;
   const hpColor = hpRatio > 0.5 ? '#33cc55' : '#cc3333';
   const ultColor = p.ultCharge >= 100 ? '#ffcc44' : '#886633';
+  const xpRatio = p.xpToNext > 0 ? (p.xp / p.xpToNext) * 100 : 0;
 
   const hudP1 = document.getElementById('hud-p1');
   if (hudP1) {
@@ -43,6 +44,10 @@ export function updateHUD(state: GameState): void {
         <div class="bar-o"><div class="bar-i" style="width:${hpRatio * 100}%;background:${hpColor}"></div></div>
         <div class="bar-o" style="margin-top:2px"><div class="bar-i" style="width:${(p.mana / p.maxMana) * 100}%;background:#4488ff"></div></div>
         <div class="bar-o" style="margin-top:1px"><div class="bar-i" style="width:${p.ultCharge}%;background:${ultColor}"></div></div>
+        <div style="margin-top:3px;display:flex;align-items:center;gap:4px">
+          <span class="xp-lv">Lv${p.level}</span>
+          <div class="bar-o bar-xp"><div class="bar-i" style="width:${xpRatio}%;background:#bb77ff"></div></div>
+        </div>
       </div>${spH}`;
   }
 
