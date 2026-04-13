@@ -22,6 +22,8 @@ import {
   WIZARD_SIZE,
   UPGRADE_POOL,
   HEALTH_DROP_CHANCE,
+  BOSS_HP_EXPONENT,
+  BOSS_HP_EXPONENT_DIVISOR,
 } from '../src/constants';
 import {
   SpellType,
@@ -254,7 +256,7 @@ function generateWave(state: SimState): void {
   if (isBoss) {
     const bossType = wave % 10 === 0 ? 'demon' : 'golem';
     const et = ENEMIES[bossType];
-    const bossHp = et.hp + wave * 4;
+    const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR));
     state.enemies.push({
       type: bossType,
       x: ROOM_WIDTH / 2, y: 60,

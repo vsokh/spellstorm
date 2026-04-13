@@ -14,6 +14,8 @@ import {
   PILLAR_SPAWN_TRIES,
   waveClearGold,
   DUNGEON_TIMING,
+  BOSS_HP_EXPONENT,
+  BOSS_HP_EXPONENT_DIVISOR,
 } from '../constants';
 
 import { sfx } from '../audio';
@@ -123,7 +125,7 @@ export function startWave(state: GameState): void {
   // FINALE — The Archlord (wave 20)
   if (wave === MAX_WAVES) {
     const et = ENEMIES['archlord'];
-    const bossHp = Math.ceil((et.hp + wave * 5) * timeMul); // 160+ HP with time scaling
+    const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR) * timeMul);
     state.enemies.push({
       type: 'archlord',
       x: ROOM_WIDTH / 2,
@@ -164,7 +166,7 @@ export function startWave(state: GameState): void {
     // Boss wave
     const bossType = wave % 10 === 0 ? 'demon' : 'golem';
     const et = ENEMIES[bossType];
-    const bossHp = Math.ceil((et.hp + wave * 4) * timeMul);
+    const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR) * timeMul);
     state.enemies.push({
       type: bossType,
       x: ROOM_WIDTH / 2,

@@ -440,6 +440,9 @@ export const CLASS_ORDER: string[] = [
   'druid', 'warlock', 'monk', 'engineer',
 ];
 
+export const BOSS_HP_EXPONENT = 1.4;
+export const BOSS_HP_EXPONENT_DIVISOR = 5;
+
 // ═══════════════════════════════════
 //        ENEMY TYPES
 // ═══════════════════════════════════
