@@ -1,4 +1,4 @@
-import { GameState, dist, clamp, spawnParticles, spawnText } from '../state';
+import { GameState, dist, clamp, spawnParticles, spawnText, shake } from '../state';
 import { getInput } from '../input';
 import {
   WIZARD_SIZE,
@@ -13,8 +13,9 @@ import {
   RANGES,
   WAVE_PHYSICS,
   DUNGEON_TIMING,
+  GAME_OVER_DELAY_MS,
 } from '../constants';
-import { Enemy, PickupType, SfxName } from '../types';
+import { Enemy, GamePhase, PickupType, SfxName } from '../types';
 import { sfx } from '../audio';
 import { castSpell, castSpellSilent, castUltimate, damageEnemy } from './combat';
 
@@ -30,7 +31,44 @@ export function setChestPickupHandler(handler: (state: GameState) => void): void
 
 export function updatePlayers(state: GameState, dt: number): void {
   for (const p of state.players) {
-    if (!p.alive) continue;
+    if (!p.alive) {
+      if (p.respawnTimer > 0) {
+        p.respawnTimer -= dt;
+        if (p.respawnTimer <= 0 && state.lives > 0) {
+          // Respawn this player
+          state.lives--;
+          p.alive = true;
+          p.hp = Math.floor(p.maxHp * 0.5);
+          p.mana = p.maxMana * 0.5;
+          p.iframes = 2.0;
+          p.respawnTimer = 0;
+          p._animDeathFade = -1;
+          p.x = ROOM_WIDTH / 2 + (p.idx === 0 ? -30 : 30);
+          p.y = ROOM_HEIGHT * 0.6;
+          p.vx = 0;
+          p.vy = 0;
+          p.stunTimer = 0;
+          p.slowTimer = 0;
+        } else if (p.respawnTimer <= 0 && state.lives <= 0) {
+          // No lives left -- check if all players dead for game over
+          const allDead = state.players.every(pl => !pl.alive);
+          if (allDead) {
+            state.gamePhase = GamePhase.GameOver;
+            document.exitPointerLock();
+            document.body.classList.remove('in-game');
+            setTimeout(() => {
+              const statsEl = document.getElementById('go-stats');
+              if (statsEl) {
+                statsEl.innerHTML = `Wave Reached: ${state.wave} / 20<br>Kills: ${state.totalKills}<br>Gold: ${state.gold}`;
+              }
+              const goEl = document.getElementById('gameover');
+              if (goEl) goEl.style.display = 'flex';
+            }, GAME_OVER_DELAY_MS);
+          }
+        }
+      }
+      continue;
+    }
     const input = getInput(state, p.idx);
     if (p.stunTimer > 0) { p.stunTimer -= dt; continue; }
     const slow = p.slowTimer > 0 ? WAVE_PHYSICS.SLOW_MOVE_MULT : 1;

@@ -123,7 +123,7 @@ export interface GameState {
   activeSynergy: { name: string; desc: string; color: string } | null;
   synergyBannerTimer: number;
 
-  // Lives system (single-player)
+  // Lives system
   lives: number;
   maxLives: number;
 }
@@ -375,6 +375,7 @@ export function createPlayer(idx: number, clsKey: string): Player {
     _animHitFlash: 0,
     _animDeathFade: -1,
     _animMoving: false,
+    respawnTimer: 0,
   };
 }
 

@@ -114,15 +114,9 @@ function beginGame(c1: string, c2: string): void {
   state.shopShieldHits = 0;
   state.activeSynergy = null;
   state.synergyBannerTimer = 0;
-
-  // Initialize lives for single-player
-  if (state.mode === NetworkMode.Local) {
-    state.lives = DEFAULT_LIVES;
-    state.maxLives = DEFAULT_LIVES;
-  } else {
-    state.lives = 0;
-    state.maxLives = 0;
-  }
+  // Initialize lives (shared pool for both single-player and co-op)
+  state.lives = DEFAULT_LIVES;
+  state.maxLives = DEFAULT_LIVES;
 
   // Spawn players
   state.players = [];

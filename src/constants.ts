@@ -56,7 +56,7 @@ export const PILLAR_SPAWN_TRIES = 20;
 export const RESPAWN_DELAY_MS = 3000;
 /** Game over delay after all players die, in ms */
 export const GAME_OVER_DELAY_MS = 1500;
-/** Default number of lives in single-player */
+/** Default number of lives per match */
 export const DEFAULT_LIVES = 3;
 
 /** Fixed run length — 20 waves with a finale boss */

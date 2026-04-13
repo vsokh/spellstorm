@@ -28,6 +28,7 @@ import {
   ROOM_WIDTH,
   ROOM_HEIGHT,
   GAME_OVER_DELAY_MS,
+  RESPAWN_DELAY_MS,
   scaledHealthDropChance,
   goldDropBonus,
   COMBAT,
@@ -406,8 +407,8 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
       return;
     }
 
-    // Lives system: respawn if lives remain (single-player only)
-    if (state.lives > 1) {
+    // Lives system: single-player instant respawn if lives remain
+    if (state.mode === NetworkMode.Local && state.lives > 1) {
       state.lives--;
       p.hp = p.maxHp;
       p.x = ROOM_WIDTH / 2;
@@ -434,17 +435,26 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
     shake(state, 10);
     flashScreen(state, TIMING.FLASH_SCREEN_ULT, '255,100,50');
 
-    state.gamePhase = GamePhase.GameOver;
-    document.exitPointerLock();
-    document.body.classList.remove('in-game');
-    setTimeout(() => {
-      const statsEl = document.getElementById('go-stats');
-      if (statsEl) {
-        statsEl.innerHTML = `Wave Reached: ${state.wave} / 20<br>Kills: ${state.totalKills}<br>Gold: ${state.gold}<br>Lives Used: ${state.maxLives}`;
-      }
-      const goEl = document.getElementById('gameover');
-      if (goEl) goEl.style.display = 'flex';
-    }, GAME_OVER_DELAY_MS);
+    // Co-op: delayed respawn handled by physics.ts
+    if (state.mode !== NetworkMode.Local) {
+      p.respawnTimer = RESPAWN_DELAY_MS / 1000;
+    }
+
+    // Game over if all players dead and no lives left
+    const allDead = state.players.every(pl => !pl.alive);
+    if (allDead && state.lives <= (state.mode === NetworkMode.Local ? 1 : 0)) {
+      state.gamePhase = GamePhase.GameOver;
+      document.exitPointerLock();
+      document.body.classList.remove('in-game');
+      setTimeout(() => {
+        const statsEl = document.getElementById('go-stats');
+        if (statsEl) {
+          statsEl.innerHTML = `Wave Reached: ${state.wave} / 20<br>Kills: ${state.totalKills}<br>Gold: ${state.gold}<br>Lives Used: ${state.maxLives}`;
+        }
+        const goEl = document.getElementById('gameover');
+        if (goEl) goEl.style.display = 'flex';
+      }, GAME_OVER_DELAY_MS);
+    }
   }
 }
 

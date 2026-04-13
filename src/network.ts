@@ -258,6 +258,8 @@ export function sendState(state: GameState): void {
     ct: state.countdownTimer,
     sc: state.screenFlash > 0 ? state.screenFlash : 0,
     sk: state.shakeIntensity > 0 ? state.shakeIntensity : 0,
+    lv: state.lives,
+    mlv: state.maxLives,
   };
 
   try { conn.send(msg); } catch (_e) { /* silently ignore */ }
@@ -380,6 +382,8 @@ function applyState(state: GameState, msg: NetStateMessage): void {
   if (msg.ct !== undefined) state.countdownTimer = msg.ct;
   if (msg.sc > 0) state.screenFlash = Math.max(state.screenFlash, msg.sc);
   if (msg.sk > 0) shake(state, msg.sk);
+  if (msg.lv !== undefined) state.lives = msg.lv;
+  if (msg.mlv !== undefined) state.maxLives = msg.mlv;
 }
 
 // ═══════════════════════════════════
