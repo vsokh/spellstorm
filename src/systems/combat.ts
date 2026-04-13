@@ -27,7 +27,6 @@ import {
   ROOM_WIDTH,
   ROOM_HEIGHT,
   GAME_OVER_DELAY_MS,
-  RESPAWN_DELAY_MS,
   scaledHealthDropChance,
   goldDropBonus,
   COMBAT,
@@ -414,31 +413,17 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
     shake(state, 10);
     flashScreen(state, TIMING.FLASH_SCREEN_ULT, '255,100,50');
 
-    if (state.players.every(pl => !pl.alive)) {
-      state.gamePhase = GamePhase.GameOver;
-      document.exitPointerLock();
-      document.body.classList.remove('in-game');
-      setTimeout(() => {
-        const statsEl = document.getElementById('go-stats');
-        if (statsEl) {
-          statsEl.innerHTML = `Wave Reached: ${state.wave} / 20<br>Kills: ${state.totalKills}<br>Gold: ${state.gold}`;
-        }
-        const goEl = document.getElementById('gameover');
-        if (goEl) goEl.style.display = 'flex';
-      }, GAME_OVER_DELAY_MS);
-    } else {
-      // Revive after delay if ally still alive
-      setTimeout(() => {
-        if (state.gamePhase === GamePhase.Playing && state.players.some(pl => pl.alive)) {
-          p.hp = Math.floor(p.maxHp / 2);
-          p.mana = p.maxMana;
-          p.alive = true;
-          p.iframes = 2;
-          p.x = ROOM_WIDTH / 2;
-          p.y = ROOM_HEIGHT / 2;
-        }
-      }, RESPAWN_DELAY_MS);
-    }
+    state.gamePhase = GamePhase.GameOver;
+    document.exitPointerLock();
+    document.body.classList.remove('in-game');
+    setTimeout(() => {
+      const statsEl = document.getElementById('go-stats');
+      if (statsEl) {
+        statsEl.innerHTML = `Wave Reached: ${state.wave} / 20<br>Kills: ${state.totalKills}<br>Gold: ${state.gold}`;
+      }
+      const goEl = document.getElementById('gameover');
+      if (goEl) goEl.style.display = 'flex';
+    }, GAME_OVER_DELAY_MS);
   }
 }
 
