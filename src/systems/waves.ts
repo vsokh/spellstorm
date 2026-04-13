@@ -1,5 +1,5 @@
 import { GameState, dist, rand, wrapAngle, spawnParticles, spawnShockwave, spawnText, shake, flashScreen } from '../state';
-import { ENEMIES, ROOM_WIDTH, ROOM_HEIGHT } from '../constants';
+import { ENEMIES, ROOM_WIDTH, ROOM_HEIGHT, WALL_THICKNESS } from '../constants';
 import { SfxName } from '../types';
 import { sfx } from '../audio';
 import { damageEnemy } from './combat';
@@ -43,6 +43,19 @@ export function updateSpells(state: GameState, dt: number): void {
     s.x += s.vx * dt;
     s.y += s.vy * dt;
     s.age += dt;
+
+    // Wall bounce
+    const wL = WALL_THICKNESS;
+    const wR = ROOM_WIDTH - WALL_THICKNESS;
+    const wT = WALL_THICKNESS;
+    const wB = ROOM_HEIGHT - WALL_THICKNESS;
+    const maxBounces = 3 + (state.players[s.owner]?.ricochet || 0);
+    if (s._bounces < maxBounces) {
+      if (s.x < wL)  { s.x = wL + (wL - s.x);  s.vx = Math.abs(s.vx);  s._bounces++; }
+      if (s.x > wR)  { s.x = wR - (s.x - wR);  s.vx = -Math.abs(s.vx); s._bounces++; }
+      if (s.y < wT)  { s.y = wT + (wT - s.y);  s.vy = Math.abs(s.vy);  s._bounces++; }
+      if (s.y > wB)  { s.y = wB - (s.y - wB);  s.vy = -Math.abs(s.vy); s._bounces++; }
+    }
 
     // Gravity Well: pull nearby enemies toward projectile path
     if (state.players[s.owner]?.gravityWell) {

@@ -1,6 +1,6 @@
 import { GameState, dist, clamp, rand, spawnParticles, spawnShockwave, shake } from '../state';
 import { EnemyAI, SfxName, PickupType } from '../types';
-import { ENEMIES, ROOM_WIDTH, ROOM_HEIGHT, WIZARD_SIZE } from '../constants';
+import { ENEMIES, ROOM_WIDTH, ROOM_HEIGHT, WIZARD_SIZE, WALL_THICKNESS } from '../constants';
 import { sfx } from '../audio';
 import { damageEnemy, damagePlayer } from './combat';
 
@@ -199,6 +199,20 @@ export function updateEProj(state: GameState, dt: number): void {
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.life -= dt;
+
+    // Wall bounce (enemy projectiles get 1 bounce)
+    const wL = WALL_THICKNESS;
+    const wR = ROOM_WIDTH - WALL_THICKNESS;
+    const wT = WALL_THICKNESS;
+    const wB = ROOM_HEIGHT - WALL_THICKNESS;
+    if (!p._bounces) p._bounces = 0;
+    if (p._bounces < 1) {
+      if (p.x < wL)  { p.x = wL + (wL - p.x);  p.vx = Math.abs(p.vx);  p._bounces++; }
+      if (p.x > wR)  { p.x = wR - (p.x - wR);  p.vx = -Math.abs(p.vx); p._bounces++; }
+      if (p.y < wT)  { p.y = wT + (wT - p.y);  p.vy = Math.abs(p.vy);  p._bounces++; }
+      if (p.y > wB)  { p.y = wB - (p.y - wB);  p.vy = -Math.abs(p.vy); p._bounces++; }
+    }
+
     if (Math.random() > 0.5) {
       state.trails.push({ x: p.x, y: p.y, life: 0.5, r: 2, color: p.color });
     }

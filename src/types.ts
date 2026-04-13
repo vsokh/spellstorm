@@ -372,6 +372,7 @@ export interface Spell {
   stun: number;
   clsKey: string;
   _reversed: boolean;
+  _bounces: number;
 }
 
 export interface Particle {
@@ -459,6 +460,7 @@ export interface EnemyProjectile {
   life: number;
   radius: number;
   color: string;
+  _bounces?: number;
 }
 
 export interface Pillar {

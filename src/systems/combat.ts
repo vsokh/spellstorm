@@ -463,6 +463,7 @@ function spellToRuntime(def: SpellDef): Spell {
     stun: def.stun,
     clsKey: '',
     _reversed: false,
+    _bounces: 0,
   };
 }
 
@@ -596,7 +597,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
             vy: Math.sin(sa) * def.speed,
             owner: p.idx, age: 0, zapTimer: 0, pierceLeft: 0,
             zap: 0, zapRate: 0, slow: 0, drain: 0, explode: 0, burn: 0,
-            stun: 0, clsKey: p.clsKey, _reversed: false,
+            stun: 0, clsKey: p.clsKey, _reversed: false, _bounces: 0,
           });
           sfx(SfxName.Arcane);
         }, i * 80);
@@ -1021,7 +1022,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
           vx: Math.cos(sa) * 200, vy: Math.sin(sa) * 200,
           owner: p.idx, age: 0, zapTimer: 0, pierceLeft: 0,
           zap: 0, zapRate: 0, slow: 0, drain: 0, explode: 0, burn: 0,
-          stun: 0, clsKey: p.clsKey, _reversed: false,
+          stun: 0, clsKey: p.clsKey, _reversed: false, _bounces: 0,
         });
         sfx(SfxName.Arcane);
       }, i * 50);
@@ -1089,7 +1090,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
           vx: aCos * 400, vy: aSin * 400,
           owner: p.idx, age: 0, zapTimer: 0, pierceLeft: 2,
           homing: 0, zap: 0, zapRate: 0, slow: 0, drain: 0, explode: 0, burn: 0,
-          stun: 0, clsKey: p.clsKey, _reversed: false,
+          stun: 0, clsKey: p.clsKey, _reversed: false, _bounces: 0,
         });
         sfx(SfxName.Hit);
       }, i * 30);
