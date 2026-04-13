@@ -438,6 +438,7 @@ export interface Zone {
   pull: number;
   freezeAfter: number;
   _turret?: boolean;
+  _megaTurret?: boolean;
 }
 
 export interface AoeMarker {

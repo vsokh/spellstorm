@@ -1103,6 +1103,30 @@ export function drawTurret(ctx: CanvasRenderingContext2D, x: number, y: number, 
   const s = size;
   const barrelAngle = time * 2;
 
+  if (!isMega) {
+    // Ground shadow for regular turret
+    ctx.globalAlpha = 0.2;
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.ellipse(x, y + s * 0.7, s * 0.85, s * 0.35, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  if (isMega) {
+    // Energy shield: translucent pulsing circle with glowing edge
+    const shieldPulse = 0.12 + 0.06 * Math.sin(time * 3.5);
+    const shieldRadius = s * 1.3;
+    const shieldG = ctx.createRadialGradient(x, y, shieldRadius * 0.7, x, y, shieldRadius);
+    shieldG.addColorStop(0, 'rgba(255,170,50,0)');
+    shieldG.addColorStop(0.8, `rgba(255,180,60,${shieldPulse * 0.3})`);
+    shieldG.addColorStop(1, `rgba(255,200,80,${shieldPulse})`);
+    ctx.fillStyle = shieldG;
+    ctx.beginPath();
+    ctx.arc(x, y, shieldRadius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   // Base platform (hexagonal)
   ctx.fillStyle = isMega ? '#cc8822' : '#996622';
   ctx.beginPath();
@@ -1131,6 +1155,7 @@ export function drawTurret(ctx: CanvasRenderingContext2D, x: number, y: number, 
 
   // Three barrels (rotating with inertia feel via sin easing)
   const inertiaAngle = barrelAngle + Math.sin(barrelAngle * 0.5) * 0.1;
+  const barrelTips: Array<{ x: number; y: number }> = [];
   for (let i = 0; i < 3; i++) {
     const a = inertiaAngle + (i / 3) * Math.PI * 2;
     const bx2 = x + Math.cos(a) * s * 0.3;
@@ -1138,6 +1163,7 @@ export function drawTurret(ctx: CanvasRenderingContext2D, x: number, y: number, 
     const barrelLen = isMega ? 1.4 : 1.1;
     const ex = x + Math.cos(a) * s * barrelLen;
     const ey = y + Math.sin(a) * s * barrelLen;
+    barrelTips.push({ x: ex, y: ey });
 
     // Barrel body
     ctx.strokeStyle = isMega ? '#ffbb44' : '#cc9933';
@@ -1170,11 +1196,52 @@ export function drawTurret(ctx: CanvasRenderingContext2D, x: number, y: number, 
     ctx.fill();
   }
 
+  // Mega turret: electrical arcs between adjacent barrel tips
+  if (isMega) {
+    for (let i = 0; i < 3; i++) {
+      const flicker = Math.sin(time * 9.3 + i * 5.7);
+      if (flicker > 0.1) {
+        const t1 = barrelTips[i];
+        const t2 = barrelTips[(i + 1) % 3];
+        const mx = (t1.x + t2.x) / 2;
+        const my = (t1.y + t2.y) / 2;
+        // Offset midpoint for a curved arc look
+        const offsetX = Math.sin(time * 13 + i * 3.1) * 4;
+        const offsetY = Math.cos(time * 11 + i * 2.3) * 4;
+        ctx.globalAlpha = 0.3 + 0.3 * flicker;
+        ctx.strokeStyle = '#ffee88';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(t1.x, t1.y);
+        ctx.quadraticCurveTo(mx + offsetX, my + offsetY, t2.x, t2.y);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+
   // Center eye/lens
-  ctx.fillStyle = isMega ? '#ff6622' : '#ffcc44';
-  ctx.beginPath();
-  ctx.arc(x, y, s * 0.15, 0, Math.PI * 2);
-  ctx.fill();
+  if (isMega) {
+    // Larger pulsing power core for mega turret
+    const corePulse = 0.18 + 0.04 * Math.sin(time * 4);
+    const coreG = ctx.createRadialGradient(x, y, 0, x, y, s * corePulse * 2);
+    coreG.addColorStop(0, '#ffee66');
+    coreG.addColorStop(0.5, '#ff6622');
+    coreG.addColorStop(1, 'rgba(255,100,30,0)');
+    ctx.fillStyle = coreG;
+    ctx.beginPath();
+    ctx.arc(x, y, s * corePulse * 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ff6622';
+    ctx.beginPath();
+    ctx.arc(x, y, s * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = '#ffcc44';
+    ctx.beginPath();
+    ctx.arc(x, y, s * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   // Pulsing ring (active indicator)
   const pulse = 0.3 + 0.2 * Math.sin(time * 5);

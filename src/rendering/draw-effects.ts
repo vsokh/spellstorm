@@ -115,19 +115,107 @@ export function drawZones(ctx: CanvasRenderingContext2D, state: GameState): void
     const isFire = z.color.includes('ff44') || z.color.includes('ff22') || z.color.includes('7722');
     const isHeal = z.color.includes('ffcc') || z.color.includes('ffee');
 
-    if (z._turret) {
-      // ── TURRET ZONE: turret visual + subtle range indicator ──
-      // Subtle range ring
+    if (z._turret && z._megaTurret) {
+      // ── MEGA TURRET ZONE: enhanced visuals ──
+
+      // Outer range fill (brighter, more saturated)
+      ctx.globalAlpha = 0.1 + 0.05 * Math.sin(t * 2);
+      ctx.fillStyle = '#dd8822';
+      ctx.beginPath(); ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2); ctx.fill();
+
+      // Inner ring fill (double-ring effect)
+      ctx.globalAlpha = 0.12 + 0.04 * Math.sin(t * 2.5);
+      ctx.fillStyle = '#ffaa33';
+      ctx.beginPath(); ctx.arc(z.x, z.y, z.radius * 0.55, 0, Math.PI * 2); ctx.fill();
+
+      // Energy crackle: 3 short jagged line segments
+      ctx.strokeStyle = '#ffdd66';
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < 3; i++) {
+        // Deterministic pseudo-random flicker using sin
+        const flicker = Math.sin(t * 7.3 + i * 17.1);
+        if (flicker > 0.2) {
+          ctx.globalAlpha = 0.3 + 0.2 * flicker;
+          const baseAngle = Math.sin(t * 1.1 + i * 4.7) * Math.PI * 2;
+          const dist = z.radius * (0.25 + 0.35 * (0.5 + 0.5 * Math.sin(t * 0.8 + i * 3.3)));
+          const cx = z.x + Math.cos(baseAngle) * dist;
+          const cy = z.y + Math.sin(baseAngle) * dist;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(baseAngle + 0.5) * 8, cy + Math.sin(baseAngle + 0.5) * 8);
+          ctx.lineTo(cx + Math.cos(baseAngle - 0.3) * 14, cy + Math.sin(baseAngle - 0.3) * 14);
+          ctx.stroke();
+        }
+      }
+
+      // Pulsing power ring at ~70% radius
+      const breathe = 0.7 + 0.05 * Math.sin(t * 3);
+      ctx.globalAlpha = 0.2 + 0.1 * Math.sin(t * 3);
+      ctx.strokeStyle = '#ffcc44';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(z.x, z.y, z.radius * breathe, 0, Math.PI * 2); ctx.stroke();
+
+      // Brighter dashed outline with wider dashes
+      ctx.strokeStyle = '#ffaa33';
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.25;
+      const dashOffset = t * 15;
+      ctx.setLineDash([10, 6]);
+      ctx.lineDashOffset = dashOffset;
+      ctx.beginPath(); ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.lineDashOffset = 0;
+      ctx.globalAlpha = 1;
+
+      // Draw mega turret at center (size 18, isMega=true)
+      drawTurret(ctx, z.x, z.y, 18, t, true, z.age > 0);
+
+      // Occasional bright spark particles
+      if (Math.sin(t * 11.7) > 0.85) {
+        spawnParticles(state, z.x + Math.sin(t * 3.1) * z.radius * 0.5, z.y + Math.cos(t * 2.7) * z.radius * 0.5, '#ffdd44', 1, 0.3);
+      }
+
+    } else if (z._turret) {
+      // ── REGULAR TURRET ZONE: turret visual + subtle range indicator ──
+
+      // Subtle range fill
       ctx.globalAlpha = 0.06 + 0.03 * Math.sin(t * 2);
       ctx.fillStyle = '#cc7722';
       ctx.beginPath(); ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2); ctx.fill();
+
+      // Slowly rotating radar sweep arc
+      const sweepAngle = t * 1.2;
+      ctx.globalAlpha = 0.1;
+      ctx.fillStyle = '#dd9933';
+      ctx.beginPath();
+      ctx.moveTo(z.x, z.y);
+      ctx.arc(z.x, z.y, z.radius, sweepAngle, sweepAngle + Math.PI * 0.4);
+      ctx.closePath();
+      ctx.fill();
+
+      // Rotating spark dots orbiting at ~60% radius
+      for (let i = 0; i < 4; i++) {
+        const sparkAngle = t * 1.5 + (i / 4) * Math.PI * 2;
+        const sparkDist = z.radius * 0.6;
+        const sx = z.x + Math.cos(sparkAngle) * sparkDist;
+        const sy = z.y + Math.sin(sparkAngle) * sparkDist;
+        ctx.globalAlpha = 0.4 + 0.2 * Math.sin(t * 4 + i * 1.5);
+        ctx.fillStyle = '#ffcc44';
+        ctx.beginPath(); ctx.arc(sx, sy, 1.5, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // Rotating dashed outline
       ctx.strokeStyle = '#dd8833';
       ctx.lineWidth = 1;
       ctx.globalAlpha = 0.15;
+      const regularDashOffset = t * 10;
       ctx.setLineDash([6, 8]);
+      ctx.lineDashOffset = regularDashOffset;
       ctx.beginPath(); ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2); ctx.stroke();
       ctx.setLineDash([]);
+      ctx.lineDashOffset = 0;
       ctx.globalAlpha = 1;
+
       // Draw turret in center
       drawTurret(ctx, z.x, z.y, 14, t, false, z.age > 0);
     } else if (isIce) {

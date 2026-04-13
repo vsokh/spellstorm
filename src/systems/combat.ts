@@ -1193,6 +1193,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
       dmg: Math.round(3 * pw), color: '#dd8833', owner: p.idx,
       slow: 0, tickRate: 0.7, tickTimer: 0, age: 0,
       drain: 0, heal: 0, pull: 0, freezeAfter: 0,
+      _turret: true, _megaTurret: true,
     });
   }
 
