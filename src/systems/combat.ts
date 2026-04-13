@@ -36,9 +36,24 @@ import {
   ULTIMATE,
   RANGES,
   CD_FLOORS,
+  softCapBonusDmg,
 } from '../constants';
 import { sfx } from '../audio';
 import { createFriendlyEnemy } from './dungeon';
+
+// ═══════════════════════════════════
+//       BONUS DAMAGE SOFT CAP
+// ═══════════════════════════════════
+
+/** Get effective spell damage after applying bonus damage soft cap.
+ *  Calculates how much flat bonus was added by upgrades, caps it, returns base + capped bonus. */
+function getEffectiveSpellDmg(p: Player, spellIdx: number): number {
+  const baseDmg = p._baseSpellDmg[spellIdx] || 0;
+  const currentDmg = p.cls.spells[spellIdx].dmg;
+  const bonus = currentDmg - baseDmg;
+  if (bonus <= 0) return currentDmg;
+  return baseDmg + softCapBonusDmg(bonus);
+}
 
 // ═══════════════════════════════════
 //       DAMAGE ENEMY
@@ -505,6 +520,7 @@ export function castSpellSilent(state: GameState, p: Player, idx: number, angle:
     const sx = p.x + cos * WIZARD_SIZE * 1.5;
     const sy = p.y + sin * WIZARD_SIZE * 1.5;
     const rt = spellToRuntime(def);
+    rt.dmg = getEffectiveSpellDmg(p, idx);
     if (dmgMult !== 1) rt.dmg = Math.ceil(rt.dmg * dmgMult);
     state.spells.push({
       ...rt,
@@ -731,7 +747,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       owner: p.idx, age: 0, zapTimer: 0, pierceLeft: (p.pierce || 0) + (def.pierce || 0),
       clsKey: p.clsKey,
     };
-    spell.dmg = Math.round(spell.dmg * echoDmgMul);
+    spell.dmg = Math.round(getEffectiveSpellDmg(p, idx) * echoDmgMul);
     state.spells.push(spell);
     // Muzzle flash
     spawnParticles(state, p.x + cos * 15, p.y + sin * 15, spell.color, 3, 0.3);
@@ -741,8 +757,10 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         const ba = angle + bOff;
         const bcos = Math.cos(ba);
         const bsin = Math.sin(ba);
+        const burstRt = spellToRuntime(def);
+        burstRt.dmg = getEffectiveSpellDmg(p, idx);
         state.spells.push({
-          ...spellToRuntime(def),
+          ...burstRt,
           x: p.x + bcos * WIZARD_SIZE * 1.5,
           y: p.y + bsin * WIZARD_SIZE * 1.5,
           vx: bcos * def.speed, vy: bsin * def.speed,
@@ -768,7 +786,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       for (const e of state.enemies) {
         if (!e.alive || e.iframes > 0) continue;
         if (dist(bx, by, e.x, e.y) < ENEMIES[e.type].size + 4) {
-          damageEnemy(state, e, Math.round(def.dmg * echoDmgMul), p.idx);
+          damageEnemy(state, e, Math.round(getEffectiveSpellDmg(p, idx) * echoDmgMul), p.idx);
           break;
         }
       }
@@ -788,7 +806,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       if (d > def.range) continue;
       const a2 = Math.atan2(e.y - p.y, e.x - p.x);
       if (Math.abs(wrapAngle(a2 - angle)) <= def.angle / 2) {
-        damageEnemy(state, e, Math.round(def.dmg * echoDmgMul), p.idx);
+        damageEnemy(state, e, Math.round(getEffectiveSpellDmg(p, idx) * echoDmgMul), p.idx);
         if (def.slow) e.slowTimer = (e.slowTimer || 0) + def.slow;
         if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
       }
@@ -802,7 +820,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     for (const e of state.enemies) {
       if (!e.alive) continue;
       if (dist(p.x, p.y, e.x, e.y) <= def.range) {
-        damageEnemy(state, e, def.dmg, p.idx);
+        damageEnemy(state, e, getEffectiveSpellDmg(p, idx), p.idx);
         if (def.slow) e.slowTimer = (e.slowTimer || 0) + def.slow;
         if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
         if (def.drain) novaHealed += def.drain;
@@ -837,8 +855,10 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       const sa = angle + (i - def.count / 2) * def.spread / def.count + rand(-0.05, 0.05);
       // Stagger barrage shots
       setTimeout(() => {
+        const barRt = spellToRuntime(def);
+        barRt.dmg = getEffectiveSpellDmg(p, idx);
         state.spells.push({
-          ...spellToRuntime(def),
+          ...barRt,
           type: SpellType.Projectile,
           x: p.x + Math.cos(sa) * WIZARD_SIZE,
           y: p.y + Math.sin(sa) * WIZARD_SIZE,
@@ -893,7 +913,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     for (const e of state.enemies) {
       if (!e.alive) continue;
       if (dist(p.x, p.y, e.x, e.y) < def.aoeR + ENEMIES[e.type].size) {
-        damageEnemy(state, e, def.dmg, p.idx);
+        damageEnemy(state, e, getEffectiveSpellDmg(p, idx), p.idx);
         if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
       }
     }

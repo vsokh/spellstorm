@@ -284,6 +284,9 @@ export interface Player {
   seekerMines: boolean;
   burstFire: boolean;
 
+  // Base spell damage before upgrades (for soft cap calculation)
+  _baseSpellDmg: number[];
+
   // Hyperbolic stacking accumulators (raw sums before diminishing returns)
   _hyperAcc: Record<string, number>;
 
