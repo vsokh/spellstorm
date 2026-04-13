@@ -280,6 +280,8 @@ export function checkWaveComplete(state: GameState): void {
     // Victory check — completed all waves
     if (state.wave >= MAX_WAVES) {
       state.gamePhase = GamePhase.Victory;
+      document.exitPointerLock();
+      document.body.classList.remove('in-game');
       setTimeout(() => {
         const statsEl = document.getElementById('victory-stats');
         if (statsEl) {

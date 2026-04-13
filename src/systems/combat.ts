@@ -393,6 +393,8 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
 
     if (state.players.every(pl => !pl.alive)) {
       state.gamePhase = GamePhase.GameOver;
+      document.exitPointerLock();
+      document.body.classList.remove('in-game');
       setTimeout(() => {
         const statsEl = document.getElementById('go-stats');
         if (statsEl) {
