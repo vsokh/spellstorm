@@ -922,13 +922,13 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
       spawnParticles(state, sx, sy, '#55cc55', 8);
     }
   } else if (p.clsKey === 'chronomancer') {
-    // Time Stop: freeze all enemies for 4s, player moves at 2x speed
-    const freezeDur = 4 * pw;
+    // Time Stop: freeze all enemies for 3s, player moves at 1.5x speed
+    const freezeDur = 3 * pw;
     for (const e of state.enemies) {
       if (!e.alive) continue;
       e.stunTimer = (e.stunTimer || 0) + freezeDur;
     }
-    p.moveSpeed *= 2;
+    p.moveSpeed *= 1.5;
     p._timeStopTimer = freezeDur;
     spawnShockwave(state, p.x, p.y, ROOM_WIDTH, 'rgba(255,200,60,.2)');
   } else if (p.clsKey === 'knight') {
@@ -944,12 +944,12 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
     p._rageDmgMul = 2;
     spawnParticles(state, p.x, p.y, '#ff3333', 25, 1.2);
   } else if (p.clsKey === 'paladin') {
-    // Holy Light: heal both players to full + damage all enemies for 3
+    // Holy Light: heal both players for 75% max HP + damage all enemies for 3
     for (const pl of state.players) {
       if (pl.alive) {
-        pl.hp = pl.maxHp;
+        pl.hp = Math.min(pl.maxHp, pl.hp + Math.round(pl.maxHp * 0.75));
         spawnParticles(state, pl.x, pl.y, '#ffffaa', 15);
-        spawnText(state, pl.x, pl.y - 20, 'FULL HEAL', '#ffffaa');
+        spawnText(state, pl.x, pl.y - 20, 'HEAL 75%', '#ffffaa');
       }
     }
     for (const e of state.enemies) {
@@ -981,14 +981,14 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
       }, i * 30);
     }
   } else if (p.clsKey === 'druid') {
-    // Nature's Wrath: summon ring of 8 thorn zones + 2 treant allies
-    for (let i = 0; i < 8; i++) {
-      const za = (i / 8) * Math.PI * 2;
+    // Nature's Wrath: summon ring of 6 thorn zones + 2 treant allies
+    for (let i = 0; i < 6; i++) {
+      const za = (i / 6) * Math.PI * 2;
       const zDist = rand(100, 120);
       const zx = p.x + Math.cos(za) * zDist;
       const zy = p.y + Math.sin(za) * zDist;
       state.zones.push({
-        x: zx, y: zy, radius: 40, duration: 6,
+        x: zx, y: zy, radius: 40, duration: 4,
         dmg: Math.round(2 * pw), color: '#66aa44', owner: p.idx,
         slow: 0.5, tickRate: 0.5, tickTimer: 0, age: 0,
         drain: 0, heal: 0, pull: 0, freezeAfter: 0,
@@ -1001,15 +1001,15 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
       const tx = p.x + Math.cos(ta) * 50;
       const ty = p.y + Math.sin(ta) * 50;
       const treant = createFriendlyEnemy(tx, ty, p.idx);
-      treant.hp = 12;
-      treant.maxHp = 12;
-      treant._lifespan = 15;
+      treant.hp = 8;
+      treant.maxHp = 8;
+      treant._lifespan = 10;
       state.enemies.push(treant);
       spawnParticles(state, tx, ty, '#88aa66', 10);
     }
     spawnShockwave(state, p.x, p.y, 130, 'rgba(80,180,60,.3)');
   } else if (p.clsKey === 'warlock') {
-    // Doom: marks all enemies, after 3s they take 50% of their max HP as damage
+    // Doom: marks all enemies, after 3s they take 35% of their max HP as damage
     const marked = state.enemies.filter(e => e.alive && !e._friendly);
     for (const e of marked) {
       spawnText(state, e.x, e.y - 15, 'DOOMED', '#662288');
@@ -1018,7 +1018,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
     setTimeout(() => {
       for (const e of marked) {
         if (!e.alive) continue;
-        const doomDmg = Math.max(1, Math.ceil(e.maxHp * 0.5 * pw));
+        const doomDmg = Math.max(1, Math.ceil(e.maxHp * 0.35 * pw));
         damageEnemy(state, e, doomDmg, pIdx);
         spawnParticles(state, e.x, e.y, '#662288', 10);
       }
@@ -1053,17 +1053,17 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
       }, i * 40);
     }
   } else if (p.clsKey === 'engineer') {
-    // Mega Turret: huge turret (30 HP, 3 dmg/shot, 20s)
+    // Mega Turret: huge turret (20 HP, 3 dmg/shot, 12s)
     const turret = createFriendlyEnemy(p.x + Math.cos(angle) * 40, p.y + Math.sin(angle) * 40, p.idx);
     turret.type = '_ally';
-    turret.hp = 30;
-    turret.maxHp = 30;
-    turret._lifespan = 20;
+    turret.hp = 20;
+    turret.maxHp = 20;
+    turret._lifespan = 12;
     state.enemies.push(turret);
     spawnParticles(state, turret.x, turret.y, '#dd8833', 15);
     // Also create a high-damage zone around the turret
     state.zones.push({
-      x: turret.x, y: turret.y, radius: 130, duration: 20,
+      x: turret.x, y: turret.y, radius: 100, duration: 12,
       dmg: Math.round(3 * pw), color: '#dd8833', owner: p.idx,
       slow: 0, tickRate: 0.7, tickTimer: 0, age: 0,
       drain: 0, heal: 0, pull: 0, freezeAfter: 0,
