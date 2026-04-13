@@ -117,9 +117,9 @@ export const CLASSES: Record<string, ClassDefInput> = {
     desc: 'Death magic. Drains life.',
     passive: { name: 'Soul Harvest', desc: 'Kills heal 1 HP' },
     spells: [
-      { name: 'Soul Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 380, radius: 9, mana: 7, cd: 0.3, life: 1.3, drain: 1, color: '#55cc55', trail: '#228822' },
-      { name: 'Death Wave', key: 'RMB', type: SpellType.Nova, dmg: 2, range: 100, mana: 24, cd: 3.5, drain: 2, color: '#44aa44' },
-      { name: 'Plague', key: 'Q', type: SpellType.Zone, dmg: 1, mana: 38, cd: 9, radius: 95, duration: 5, tickRate: 0.6, slow: 0.4, drain: 1, color: '#338833' },
+      { name: 'Soul Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 360, radius: 9, mana: 8, cd: 0.35, life: 1.2, color: '#55cc55', trail: '#228822' },
+      { name: 'Death Wave', key: 'RMB', type: SpellType.Nova, dmg: 2, range: 90, mana: 28, cd: 4, drain: 1, color: '#44aa44' },
+      { name: 'Plague', key: 'Q', type: SpellType.Zone, dmg: 1, mana: 40, cd: 10, radius: 80, duration: 4, tickRate: 0.8, slow: 0.3, color: '#338833' },
       { name: 'Army of Dead', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#228822', mana: 0, cd: 0 },
     ],
   },
@@ -139,9 +139,9 @@ export const CLASSES: Record<string, ClassDefInput> = {
     desc: 'Tank. Absorbs damage, protects ally.',
     passive: { name: 'Bulwark', desc: 'Take 25% less damage' },
     spells: [
-      { name: 'Sword Slash', key: 'LMB', type: SpellType.Cone, dmg: 2, range: 55, mana: 3, cd: 0.3, angle: 1.2, color: '#ccddee' },
-      { name: 'Shield Bash', key: 'RMB', type: SpellType.Nova, dmg: 3, range: 45, mana: 15, cd: 2, stun: 1, color: '#8899aa' },
-      { name: 'Charge', key: 'Q', type: SpellType.Blink, range: 200, mana: 20, cd: 4, color: '#aabbcc' },
+      { name: 'Shield Throw', key: 'LMB', type: SpellType.Projectile, dmg: 2, speed: 350, radius: 10, mana: 4, cd: 0.4, life: 0.8, color: '#ccddee', trail: '#8899aa' },
+      { name: 'Shield Bash', key: 'RMB', type: SpellType.Nova, dmg: 3, range: 60, mana: 15, cd: 2, stun: 1.5, color: '#8899aa' },
+      { name: 'Charge', key: 'Q', type: SpellType.Blink, range: 200, mana: 20, cd: 3.5, color: '#aabbcc' },
       { name: 'Shield Wall', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#ccddee', mana: 0, cd: 0 },
     ],
   },
@@ -151,7 +151,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
     passive: { name: 'Fury', desc: 'Below 50% HP: +50% damage and speed' },
     spells: [
       { name: 'Axe Swing', key: 'LMB', type: SpellType.Cone, dmg: 3, range: 50, mana: 2, cd: 0.35, angle: 1.5, color: '#ff6644' },
-      { name: 'Throwing Axe', key: 'RMB', type: SpellType.Projectile, dmg: 2, speed: 450, radius: 8, mana: 10, cd: 1, life: 1, color: '#ff4444', trail: '#cc2222' },
+      { name: 'Throwing Axe', key: 'RMB', type: SpellType.Projectile, dmg: 3, speed: 500, radius: 10, mana: 8, cd: 0.8, life: 1.2, color: '#ff4444', trail: '#cc2222' },
       { name: 'Leap Slam', key: 'Q', type: SpellType.Leap, range: 180, mana: 20, cd: 3.5, dmg: 3, aoeR: 60, color: '#ff3322' },
       { name: 'Blood Rage', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#ff2222', mana: 0, cd: 0 },
     ],
@@ -203,11 +203,11 @@ export const CLASSES: Record<string, ClassDefInput> = {
   monk: {
     name: 'Monk', color: '#eedd88', glow: '#ccaa44',
     desc: 'Martial arts. Fast melee + dodging.',
-    passive: { name: 'Inner Peace', desc: 'Dodge 20% of attacks naturally' },
+    passive: { name: 'Inner Peace', desc: 'Dodge 25% of attacks naturally' },
     spells: [
-      { name: 'Palm Strike', key: 'LMB', type: SpellType.Cone, dmg: 1, range: 45, mana: 2, cd: 0.15, angle: 1.0, color: '#eedd88' },
-      { name: 'Flying Kick', key: 'RMB', type: SpellType.Leap, range: 150, mana: 15, cd: 2.5, dmg: 3, aoeR: 40, color: '#ccaa44' },
-      { name: 'Meditation', key: 'Q', type: SpellType.Zone, dmg: 0, mana: 20, cd: 8, radius: 30, duration: 3, tickRate: 1, heal: 1, color: '#ffffcc' },
+      { name: 'Chi Blast', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 500, radius: 8, mana: 3, cd: 0.15, life: 0.5, color: '#eedd88', trail: '#ccaa44' },
+      { name: 'Flying Kick', key: 'RMB', type: SpellType.Leap, range: 180, mana: 12, cd: 2, dmg: 4, aoeR: 55, color: '#ccaa44' },
+      { name: 'Meditation', key: 'Q', type: SpellType.Zone, dmg: 0, mana: 15, cd: 6, radius: 40, duration: 3, tickRate: 0.8, heal: 2, color: '#ffffcc' },
       { name: 'Thousand Fists', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#eedd88', mana: 0, cd: 0 },
     ],
   },
@@ -306,10 +306,32 @@ export const UPGRADE_POOL: UpgradeDef[] = [
   { name: 'Deep Freeze', desc: 'Slow effects 2x stronger', apply: (p: Player) => { for (const s of p.cls.spells) if (s.slow) s.slow *= 2; } },
   { name: 'Aftershock', desc: 'AoE spells leave a damage zone for 2s', apply: (p: Player) => { p.aftershock = true; } },
 
+  // -- SECONDARY (RMB) UPGRADES --
+  { name: 'Secondary Mastery', desc: 'RMB cooldown -40%', apply: (p: Player) => { if (p.cls.spells[1]) p.cls.spells[1].cd *= 0.6; } },
+  { name: 'Double Secondary', desc: 'RMB fires/activates twice', apply: (p: Player) => { p.doubleSecondary = (p.doubleSecondary || 0) + 1; } },
+  { name: 'Secondary Power', desc: 'RMB +3 damage', apply: (p: Player) => { if (p.cls.spells[1]) p.cls.spells[1].dmg = (p.cls.spells[1].dmg || 0) + 3; } },
+  { name: 'Free Cast', desc: 'RMB costs no mana (extra 2s cooldown)', apply: (p: Player) => { if (p.cls.spells[1]) { p.cls.spells[1].mana = 0; p.cls.spells[1].cd += 2; } } },
+  { name: 'Combo', desc: 'RMB deals +50% dmg if target was hit by LMB recently', apply: (p: Player) => { p.comboBonus = true; } },
+  { name: 'Area Secondary', desc: 'RMB range/radius +50%', apply: (p: Player) => { const s = p.cls.spells[1]; if (s) { if (s.range) s.range *= 1.5; if (s.radius) s.radius *= 1.5; if (s.aoeR) s.aoeR *= 1.5; } } },
+
+  // -- ULTIMATE (R) UPGRADES --
+  { name: 'Quick Charge', desc: 'Ultimate charges 50% faster', apply: (p: Player) => { p.ultChargeRate = (p.ultChargeRate || 1) * 1.5; } },
+  { name: 'Ult Mastery', desc: 'Ultimate deals 2x damage/effect', apply: (p: Player) => { p.ultPower = (p.ultPower || 1) * 2; } },
+  { name: 'Overflow', desc: 'Ult charges to 200% for double cast', apply: (p: Player) => { p.ultOverflow = true; } },
+  { name: 'Ult Echo', desc: 'After ult, next 5 primary shots deal 2x', apply: (p: Player) => { p.ultEcho = (p.ultEcho || 0) + 5; } },
+  { name: 'Ult Regen', desc: 'Using ult restores 50% HP', apply: (p: Player) => { p.ultHeal = true; } },
+
+  // -- CROSS-SPELL SYNERGIES --
+  { name: 'Spell Weaving', desc: 'Alternating LMB/RMB: +25% dmg per swap (3x max)', apply: (p: Player) => { p.spellWeaving = true; } },
+  { name: 'Cooldown Cascade', desc: 'LMB kills reduce RMB cooldown by 1s', apply: (p: Player) => { p.cdCascade = true; } },
+  { name: 'Full Rotation', desc: 'Use all 3 spells in 5s: 3x attack speed for 3s', apply: (p: Player) => { p.fullRotation = true; } },
+  { name: 'Q Mastery', desc: 'Q skill cooldown -35%, +2 damage', apply: (p: Player) => { if (p.cls.spells[2]) { p.cls.spells[2].cd *= 0.65; p.cls.spells[2].dmg = (p.cls.spells[2].dmg || 0) + 2; } } },
+  { name: 'Skill Reset', desc: 'Using ult resets Q and RMB cooldowns', apply: (p: Player) => { p.ultResetCDs = true; } },
+
   // -- WILD / FUN --
   { name: 'Chaos Bolts', desc: 'Primary deals random 1-4 damage', apply: (p: Player) => { p.chaosDmg = true; } },
   { name: 'Magnet', desc: 'Pickups fly to you from further away', apply: (p: Player) => { p.magnetRange = (p.magnetRange || 30) + 60; } },
   { name: 'Gold Rush', desc: 'Enemies drop 2x gold', apply: (p: Player) => { p.goldMul = (p.goldMul || 1) * 2; } },
   { name: 'XP Boost', desc: 'Gain upgrades 30% more often', apply: (p: Player) => { p.xpBoost = (p.xpBoost || 0) + 0.3; } },
-  { name: 'Friendly Fire', desc: '+4 dmg but your spells can hurt you', apply: (p: Player) => { for (const s of p.cls.spells) s.dmg = (s.dmg || 0) + 4; p.selfDmg = true; } },
+  { name: 'Friendly Fire', desc: '+2 dmg but your spells can hurt you', apply: (p: Player) => { for (const s of p.cls.spells) s.dmg = (s.dmg || 0) + 2; p.selfDmg = true; } },
 ];

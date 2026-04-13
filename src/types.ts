@@ -203,6 +203,27 @@ export interface Player {
   xpBoost: number;
   selfDmg: boolean;
 
+  // Secondary (RMB) upgrades
+  doubleSecondary: number;
+  comboBonus: boolean;
+  // Ultimate (R) upgrades
+  ultChargeRate: number;
+  ultPower: number;
+  ultOverflow: boolean;
+  ultEcho: number;
+  ultEchoLeft: number;
+  ultHeal: boolean;
+  ultResetCDs: boolean;
+  // Cross-spell synergies
+  spellWeaving: boolean;
+  spellWeaveStack: number;
+  lastSpellSlot: number;
+  cdCascade: boolean;
+  fullRotation: boolean;
+  fullRotationTimer: number;
+  fullRotationSpells: number;
+  fullRotationBuff: number;
+
   // Internal timers / state
   _snapTimer: number;
   _rewindSnap: { hp: number; mana: number } | null;
