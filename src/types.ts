@@ -260,6 +260,7 @@ export interface Player {
   shieldBounce: number;
   tauntAura: boolean;
   bloodlust: boolean;
+  _bloodlustStacks: number;
   undyingRage: number;
   reflectShield: boolean;
   resurrection: boolean;

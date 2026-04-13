@@ -354,6 +354,7 @@ export function createPlayer(idx: number, clsKey: string): Player {
     shieldBounce: 0,
     tauntAura: false,
     bloodlust: false,
+    _bloodlustStacks: 0,
     undyingRage: 0,
     reflectShield: false,
     resurrection: false,

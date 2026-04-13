@@ -227,6 +227,14 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
 
     if (p) {
       p.killCount++;
+      // Bloodlust: +5% attack speed per kill (cap +100%), then +1% crit per kill (cap +15%)
+      if (p.bloodlust) {
+        p._bloodlustStacks++;
+        // After speed cap, overflow stacks grant crit chance
+        if (p._bloodlustStacks > 20 && (p._bloodlustStacks - 20) * 0.01 <= COMBAT.BLOODLUST_CRIT_CAP) {
+          p.critChance += 0.01;
+        }
+      }
       // Ultimate charge on kill
       const killChargeGain = Math.round(COMBAT.ULT_CHARGE_KILL * (p.ultChargeRate || 1));
       const killChargeCap = p.ultOverflow ? COMBAT.ULT_THRESHOLD_OVERFLOW : COMBAT.ULT_THRESHOLD;
@@ -584,7 +592,13 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     p.hp -= 1;
     if (p.hp <= 0) p.hp = 1; // don't let Dark Pact kill you
   }
-  p.cd[idx] = Math.max(CD_FLOORS[idx] ?? 0, def.cd);
+  let cd = def.cd;
+  // Bloodlust: reduce cooldown based on kill stacks (max +100% attack speed = halve cooldown)
+  if (p.bloodlust && p._bloodlustStacks > 0) {
+    const speedBonus = Math.min(p._bloodlustStacks * 0.05, COMBAT.BLOODLUST_SPEED_CAP);
+    cd = cd / (1 + speedBonus);
+  }
+  p.cd[idx] = Math.max(CD_FLOORS[idx] ?? 0, cd);
 
   // ultEcho: double LMB damage for N casts after ultimate
   let echoDmgMul = 1;

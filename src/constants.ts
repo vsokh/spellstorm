@@ -183,6 +183,8 @@ export const COMBAT = {
   BOSS_DMG_REDUCTION_MIN_WAVE: 15,    // only wave 15+ bosses
   BONUS_DMG_SOFT_CAP_THRESHOLD: 6,
   BONUS_DMG_SOFT_CAP_KNEE: 6,
+  BLOODLUST_SPEED_CAP: 1.0,    // max +100% attack speed (20 kills × 5%)
+  BLOODLUST_CRIT_CAP: 0.15,    // max +15% crit chance overflow
 } as const;
 
 export const TIMING = {
@@ -684,7 +686,7 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p: Player) => { p.tauntAura = true; } },
 
   // ── Berserker ──
-  { name: 'Bloodlust', desc: 'Each kill gives +5% attack speed (permanent, stacks)', forClass: 'berserker', color: '#ff4444',
+  { name: 'Bloodlust', desc: 'Each kill: +5% attack speed (cap +100%). After cap: +1% crit (cap +15%)', forClass: 'berserker', color: '#ff4444',
     apply: (p: Player) => { p.bloodlust = true; } },
   { name: 'Undying Rage', desc: 'Cannot die for 3s after reaching 1 HP (once per wave)', forClass: 'berserker', color: '#ff4444',
     apply: (p: Player) => { p.undyingRage = (p.undyingRage || 0) + 1; } },
