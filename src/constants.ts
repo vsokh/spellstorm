@@ -191,6 +191,14 @@ export const COMBAT = {
   BONUS_DMG_SOFT_CAP_KNEE: 6,
   BLOODLUST_SPEED_CAP: 1.0,    // max +100% attack speed (20 kills × 5%)
   BLOODLUST_CRIT_CAP: 0.15,    // max +15% crit chance overflow
+  // Elite enemies (wave 13+)
+  ELITE_WAVE_THRESHOLD: 13,       // wave where elites start appearing
+  ELITE_WAVE2_THRESHOLD: 17,      // wave where elite chance increases
+  ELITE_CHANCE: 0.1,              // 10% chance at wave 13+
+  ELITE_CHANCE_WAVE2: 0.2,        // 20% chance at wave 17+
+  ELITE_HP_MULT: 2.5,             // 2.5x HP
+  ELITE_DMG_MULT: 1.3,            // 1.3x damage
+  ELITE_XP_MULT: 2,               // 2x XP on death
 } as const;
 
 export const TIMING = {

@@ -19,6 +19,7 @@ import {
   TIME_SCALING_FACTOR,
   ENEMY_HP_WAVE_MULT,
   CO_OP_HP_MULTIPLIER,
+  COMBAT,
 } from '../constants';
 
 import { sfx } from '../audio';
@@ -86,6 +87,9 @@ export function spawnEnemy(state: GameState, type: string, hpScale: number, spdS
   else { ex = -20; ey = rand(30, ROOM_HEIGHT - 30); }
 
   const hp = Math.max(1, Math.ceil((et.hp + hpScale - 1) * timeMul));
+  const isElite = !et.boss && state.wave >= COMBAT.ELITE_WAVE_THRESHOLD &&
+    Math.random() < (state.wave >= COMBAT.ELITE_WAVE2_THRESHOLD ? COMBAT.ELITE_CHANCE_WAVE2 : COMBAT.ELITE_CHANCE);
+  const finalHp = isElite ? Math.ceil(hp * COMBAT.ELITE_HP_MULT) : hp;
   state.enemies.push({
     id: nextEnemyId(state),
     type,
@@ -93,8 +97,8 @@ export function spawnEnemy(state: GameState, type: string, hpScale: number, spdS
     y: ey,
     vx: 0,
     vy: 0,
-    hp,
-    maxHp: hp,
+    hp: finalHp,
+    maxHp: finalHp,
     alive: true,
     atkTimer: et.atkCd * Math.random() + 0.5,
     target: Math.floor(Math.random() * 2),
@@ -108,11 +112,12 @@ export function spawnEnemy(state: GameState, type: string, hpScale: number, spdS
     _owner: 0,
     _lifespan: 0,
     _spdMul: spdScale,
-    _dmgMul: timeMul,
+    _dmgMul: isElite ? timeMul * COMBAT.ELITE_DMG_MULT : timeMul,
     _teleportTimer: 0,
     _hitFlash: 0,
     _deathTimer: -1,
     _atkAnim: 0,
+    _elite: isElite,
     _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
   });
 }
@@ -151,6 +156,7 @@ export function startWave(state: GameState): void {
       _dmgMul: baseTimeMul,
       _teleportTimer: 0,
       _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
+      _elite: false,
       _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
     });
     // Elite guard — spawn 11 mixed elites
@@ -201,6 +207,7 @@ export function startWave(state: GameState): void {
       _dmgMul: baseTimeMul,
       _teleportTimer: 0,
       _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
+      _elite: false,
       _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
     });
     // Minions trickle-spawn over 10 seconds
@@ -390,6 +397,7 @@ export function createFriendlyEnemy(state: GameState, x: number, y: number, owne
     _hitFlash: 0,
     _deathTimer: -1,
     _atkAnim: 0,
+    _elite: false,
     _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
   };
 }

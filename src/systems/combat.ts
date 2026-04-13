@@ -200,7 +200,8 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
       }
     } else {
       const gemCount = 3 + Math.floor(Math.random() * 4); // 3-6 gems
-      const xpPerGem = Math.max(1, Math.ceil(et.xp / gemCount));
+      const baseXp = e._elite ? et.xp * COMBAT.ELITE_XP_MULT : et.xp;
+      const xpPerGem = Math.max(1, Math.ceil(baseXp / gemCount));
       for (let i = 0; i < gemCount; i++) {
         state.pickups.push({
           x: e.x + rand(-15, 15), y: e.y + rand(-15, 15),
@@ -349,6 +350,7 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
           _dmgMul: e._dmgMul || 1,
           _teleportTimer: 0,
           _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
+          _elite: false,
           _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
         });
       }

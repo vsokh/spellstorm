@@ -367,6 +367,9 @@ export interface Enemy {
   _dmgReductionTimer: number;    // countdown timer (starts at 3, counts to 0)
   _dmgReductionTriggered: boolean; // true once triggered (prevents re-trigger)
 
+  // Elite variant flag
+  _elite: boolean;
+
   // Network interpolation (guest only)
   _targetX?: number;
   _targetY?: number;
