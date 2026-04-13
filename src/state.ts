@@ -401,6 +401,7 @@ export function toWorld(state: GameState, sx: number, sy: number): { x: number; 
 export function spawnParticles(
   state: GameState, x: number, y: number, col: string, n: number, scale: number = 1
 ): void {
+  if (state.particles.length >= 150) return;
   for (let i = 0; i < n; i++) {
     const a = Math.random() * Math.PI * 2;
     const s = (25 + Math.random() * 100) * scale;

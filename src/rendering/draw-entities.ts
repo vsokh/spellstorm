@@ -75,11 +75,9 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     ctx.beginPath(); ctx.arc(x, y, S * 0.5, 0, Math.PI * 2); ctx.fill();
 
     // Outline glow
-    ctx.shadowColor = glow; ctx.shadowBlur = 8;
     ctx.strokeStyle = `rgba(255,100,0,0.4)`;
     ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.stroke();
-    ctx.shadowBlur = 0;
 
   } else if (clsKey === 'cryomancer') {
     // ── CRYOMANCER: crystal with refraction lines and frost particles ──
@@ -123,14 +121,12 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     }
 
     // Crystal edge glow
-    ctx.shadowColor = '#44bbff'; ctx.shadowBlur = 6;
     ctx.strokeStyle = 'rgba(100,200,255,0.6)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(x, y - S * 1.2); ctx.lineTo(x + S * 0.8, y);
     ctx.lineTo(x, y + S * 1.2); ctx.lineTo(x - S * 0.8, y);
     ctx.closePath(); ctx.stroke();
-    ctx.shadowBlur = 0;
 
   } else if (clsKey === 'stormcaller') {
     // ── STORMCALLER: pulsing orb with jittery lightning ──
@@ -168,11 +164,9 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     }
 
     // Outline glow
-    ctx.shadowColor = '#bb66ff'; ctx.shadowBlur = 8;
     ctx.strokeStyle = 'rgba(170,100,255,0.3)';
     ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(x, y, S * 0.9, 0, Math.PI * 2); ctx.stroke();
-    ctx.shadowBlur = 0;
 
   } else if (clsKey === 'arcanist') {
     // ── ARCANIST: floating orb with rune ring and trailing particles ──
@@ -220,11 +214,9 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     }
 
     // Outline glow
-    ctx.shadowColor = glow; ctx.shadowBlur = 6;
     ctx.strokeStyle = 'rgba(255,80,160,0.3)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(x, y, S * 0.8, 0, Math.PI * 2); ctx.stroke();
-    ctx.shadowBlur = 0;
 
   } else if (clsKey === 'necromancer') {
     // ── NECROMANCER: skull with green flame eyes and bobbing jaw ──
@@ -272,11 +264,9 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     }
 
     // Outline glow
-    ctx.shadowColor = '#22ff22'; ctx.shadowBlur = 6;
     ctx.strokeStyle = 'rgba(50,200,50,0.3)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(x, y - S * 0.1, S * 0.9, 0, Math.PI * 2); ctx.stroke();
-    ctx.shadowBlur = 0;
 
   } else if (clsKey === 'chronomancer') {
     // ── CHRONOMANCER: clock with tick marks and smoothly sweeping hands ──
@@ -322,11 +312,9 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     ctx.beginPath(); ctx.arc(x, y, S * 0.08, 0, Math.PI * 2); ctx.fill();
 
     // Outline glow
-    ctx.shadowColor = '#ffcc44'; ctx.shadowBlur = 5;
     ctx.strokeStyle = 'rgba(255,200,60,0.3)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.stroke();
-    ctx.shadowBlur = 0;
 
   } else if (clsKey === 'knight') {
     // ── KNIGHT: bulky shield with metallic sheen and glowing cross ──
@@ -352,11 +340,9 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     ctx.stroke();
 
     // Glowing cross emblem
-    ctx.shadowColor = '#aaccff'; ctx.shadowBlur = 4;
     ctx.fillStyle = '#ddeeff';
     ctx.fillRect(x - 2, y - S * 0.5, 4, S);
     ctx.fillRect(x - S * 0.35, y - 2, S * 0.7, 4);
-    ctx.shadowBlur = 0;
 
     // Metallic highlight streak
     ctx.fillStyle = 'rgba(255,255,255,0.15)';
@@ -368,7 +354,6 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     ctx.closePath(); ctx.fill();
 
     // Outline glow
-    ctx.shadowColor = '#778899'; ctx.shadowBlur = 5;
     ctx.strokeStyle = 'rgba(150,180,210,0.3)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -379,7 +364,6 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     ctx.lineTo(x - S * 0.7, y + S * 0.8);
     ctx.lineTo(x - S * 0.9, y - S * 0.3);
     ctx.closePath(); ctx.stroke();
-    ctx.shadowBlur = 0;
 
   } else if (clsKey === 'berserker') {
     // ── BERSERKER: jagged bulky body with pulsing spikes ──
@@ -429,7 +413,6 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     ctx.fillRect(x + S * 0.2, y - S * 0.15, S * 0.12, S * 0.08);
 
     // Outline glow (red/orange)
-    ctx.shadowColor = furyActive ? '#ff4400' : '#cc2222'; ctx.shadowBlur = furyActive ? 10 : 4;
     ctx.strokeStyle = `rgba(255,${furyActive ? 100 : 50},${furyActive ? 50 : 30},0.4)`;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -440,7 +423,6 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
               : ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
     }
     ctx.closePath(); ctx.stroke();
-    ctx.shadowBlur = 0;
 
   } else if (clsKey === 'paladin') {
     // ── PALADIN: warm glowing body with halo light rays ──
@@ -482,11 +464,9 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     }
 
     // Holy cross
-    ctx.shadowColor = '#ffffcc'; ctx.shadowBlur = 3;
     ctx.strokeStyle = '#ffffcc'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(x, y - S * 0.5); ctx.lineTo(x, y + S * 0.5); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(x - S * 0.35, y - S * 0.1); ctx.lineTo(x + S * 0.35, y - S * 0.1); ctx.stroke();
-    ctx.shadowBlur = 0;
 
   } else if (clsKey === 'ranger') {
     // ── RANGER: hooded figure with depth shading and quiver ──
@@ -537,7 +517,6 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     }
 
     // Outline glow
-    ctx.shadowColor = glow; ctx.shadowBlur = 4;
     ctx.strokeStyle = 'rgba(100,150,50,0.3)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -545,7 +524,6 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     ctx.lineTo(x + S * 0.9, y + S * 0.8);
     ctx.lineTo(x - S * 0.9, y + S * 0.8);
     ctx.closePath(); ctx.stroke();
-    ctx.shadowBlur = 0;
 
   } else if (clsKey === 'druid') {
     // ── DRUID: multi-layered swaying leaves with parallax ──
@@ -601,7 +579,6 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     }
 
     // Outline glow
-    ctx.shadowColor = '#44dd22'; ctx.shadowBlur = 5;
     ctx.strokeStyle = 'rgba(60,180,30,0.25)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -610,7 +587,6 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     ctx.quadraticCurveTo(x + sway2 * 0.3, y + S * 0.6, x - S * 0.3 - sway2 * 0.5, y + S * 1.0);
     ctx.quadraticCurveTo(x - S * 1.2 - sway2, y - S * 0.3, x + sway2, y - S * 1.2);
     ctx.closePath(); ctx.stroke();
-    ctx.shadowBlur = 0;
 
   } else if (clsKey === 'warlock') {
     // ── WARLOCK: dark robe with energy wisps and trailing eyes ──
@@ -664,7 +640,6 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     }
 
     // Outline glow
-    ctx.shadowColor = '#8833cc'; ctx.shadowBlur = 6;
     ctx.strokeStyle = 'rgba(120,40,180,0.3)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -674,7 +649,6 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     ctx.lineTo(x - S * 0.9, y + S * 1.0);
     ctx.lineTo(x - S * 0.7, y - S * 0.2);
     ctx.closePath(); ctx.stroke();
-    ctx.shadowBlur = 0;
 
   } else if (clsKey === 'monk') {
     // ── MONK: rotating yin-yang with chi energy ring ──
@@ -726,11 +700,9 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     ctx.restore();
 
     // Outline glow
-    ctx.shadowColor = '#ccaa44'; ctx.shadowBlur = 4;
     ctx.strokeStyle = 'rgba(200,170,60,0.25)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.stroke();
-    ctx.shadowBlur = 0;
 
   } else if (clsKey === 'engineer') {
     // ── ENGINEER: goggled figure with lens flare and sparking gear ──
@@ -793,11 +765,9 @@ function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: number, angl
     }
 
     // Outline glow
-    ctx.shadowColor = glow; ctx.shadowBlur = 4;
     ctx.strokeStyle = 'rgba(200,120,30,0.3)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.stroke();
-    ctx.shadowBlur = 0;
 
   } else {
     // Default fallback (gradient body)
@@ -947,10 +917,8 @@ function drawWeapon(ctx: CanvasRenderingContext2D, x: number, y: number, angle: 
     ctx.fillStyle = orbG;
     ctx.beginPath(); ctx.arc(ex, ey, 5, 0, Math.PI * 2); ctx.fill();
     // Glow
-    ctx.shadowColor = color; ctx.shadowBlur = 6;
     ctx.fillStyle = color;
     ctx.beginPath(); ctx.arc(ex, ey, 2, 0, Math.PI * 2); ctx.fill();
-    ctx.shadowBlur = 0;
     return;
   }
 }

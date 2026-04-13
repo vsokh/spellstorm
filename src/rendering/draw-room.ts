@@ -18,7 +18,7 @@ interface AmbientMote {
 }
 
 const ambientMotes: AmbientMote[] = [];
-const MOTE_COUNT = 40;
+const MOTE_COUNT = 18;
 
 function ensureMotes(): void {
   while (ambientMotes.length < MOTE_COUNT) {

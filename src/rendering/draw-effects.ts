@@ -16,13 +16,19 @@ export function updateFx(state: GameState, dt: number): void {
     p.vx *= 0.94;
     p.vy *= 0.94;
     p.life -= dt * 2.2;
-    if (p.life <= 0) state.particles.splice(i, 1);
+    if (p.life <= 0) {
+      state.particles[i] = state.particles[state.particles.length - 1];
+      state.particles.pop();
+    }
   }
 
   // Trails
   for (let i = state.trails.length - 1; i >= 0; i--) {
     state.trails[i].life -= dt * 4;
-    if (state.trails[i].life <= 0) state.trails.splice(i, 1);
+    if (state.trails[i].life <= 0) {
+      state.trails[i] = state.trails[state.trails.length - 1];
+      state.trails.pop();
+    }
   }
 
   // Shockwaves
@@ -30,7 +36,10 @@ export function updateFx(state: GameState, dt: number): void {
     const s = state.shockwaves[i];
     s.radius += dt * 200;
     s.life -= dt * 2.5;
-    if (s.life <= 0) state.shockwaves.splice(i, 1);
+    if (s.life <= 0) {
+      state.shockwaves[i] = state.shockwaves[state.shockwaves.length - 1];
+      state.shockwaves.pop();
+    }
   }
 
   // Floating text
@@ -38,13 +47,19 @@ export function updateFx(state: GameState, dt: number): void {
     const t = state.texts[i];
     t.y += t.vy * dt;
     t.life -= dt;
-    if (t.life <= 0) state.texts.splice(i, 1);
+    if (t.life <= 0) {
+      state.texts[i] = state.texts[state.texts.length - 1];
+      state.texts.pop();
+    }
   }
 
   // Beams
   for (let i = state.beams.length - 1; i >= 0; i--) {
     state.beams[i].life -= dt;
-    if (state.beams[i].life <= 0) state.beams.splice(i, 1);
+    if (state.beams[i].life <= 0) {
+      state.beams[i] = state.beams[state.beams.length - 1];
+      state.beams.pop();
+    }
   }
 
   // Screen shake
@@ -77,8 +92,6 @@ export function drawBeams(ctx: CanvasRenderingContext2D, state: GameState): void
     ctx.globalAlpha = life * 0.3;
     ctx.strokeStyle = b.color;
     ctx.lineWidth = b.width + 8;
-    ctx.shadowColor = b.color;
-    ctx.shadowBlur = 15;
     ctx.beginPath();
     ctx.moveTo(b.x, b.y);
     ctx.lineTo(ex, ey);
@@ -87,7 +100,6 @@ export function drawBeams(ctx: CanvasRenderingContext2D, state: GameState): void
     // Layer 2: mid beam
     ctx.globalAlpha = life * 0.6;
     ctx.lineWidth = b.width + 3;
-    ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.moveTo(b.x, b.y);
     ctx.lineTo(ex, ey);
@@ -97,13 +109,10 @@ export function drawBeams(ctx: CanvasRenderingContext2D, state: GameState): void
     ctx.globalAlpha = life * 0.8;
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = b.width * 0.5;
-    ctx.shadowBlur = 4;
     ctx.beginPath();
     ctx.moveTo(b.x, b.y);
     ctx.lineTo(ex, ey);
     ctx.stroke();
-
-    ctx.shadowBlur = 0;
   }
   ctx.globalAlpha = 1;
 }
@@ -131,7 +140,7 @@ export function drawZones(ctx: CanvasRenderingContext2D, state: GameState): void
       // Energy crackle: 3 short jagged line segments
       ctx.strokeStyle = '#ffdd66';
       ctx.lineWidth = 1.5;
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 2; i++) {
         // Deterministic pseudo-random flicker using sin
         const flicker = Math.sin(t * 7.3 + i * 17.1);
         if (flicker > 0.2) {
@@ -233,7 +242,7 @@ export function drawZones(ctx: CanvasRenderingContext2D, state: GameState): void
       // Ice crystal particles
       ctx.fillStyle = '#cceeFF';
       ctx.globalAlpha = 0.5;
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 3; i++) {
         const a = t * 0.5 + (i / 6) * Math.PI * 2;
         const d = z.radius * (0.3 + 0.2 * Math.sin(t + i));
         ctx.beginPath();
@@ -252,7 +261,7 @@ export function drawZones(ctx: CanvasRenderingContext2D, state: GameState): void
       ctx.globalAlpha = 0.25;
       ctx.beginPath(); ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2); ctx.stroke();
       // Rising embers
-      if (Math.random() < 0.4) {
+      if (Math.random() < 0.15) {
         spawnParticles(state, z.x + rand(-z.radius * 0.8, z.radius * 0.8), z.y + rand(-z.radius * 0.8, z.radius * 0.8), '#ff8833', 1, 0.2);
       }
     } else if (isHeal) {
@@ -267,7 +276,7 @@ export function drawZones(ctx: CanvasRenderingContext2D, state: GameState): void
       // Rising + sparkles
       ctx.fillStyle = '#ffffcc';
       ctx.globalAlpha = 0.6;
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 2; i++) {
         const sx = z.x + Math.sin(t * 2 + i * 2.1) * z.radius * 0.5;
         const sy = z.y - (t * 20 + i * 30) % z.radius;
         ctx.beginPath(); ctx.arc(sx, sy, 1.5, 0, Math.PI * 2); ctx.fill();
@@ -284,7 +293,7 @@ export function drawZones(ctx: CanvasRenderingContext2D, state: GameState): void
     }
     ctx.globalAlpha = 1;
 
-    if (Math.random() < 0.15) {
+    if (Math.random() < 0.05) {
       spawnParticles(state, z.x + rand(-z.radius, z.radius), z.y + rand(-z.radius, z.radius), z.color, 1, 0.15);
     }
   }
@@ -372,32 +381,24 @@ export function drawFx(ctx: CanvasRenderingContext2D, state: GameState): void {
     const alpha = t.life * t.life * 0.6;
     ctx.globalAlpha = alpha;
     ctx.fillStyle = t.color;
-    ctx.shadowColor = t.color;
-    ctx.shadowBlur = 4 * t.life;
     ctx.beginPath();
     ctx.arc(t.x, t.y, t.r * t.life, 0, Math.PI * 2);
     ctx.fill();
   }
-  ctx.shadowBlur = 0;
   ctx.globalAlpha = 1;
 
   // Particles
   for (const p of state.particles) {
     ctx.globalAlpha = p.life;
     ctx.fillStyle = p.color;
-    ctx.shadowColor = p.color;
-    ctx.shadowBlur = 6 * p.life;
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
     ctx.fill();
   }
-  ctx.shadowBlur = 0;
   ctx.globalAlpha = 1;
 
   // Shockwaves
   for (const s of state.shockwaves) {
-    ctx.shadowColor = s.color;
-    ctx.shadowBlur = 10 * s.life;
     ctx.globalAlpha = s.life * 0.4;
     ctx.strokeStyle = s.color;
     ctx.lineWidth = 3 * s.life;
@@ -410,7 +411,6 @@ export function drawFx(ctx: CanvasRenderingContext2D, state: GameState): void {
     ctx.arc(s.x, s.y, s.radius * 0.7, 0, Math.PI * 2);
     ctx.stroke();
   }
-  ctx.shadowBlur = 0;
   ctx.globalAlpha = 1;
 
   // Floating text with damage-scaled sizing

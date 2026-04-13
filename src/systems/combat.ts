@@ -289,7 +289,7 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
     }
 
     // Scale particles with combo
-    const particleCount = 18 + Math.min(state.comboCount, 30);
+    const particleCount = 8 + Math.min(state.comboCount, 12);
     spawnParticles(state, e.x, e.y, et.color, particleCount, 1);
     // Scale shockwave radius with combo
     const shockR = 25 + Math.min(state.comboCount * 0.5, 20);
