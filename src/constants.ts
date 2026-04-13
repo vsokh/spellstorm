@@ -508,4 +508,40 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p: Player) => { p.laserTurret = true; } },
   { name: 'Self-Destruct', desc: 'Turrets explode when they expire (6 dmg, 80px radius)', forClass: 'engineer', color: '#dd8833',
     apply: (p: Player) => { p.turretExplode = true; } },
+
+  // ══════════════════════════════════════
+  //     EVOLUTION UPGRADES
+  // ══════════════════════════════════════
+  // Evolutions appear when their parent stackable upgrade reaches max stacks.
+  // They are NOT offered in the normal upgrade pool.
+
+  { name: 'Spell Mastery', desc: 'All spells deal +5 damage and cooldowns -30%', isEvolution: true, evolvesFrom: 0, color: '#ffaa00',
+    apply: (p: Player, _s: number) => { for (const s of p.cls.spells) { s.dmg = (s.dmg || 0) + 5; s.cd *= 0.7; } } },
+
+  { name: 'Primary Overload', desc: 'Primary +6 damage and explodes on hit (3 AoE dmg)', isEvolution: true, evolvesFrom: 1, color: '#ffaa00',
+    apply: (p: Player, _s: number) => { p.cls.spells[0].dmg += 6; p.cls.spells[0].explode = (p.cls.spells[0].explode || 0) + 40; } },
+
+  { name: 'Lethal Precision', desc: 'Crits deal 3x damage and +30% crit chance', isEvolution: true, evolvesFrom: 4, color: '#ffaa00',
+    apply: (p: Player, _s: number) => { p.critChance = (p.critChance || 0) + 0.30; p.critMul = 3; } },
+
+  { name: 'Void Lance', desc: 'Primary pierces all enemies and gains +3 damage', isEvolution: true, evolvesFrom: 6, color: '#ffaa00',
+    apply: (p: Player, _s: number) => { p.pierce = (p.pierce || 0) + 99; p.cls.spells[0].dmg += 3; } },
+
+  { name: 'Chain Annihilation', desc: 'Chain hits deal full damage and +3 extra jumps', isEvolution: true, evolvesFrom: 10, color: '#ffaa00',
+    apply: (p: Player, _s: number) => { p.chainHit = (p.chainHit || 0) + 3; p.chainFullDmg = true; } },
+
+  { name: 'Regeneration', desc: '+5 max HP, regenerate 1 HP every 3 seconds', isEvolution: true, evolvesFrom: 23, color: '#ffaa00',
+    apply: (p: Player, _s: number) => { p.maxHp += 5; p.hp = p.maxHp; p.hpRegen = (p.hpRegen || 0) + 0.333; } },
+
+  { name: 'Fortress', desc: '+3 armor and enemies take 3 damage when hitting you', isEvolution: true, evolvesFrom: 24, color: '#ffaa00',
+    apply: (p: Player, _s: number) => { p.armor = (p.armor || 0) + 3; p.thorns = (p.thorns || 0) + 3; } },
+
+  { name: 'Shadow Step', desc: '+30% dodge chance and +25% move speed', isEvolution: true, evolvesFrom: 29, color: '#ffaa00',
+    apply: (p: Player, _s: number) => { p.dodgeChance = (p.dodgeChance || 0) + 0.30; p.moveSpeed *= 1.25; } },
+
+  { name: 'Storm Lord', desc: 'Lightning chains to +5 enemies and primary +2 damage', isEvolution: true, evolvesFrom: 71, color: '#ffaa00', forClass: 'stormcaller',
+    apply: (p: Player, _s: number) => { p.chainLightning = (p.chainLightning || 0) + 5; p.cls.spells[0].dmg += 2; } },
+
+  { name: 'Lich King', desc: 'Raise dead chance +50% — nearly every kill raises a minion', isEvolution: true, evolvesFrom: 77, color: '#ffaa00', forClass: 'necromancer',
+    apply: (p: Player, _s: number) => { p.raiseDead = (p.raiseDead || 0) + 0.50; } },
 ];

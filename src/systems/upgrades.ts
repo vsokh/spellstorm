@@ -20,11 +20,14 @@ export function showUpgradeScreen(state: GameState): void {
   const clsKey = localPlayer?.clsKey || '';
   const taken = localPlayer?.takenUpgrades || new Map<number, number>();
 
-  // Filter: skip other classes, skip already-taken non-stackable
+  // Filter: skip other classes, skip already-taken non-stackable, handle evolutions
   const genericIndices: number[] = [];
   const classIndices: number[] = [];
+
   for (let i = 0; i < UPGRADE_POOL.length; i++) {
     const up = UPGRADE_POOL[i];
+    // Skip evolution upgrades in normal selection — they're injected below
+    if (up.isEvolution) continue;
     // Skip if already taken and not stackable
     if (taken.has(i) && !up.stackable) continue;
     // Skip if stackable but at max stacks
@@ -34,6 +37,20 @@ export function showUpgradeScreen(state: GameState): void {
 
     if (up.forClass === clsKey) classIndices.push(i);
     else genericIndices.push(i);
+  }
+
+  // Inject evolution upgrades whose parent is maxed and not already taken
+  for (let i = 0; i < UPGRADE_POOL.length; i++) {
+    const up = UPGRADE_POOL[i];
+    if (!up.isEvolution || up.evolvesFrom === undefined) continue;
+    if (taken.has(i)) continue; // already taken this evolution
+    if (up.forClass && up.forClass !== clsKey) continue;
+    const parentStacks = taken.get(up.evolvesFrom) || 0;
+    const parent = UPGRADE_POOL[up.evolvesFrom];
+    if (parent.maxStacks && parentStacks >= parent.maxStacks) {
+      if (up.forClass === clsKey) classIndices.push(i);
+      else genericIndices.push(i);
+    }
   }
 
   const indices: number[] = [];
@@ -83,13 +100,17 @@ function showUpgradeUI(state: GameState, indices: number[]): void {
     const card = document.createElement('div');
     card.className = 'upgrade-card';
     const isClassSpecific = !!up.forClass;
-    const nameColor = up.color || (isClassSpecific ? '#ffcc44' : '#ddcc66');
-    const classTag = isClassSpecific ? `<span style="font-size:8px;color:${up.color || '#888'};opacity:.7"> ★ CLASS</span>` : '';
+    const isEvo = !!up.isEvolution;
+    const nameColor = isEvo ? '#ffaa00' : up.color || (isClassSpecific ? '#ffcc44' : '#ddcc66');
+    const classTag = isClassSpecific && !isEvo ? `<span style="font-size:8px;color:${up.color || '#888'};opacity:.7"> ★ CLASS</span>` : '';
+    const evoTag = isEvo ? `<span style="font-size:8px;color:#ffaa00;opacity:.9"> ⚡ EVOLUTION</span>` : '';
     const count = taken.get(idx) || 0;
-    const stackCount = count > 0 ? ` <span style="font-size:9px;color:#88aa66">${count}/${up.maxStacks || '∞'}</span>` : '';
-    const stackTag = up.stackable ? `<span style="font-size:8px;color:#556644;opacity:.6"> ×${up.maxStacks || '∞'}</span>` : '';
-    card.innerHTML = `<div class="uname" style="color:${nameColor}">${up.name}${classTag}${stackTag}${stackCount}</div><div class="udesc">${up.desc}</div>`;
-    if (isClassSpecific) card.style.borderColor = (up.color || '#ffcc44') + '44';
+    const stackInfo = up.stackable && up.maxStacks
+      ? ` <span style="font-size:9px;color:#88aa66">${count}/${up.maxStacks}</span>`
+      : up.stackable ? ` <span style="font-size:8px;color:#556644;opacity:.6"> ×${up.maxStacks || '∞'}</span>` : '';
+    card.innerHTML = `<div class="uname" style="color:${nameColor}">${up.name}${classTag}${evoTag}${stackInfo}</div><div class="udesc">${up.desc}</div>`;
+    if (isClassSpecific && !isEvo) card.style.borderColor = (up.color || '#ffcc44') + '44';
+    if (isEvo) card.style.borderColor = '#ffaa0066';
     card.onclick = () => {
       if (state.upgradePickedLocal) return;
       state.upgradePickedLocal = true;

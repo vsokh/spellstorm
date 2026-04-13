@@ -59,6 +59,10 @@ export function updatePlayers(state: GameState, dt: number): void {
 
     // Mana regen
     p.mana = Math.min(p.maxMana, p.mana + p.manaRegen * dt);
+    // HP regen from evolution upgrades
+    if (p.hpRegen && p.hpRegen > 0) {
+      p.hp = Math.min(p.maxHp, p.hp + p.hpRegen * dt);
+    }
     // Cooldowns
     for (let i = 0; i < 4; i++) { if (p.cd[i] > 0) p.cd[i] -= dt; }
     if (p.iframes > 0) p.iframes -= dt;

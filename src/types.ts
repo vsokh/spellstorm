@@ -204,6 +204,9 @@ export interface Player {
   secondWind: number;
   thorns: number;
   dodgeChance: number;
+  critMul: number;
+  hpRegen: number;
+  chainFullDmg: boolean;
   hasDash: boolean;
   dashCd: number;
   momentum: boolean;
@@ -490,6 +493,10 @@ export interface UpgradeDef {
   stackable?: boolean;
   /** Maximum number of times this upgrade can be stacked (only relevant if stackable) */
   maxStacks?: number;
+  /** Index in UPGRADE_POOL this evolves FROM (only on evolution upgrades) */
+  evolvesFrom?: number;
+  /** If true, this is an evolution — never offered normally */
+  isEvolution?: boolean;
 }
 
 // ── Network message types ──

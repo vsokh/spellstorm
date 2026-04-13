@@ -50,7 +50,7 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
   if (p && p._rageDmgMul > 1) dmg = Math.ceil(dmg * p._rageDmgMul);
   // Critical strike
   if (p && p.critChance && Math.random() < p.critChance) {
-    dmg *= 2;
+    dmg *= (p.critMul || 2);
     spawnText(state, e.x, e.y - 25, 'CRIT!', '#ffcc44');
   }
   // Momentum bonus
@@ -293,7 +293,7 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
         if (d < 120 && d < nd) { nd = d; nearest = e2; }
       }
       if (nearest) {
-        damageEnemy(state, nearest, Math.max(1, Math.floor(dmg * 0.5)), pIdx);
+        damageEnemy(state, nearest, Math.max(1, Math.floor(p.chainFullDmg ? dmg : dmg * 0.5)), pIdx);
         state.beams.push({
           x: e.x, y: e.y,
           angle: Math.atan2(nearest.y - e.y, nearest.x - e.x),
