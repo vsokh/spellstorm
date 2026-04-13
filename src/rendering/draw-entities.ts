@@ -957,12 +957,43 @@ function drawWeapon(ctx: CanvasRenderingContext2D, x: number, y: number, angle: 
 
 export function drawWizard(ctx: CanvasRenderingContext2D, state: GameState): void {
   for (const p of state.players) {
-    if (!p.alive) continue;
-    if (p.iframes > 0 && Math.sin(state.time * 25) > 0) continue;
-
     const cls = p.cls;
 
-    // Aura glow
+    // ── Death fade animation ──
+    if (!p.alive) {
+      if (p._animDeathFade > 0) {
+        p._animDeathFade -= 0.016; // ~60fps decay
+        ctx.save();
+        ctx.globalAlpha = p._animDeathFade;
+        // Scale down as fading
+        const deathScale = 0.5 + 0.5 * p._animDeathFade;
+        ctx.translate(p.x, p.y);
+        ctx.scale(deathScale, deathScale);
+        ctx.translate(-p.x, -p.y);
+        drawClassBody(ctx, p.x, p.y, p.angle, p.clsKey, cls.color, cls.glow, state.time, p);
+        ctx.restore();
+      }
+      continue;
+    }
+
+    if (p.iframes > 0 && Math.sin(state.time * 25) > 0) continue;
+
+    // ── Compute animation offsets ──
+    const idleBob = p._animMoving ? 0 : Math.sin(state.time * 2.5) * 2;
+
+    let scaleX = 1.0;
+    let scaleY = 1.0;
+    let lean = 0;
+    if (p._animMoving) {
+      // Subtle lean in movement direction
+      lean = p.vx * 0.002;
+      // Running "bounce" squash-stretch
+      const bounce = Math.sin(state.time * 12) * 0.04;
+      scaleX = 1.0 - bounce;
+      scaleY = 1.0 + bounce;
+    }
+
+    // ── Aura glow (at actual position, no bob) ──
     const ag = ctx.createRadialGradient(p.x, p.y, WIZARD_SIZE * 0.5, p.x, p.y, WIZARD_SIZE * 2.5);
     ag.addColorStop(0, cls.glow + '22');
     ag.addColorStop(1, 'transparent');
@@ -971,12 +1002,46 @@ export function drawWizard(ctx: CanvasRenderingContext2D, state: GameState): voi
     ctx.arc(p.x, p.y, WIZARD_SIZE * 2.5, 0, Math.PI * 2);
     ctx.fill();
 
+    // ── Draw body + weapon with lean/squash-stretch and idle bob ──
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(lean);
+    ctx.scale(scaleX, scaleY);
+    ctx.translate(-p.x, -p.y);
+
     // Class-specific body (pass player data for fury/HP tracking)
-    drawClassBody(ctx, p.x, p.y, p.angle, p.clsKey, cls.color, cls.glow, state.time, p);
+    drawClassBody(ctx, p.x, p.y + idleBob, p.angle, p.clsKey, cls.color, cls.glow, state.time, p);
 
     // Class-specific weapon / aim indicator
     const scale = CLASS_SCALE[p.clsKey] || 1.0;
-    drawWeapon(ctx, p.x, p.y, p.angle, p.clsKey, cls.color, WIZARD_SIZE * scale);
+    drawWeapon(ctx, p.x, p.y + idleBob, p.angle, p.clsKey, cls.color, WIZARD_SIZE * scale);
+
+    ctx.restore();
+
+    // ── Cast flash (at actual position) ──
+    if (p._animCastFlash > 0) {
+      const castAlpha = Math.min(1, p._animCastFlash * 4); // quick fade
+      const cg = ctx.createRadialGradient(p.x, p.y, WIZARD_SIZE * 0.3, p.x, p.y, WIZARD_SIZE * 3);
+      cg.addColorStop(0, cls.color + Math.floor(castAlpha * 100).toString(16).padStart(2, '0'));
+      cg.addColorStop(1, 'transparent');
+      ctx.fillStyle = cg;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, WIZARD_SIZE * 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // ── Hit flash overlay (at bobbed position) ──
+    if (p._animHitFlash > 0) {
+      ctx.save();
+      const hitAlpha = Math.min(1, p._animHitFlash * 3.3);
+      ctx.globalAlpha = hitAlpha * 0.6;
+      ctx.fillStyle = '#ff3333';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y + idleBob, WIZARD_SIZE * (CLASS_SCALE[p.clsKey] || 1.0), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
 
     // Slow indicator
     if (p.slowTimer > 0) {

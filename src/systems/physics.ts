@@ -41,6 +41,7 @@ export function updatePlayers(state: GameState, dt: number): void {
     if (mvLen > ms) { mvx *= ms / mvLen; mvy *= ms / mvLen; }
     p.vx = mvx;
     p.vy = mvy;
+    p._animMoving = (Math.abs(p.vx) > 1 || Math.abs(p.vy) > 1);
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.x = clamp(p.x, WIZARD_SIZE, ROOM_WIDTH - WIZARD_SIZE);
@@ -66,6 +67,8 @@ export function updatePlayers(state: GameState, dt: number): void {
     // Cooldowns
     for (let i = 0; i < 4; i++) { if (p.cd[i] > 0) p.cd[i] -= dt; }
     if (p.iframes > 0) p.iframes -= dt;
+    if (p._animCastFlash > 0) p._animCastFlash -= dt;
+    if (p._animHitFlash > 0) p._animHitFlash -= dt;
 
     // Storm Shield: lightning strikes random nearby enemy every 1s
     if (p.stormShield) {
@@ -107,6 +110,7 @@ export function updatePlayers(state: GameState, dt: number): void {
     // Primary (LMB)
     if (input.shoot && p.cd[0] <= 0 && p.mana >= sd[0].mana) {
       castSpell(state, p, 0, input.angle);
+      p._animCastFlash = 0.25;
       // Split shot: extra bolts at angles
       if (p.splitShot) {
         for (let ss = 1; ss <= p.splitShot; ss++) {
@@ -125,12 +129,14 @@ export function updatePlayers(state: GameState, dt: number): void {
     // Secondary (RMB)
     if (input.shoot2 && p.cd[1] <= 0 && p.mana >= sd[1].mana) {
       castSpell(state, p, 1, input.angle);
+      p._animCastFlash = 0.25;
     }
 
     // Ability (Q) - only trigger once per press
     if (input.ability && p.cd[2] <= 0 && p.mana >= sd[2].mana && !state.keys[`_q${p.idx}`]) {
       state.keys[`_q${p.idx}`] = true;
       castSpell(state, p, 2, input.angle);
+      p._animCastFlash = 0.25;
     }
     if (!input.ability) state.keys[`_q${p.idx}`] = false;
 
@@ -140,6 +146,7 @@ export function updatePlayers(state: GameState, dt: number): void {
       state.keys[`_r${p.idx}`] = true;
       const wasOverflowed = p.ultOverflow && p.ultCharge >= 200;
       castUltimate(state, p, input.angle);
+      p._animCastFlash = 0.25;
       if (wasOverflowed) {
         // Overflow: cast a second time
         castUltimate(state, p, input.angle);

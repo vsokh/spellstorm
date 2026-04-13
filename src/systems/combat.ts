@@ -349,6 +349,7 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
 
   p.hp -= dmg;
   p.iframes = 0.4;
+  p._animHitFlash = 0.3;
   shake(state, 3);
   spawnParticles(state, p.x, p.y, '#ff4444', 8);
   sfx(SfxName.Hit);
@@ -378,6 +379,7 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
     }
 
     p.alive = false;
+    p._animDeathFade = 1.0;
     spawnParticles(state, p.x, p.y, '#ff6633', 35, 1.3);
     spawnShockwave(state, p.x, p.y, 70, 'rgba(255,100,50,.5)');
     sfx(SfxName.Boom);

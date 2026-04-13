@@ -298,6 +298,12 @@ export interface Player {
   _rageDmgMul: number;
   _shieldWall: number;
   _holyShield: number;
+
+  // Animation state
+  _animCastFlash: number;     // timer for casting glow (decays to 0)
+  _animHitFlash: number;      // timer for hit reaction flash (decays to 0)
+  _animDeathFade: number;     // 1.0 → 0.0 fade out on death (-1 when not dying)
+  _animMoving: boolean;       // true when velocity is non-zero
 }
 
 export interface Enemy {

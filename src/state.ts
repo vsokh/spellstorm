@@ -346,6 +346,10 @@ export function createPlayer(idx: number, clsKey: string): Player {
     _rageDmgMul: 1,
     _shieldWall: 0,
     _holyShield: 0,
+    _animCastFlash: 0,
+    _animHitFlash: 0,
+    _animDeathFade: -1,
+    _animMoving: false,
   };
 }
 
