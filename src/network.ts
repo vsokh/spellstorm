@@ -31,11 +31,28 @@ function isGamePhase(v: unknown): v is GamePhase {
 }
 
 // ═══════════════════════════════════
+//       FRIENDLY ERROR MESSAGES
+// ═══════════════════════════════════
+
+function friendlyPeerError(type: string): string {
+  switch (type) {
+    case 'peer-unavailable': return 'Room not found — check the code and try again';
+    case 'network': return 'Network error — check your internet connection';
+    case 'server-error': return 'Connection server unavailable — try again later';
+    case 'browser-incompatible': return 'Your browser does not support peer connections';
+    case 'disconnected': return 'Disconnected from server — try refreshing';
+    case 'unavailable-id': return 'Room code already in use — try hosting again';
+    default: return 'Connection error: ' + type;
+  }
+}
+
+// ═══════════════════════════════════
 //          NETWORKING
 // ═══════════════════════════════════
 
 let peer: Peer | null = null;
 let conn: DataConnection | null = null;
+let sendFailCount = 0;
 
 // Callbacks set by main.ts to break circular deps
 let onShowSelect: (() => void) | null = null;
@@ -50,6 +67,7 @@ export function setNetworkCallbacks(
 }
 
 export function getConnection(): DataConnection | null {
+  if (conn && !conn.open) return null;
   return conn;
 }
 
@@ -57,8 +75,15 @@ export function sendMessage(state: GameState, msg: NetMessage): void {
   if (!conn || !conn.open) return;
   try {
     conn.send(msg);
-  } catch (_e) {
-    // Silently handle send errors
+    sendFailCount = 0;
+  } catch (e) {
+    console.warn('sendMessage failed:', e);
+    sendFailCount++;
+    if (sendFailCount >= 3) {
+      const errorMsg = document.getElementById('error-msg');
+      if (errorMsg) errorMsg.textContent = 'Connection unstable — messages failing to send';
+      sendFailCount = 0;
+    }
   }
 }
 
@@ -81,7 +106,7 @@ export function hostGame(state: GameState): void {
   try {
     peer = new Peer('wcrawl-' + code);
   } catch (_e) {
-    if (errorMsg) errorMsg.textContent = 'PeerJS error';
+    if (errorMsg) errorMsg.textContent = 'Failed to create room — check your connection';
     return;
   }
 
@@ -141,7 +166,7 @@ export function hostGame(state: GameState): void {
   });
 
   peer.on('error', (e: { type: string }) => {
-    if (errorMsg) errorMsg.textContent = 'Error: ' + e.type;
+    if (errorMsg) errorMsg.textContent = friendlyPeerError(e.type);
   });
 }
 
@@ -166,7 +191,7 @@ export function joinGame(state: GameState): void {
   try {
     peer = new Peer();
   } catch (_e) {
-    if (errorMsg) errorMsg.textContent = 'PeerJS error';
+    if (errorMsg) errorMsg.textContent = 'Failed to connect — check your connection';
     return;
   }
 
@@ -218,7 +243,7 @@ export function joinGame(state: GameState): void {
   });
 
   peer.on('error', (e: { type: string }) => {
-    if (errorMsg) errorMsg.textContent = 'Error: ' + e.type;
+    if (errorMsg) errorMsg.textContent = friendlyPeerError(e.type);
   });
 }
 
@@ -278,7 +303,18 @@ export function sendState(state: GameState): void {
   // Clear the fx queue after copying into the message
   state.pendingFx.length = 0;
 
-  try { conn.send(msg); } catch (_e) { /* silently ignore */ }
+  try {
+    conn.send(msg);
+    sendFailCount = 0;
+  } catch (e) {
+    console.warn('sendState failed:', e);
+    sendFailCount++;
+    if (sendFailCount >= 3) {
+      const errorMsg = document.getElementById('error-msg');
+      if (errorMsg) errorMsg.textContent = 'Connection unstable — messages failing to send';
+      sendFailCount = 0;
+    }
+  }
 }
 
 // ═══════════════════════════════════
@@ -491,5 +527,14 @@ export function sendInput(state: GameState, input: {
   if (!conn || !conn.open || state.mode !== NetworkMode.Guest) return;
   try {
     conn.send({ type: 'input', ...input });
-  } catch (_e) { /* silently ignore */ }
+    sendFailCount = 0;
+  } catch (e) {
+    console.warn('sendInput failed:', e);
+    sendFailCount++;
+    if (sendFailCount >= 3) {
+      const errorMsg = document.getElementById('error-msg');
+      if (errorMsg) errorMsg.textContent = 'Connection unstable — messages failing to send';
+      sendFailCount = 0;
+    }
+  }
 }
