@@ -8,18 +8,8 @@ import { sendMessage } from '../network';
 //       UPGRADE SYSTEM
 // ═══════════════════════════════════
 
-export function showUpgradeScreen(state: GameState): void {
-  state.gamePhase = GamePhase.Upgrade;
-  document.body.classList.remove('in-game');
-  if (document.pointerLockElement) document.exitPointerLock();
-  state.upgradePickedLocal = false;
-  state.upgradePickedRemote = false;
-
-  // Pick 3 upgrades: filter already-taken, guarantee 1 class-specific
-  const localPlayer = state.players[state.localIdx];
-  const clsKey = localPlayer?.clsKey || '';
-  const taken = localPlayer?.takenUpgrades || new Map<number, number>();
-
+/** Generate 3 upgrade indices filtered by class and already-taken upgrades. */
+export function generateUpgradeIndices(clsKey: string, taken: Map<number, number>): number[] {
   // Filter: skip other classes, skip already-taken non-stackable, handle evolutions
   const genericIndices: number[] = [];
   const classIndices: number[] = [];
@@ -68,9 +58,25 @@ export function showUpgradeScreen(state: GameState): void {
     const idx = remaining.splice(pick, 1)[0];
     if (!indices.includes(idx)) indices.push(idx);
   }
+
+  return indices;
+}
+
+export function showUpgradeScreen(state: GameState): void {
+  state.gamePhase = GamePhase.Upgrade;
+  document.body.classList.remove('in-game');
+  if (document.pointerLockElement) document.exitPointerLock();
+  state.upgradePickedLocal = false;
+  state.upgradePickedRemote = false;
+
+  // Pick 3 upgrades filtered by the local player's class and taken upgrades
+  const localPlayer = state.players[state.localIdx];
+  const clsKey = localPlayer?.clsKey || '';
+  const taken = localPlayer?.takenUpgrades || new Map<number, number>();
+  const indices = generateUpgradeIndices(clsKey, taken);
   state.pendingUpgradeChoices = indices;
 
-  // Send choices to guest
+  // Signal upgrade phase to guest (indices are host-specific; guest generates its own)
   if (state.mode === NetworkMode.Host) {
     sendMessage(state, { type: 'upgrade', indices });
   }
@@ -78,13 +84,19 @@ export function showUpgradeScreen(state: GameState): void {
   showUpgradeUI(state, indices);
 }
 
-export function showUpgradeFromHost(state: GameState, indices: number[]): void {
+export function showUpgradeFromHost(state: GameState, _indices: number[]): void {
   state.gamePhase = GamePhase.Upgrade;
   document.body.classList.remove('in-game');
   if (document.pointerLockElement) document.exitPointerLock();
   state.upgradePickedLocal = false;
-  state.pendingUpgradeChoices = indices;
-  showUpgradeUI(state, indices);
+
+  // Generate the guest's OWN upgrade choices based on their class and taken upgrades
+  const localPlayer = state.players[state.localIdx];
+  const clsKey = localPlayer?.clsKey || '';
+  const taken = localPlayer?.takenUpgrades || new Map<number, number>();
+  const guestIndices = generateUpgradeIndices(clsKey, taken);
+  state.pendingUpgradeChoices = guestIndices;
+  showUpgradeUI(state, guestIndices);
 }
 
 function showUpgradeUI(state: GameState, indices: number[]): void {
