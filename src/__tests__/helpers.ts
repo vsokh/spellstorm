@@ -67,6 +67,7 @@ export function createTestState(): GameState {
     lives: 0,
     maxLives: 0,
     pendingFx: [],
+    _nextEnemyId: 1,
   };
 }
 
@@ -82,6 +83,7 @@ export function createTestPlayer(idx: number, clsKey: string): Player {
  */
 export function createTestEnemy(overrides: Partial<import('../types').Enemy> = {}): import('../types').Enemy {
   return {
+    id: 0,
     type: 'slime',
     x: 500,
     y: 350,

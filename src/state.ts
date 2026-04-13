@@ -130,6 +130,9 @@ export interface GameState {
 
   // Network fx queue (host collects, sends to guest)
   pendingFx: NetFxEvent[];
+
+  // Monotonic enemy ID counter (host only)
+  _nextEnemyId: number;
 }
 
 export function createInitialState(): GameState {
@@ -194,6 +197,7 @@ export function createInitialState(): GameState {
     lives: 0,
     maxLives: 0,
     pendingFx: [],
+    _nextEnemyId: 1,
   };
 }
 
@@ -385,6 +389,11 @@ export function createPlayer(idx: number, clsKey: string): Player {
     _animUltTimer: 0,
     respawnTimer: 0,
   };
+}
+
+/** Return and increment the next monotonic enemy ID (host only). */
+export function nextEnemyId(state: GameState): number {
+  return state._nextEnemyId++;
 }
 
 // ═══════════════════════════════════

@@ -319,6 +319,7 @@ export interface Player {
 }
 
 export interface Enemy {
+  id: number;
   type: string;
   x: number;
   y: number;
@@ -596,6 +597,7 @@ export interface NetStatePlayerData {
 }
 
 export interface NetStateEnemyData {
+  i: number;
   t: string;
   x: number;
   y: number;

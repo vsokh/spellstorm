@@ -1,4 +1,4 @@
-import { GameState, dist, rand, spawnParticles, spawnText, shake, flashScreen } from '../state';
+import { GameState, nextEnemyId, dist, rand, spawnParticles, spawnText, shake, flashScreen } from '../state';
 import { GamePhase, PickupType, Enemy, SfxName } from '../types';
 import {
   ROOM_WIDTH,
@@ -84,6 +84,7 @@ export function spawnEnemy(state: GameState, type: string, hpScale: number, spdS
 
   const hp = Math.max(1, Math.ceil((et.hp + hpScale - 1) * timeMul));
   state.enemies.push({
+    id: nextEnemyId(state),
     type,
     x: ex,
     y: ey,
@@ -128,6 +129,7 @@ export function startWave(state: GameState): void {
     const et = ENEMIES['archlord'];
     const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR) * timeMul);
     state.enemies.push({
+      id: nextEnemyId(state),
       type: 'archlord',
       x: ROOM_WIDTH / 2,
       y: 60,
@@ -170,6 +172,7 @@ export function startWave(state: GameState): void {
     const et = ENEMIES[bossType];
     const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR) * timeMul);
     state.enemies.push({
+      id: nextEnemyId(state),
       type: bossType,
       x: ROOM_WIDTH / 2,
       y: 60,
@@ -346,8 +349,9 @@ export function updateWaves(state: GameState, dt: number): void {
 //       FRIENDLY ENEMY (necro ult)
 // ═══════════════════════════════════
 
-export function createFriendlyEnemy(x: number, y: number, ownerIdx: number): Enemy {
+export function createFriendlyEnemy(state: GameState, x: number, y: number, ownerIdx: number): Enemy {
   return {
+    id: nextEnemyId(state),
     type: '_ally',
     x,
     y,

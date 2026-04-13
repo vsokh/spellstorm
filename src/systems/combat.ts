@@ -1,5 +1,6 @@
 import {
   GameState,
+  nextEnemyId,
   dist,
   clamp,
   rand,
@@ -234,7 +235,7 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
 
       // Raise Dead: chance to convert killed enemy into friendly minion
       if (p.raiseDead > 0 && !et.boss && !e._friendly && Math.random() < p.raiseDead) {
-        const minion = createFriendlyEnemy(e.x, e.y, p.idx);
+        const minion = createFriendlyEnemy(state, e.x, e.y, p.idx);
         minion._lifespan = 5;
         state.enemies.push(minion);
         spawnText(state, e.x, e.y - 20, 'RAISED!', '#55cc55');
@@ -310,6 +311,7 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
         const splitEt = ENEMIES[et.splitInto];
         const splitHp = splitEt.hp + hpScale - 1;
         state.enemies.push({
+          id: nextEnemyId(state),
           type: et.splitInto,
           x: e.x + Math.cos(angle) * splitDist,
           y: e.y + Math.sin(angle) * splitDist,
@@ -952,7 +954,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     // Special Q abilities that use Ultimate type
     if (p.clsKey === 'druid') {
       // Spirit Wolf: summon a wolf ally
-      const wolf = createFriendlyEnemy(p.x + cos * 40, p.y + sin * 40, p.idx);
+      const wolf = createFriendlyEnemy(state, p.x + cos * 40, p.y + sin * 40, p.idx);
       wolf.type = '_wolf';
       wolf.hp = 8;
       wolf.maxHp = 8;
@@ -962,7 +964,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       sfx(SfxName.Pickup);
     } else if (p.clsKey === 'warlock') {
       // Summon Imp: small ranged demon ally
-      const imp = createFriendlyEnemy(p.x + cos * 40, p.y + sin * 40, p.idx);
+      const imp = createFriendlyEnemy(state, p.x + cos * 40, p.y + sin * 40, p.idx);
       imp.type = '_imp';
       imp.hp = 5;
       imp.maxHp = 5;
@@ -1130,7 +1132,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
       const sa = p.angle + (i / 6) * Math.PI * 2;
       const sx = p.x + Math.cos(sa) * 50;
       const sy = p.y + Math.sin(sa) * 50;
-      state.enemies.push(createFriendlyEnemy(sx, sy, p.idx));
+      state.enemies.push(createFriendlyEnemy(state, sx, sy, p.idx));
       spawnParticles(state, sx, sy, '#55cc55', 8);
     }
   } else if (p.clsKey === 'chronomancer') {
@@ -1212,7 +1214,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
       const ta = angle + (i === 0 ? -ULTIMATE.DRUID_TREANT_ANGLE : ULTIMATE.DRUID_TREANT_ANGLE);
       const tx = p.x + Math.cos(ta) * 50;
       const ty = p.y + Math.sin(ta) * 50;
-      const treant = createFriendlyEnemy(tx, ty, p.idx);
+      const treant = createFriendlyEnemy(state, tx, ty, p.idx);
       treant.hp = 8;
       treant.maxHp = 8;
       treant._lifespan = ULTIMATE.DRUID_TREANT_LIFE;
@@ -1266,7 +1268,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
     }
   } else if (p.clsKey === 'engineer') {
     // Mega Turret: huge turret (20 HP, 3 dmg/shot, 12s)
-    const turret = createFriendlyEnemy(p.x + Math.cos(angle) * 40, p.y + Math.sin(angle) * 40, p.idx);
+    const turret = createFriendlyEnemy(state, p.x + Math.cos(angle) * 40, p.y + Math.sin(angle) * 40, p.idx);
     turret.type = '_ally';
     turret.hp = 20;
     turret.maxHp = 20;

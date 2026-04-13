@@ -273,7 +273,7 @@ export function sendState(state: GameState): void {
       al: p.alive, cd: p.cd.map(c => Math.round(c * 10) / 10), if: p.iframes > 0,
     })),
     e: state.enemies.map(e => ({
-      t: e.type, x: ~~e.x, y: ~~e.y, hp: e.hp, mhp: e.maxHp, al: e.alive, tgt: e.target,
+      i: e.id, t: e.type, x: ~~e.x, y: ~~e.y, hp: e.hp, mhp: e.maxHp, al: e.alive, tgt: e.target,
     })),
     sp: state.spells.map(s => ({
       x: ~~s.x, y: ~~s.y, vx: ~~s.vx, vy: ~~s.vy, r: ~~s.radius, c: s.color, o: s.owner,
@@ -370,47 +370,30 @@ function applyState(state: GameState, msg: NetStateMessage): void {
     });
   }
 
-  // Enemies — match existing enemies to preserve visual state, then interpolate
+  // Enemies — match by ID for O(n) reconciliation
   if (msg.e) {
-    const oldEnemies = state.enemies.slice(); // snapshot of current enemies
+    const oldMap = new Map<number, Enemy>();
+    for (const e of state.enemies) oldMap.set(e.id, e);
     state.enemies.length = 0;
 
     for (const ed of msg.e) {
-      // Try to find a matching old enemy: same type, closest distance within 50px
-      let bestMatch: Enemy | null = null;
-      let bestDist = 50; // max matching distance
-      let bestIdx = -1;
-      for (let j = 0; j < oldEnemies.length; j++) {
-        const old = oldEnemies[j];
-        if (old.type !== ed.t) continue;
-        const dx = old.x - ed.x;
-        const dy = old.y - ed.y;
-        const d = Math.sqrt(dx * dx + dy * dy);
-        if (d < bestDist) {
-          bestDist = d;
-          bestMatch = old;
-          bestIdx = j;
-        }
-      }
-      // Remove the matched enemy from candidates so it can't match again
-      if (bestIdx >= 0) oldEnemies.splice(bestIdx, 1);
-
-      if (bestMatch) {
+      const existing = oldMap.get(ed.i);
+      if (existing) {
         // Reuse matched enemy: set interpolation targets, preserve visual timers
-        bestMatch._prevX = bestMatch.x;
-        bestMatch._prevY = bestMatch.y;
-        bestMatch._targetX = ed.x;
-        bestMatch._targetY = ed.y;
-        bestMatch._lerpT = 0;
-        bestMatch.hp = ed.hp;
-        bestMatch.maxHp = ed.mhp;
-        bestMatch.alive = ed.al;
-        bestMatch.target = ed.tgt;
-        // Visual timers (_hitFlash, _deathTimer, _atkAnim) are preserved from match
-        state.enemies.push(bestMatch);
+        existing._prevX = existing.x;
+        existing._prevY = existing.y;
+        existing._targetX = ed.x;
+        existing._targetY = ed.y;
+        existing._lerpT = 0;
+        existing.hp = ed.hp;
+        existing.maxHp = ed.mhp;
+        existing.alive = ed.al;
+        existing.target = ed.tgt;
+        state.enemies.push(existing);
       } else {
         // New enemy — no interpolation, snap to position
         const newEnemy: Enemy = {
+          id: ed.i,
           type: ed.t, x: ed.x, y: ed.y, hp: ed.hp, maxHp: ed.mhp, alive: ed.al, target: ed.tgt,
           vx: 0, vy: 0, atkTimer: 1, iframes: 0, slowTimer: 0, stunTimer: 0,
           _burnTimer: 0, _burnTick: 0, _burnOwner: 0, _friendly: false, _owner: 0, _lifespan: 0,
