@@ -748,11 +748,23 @@ export const UPGRADE_POOL: UpgradeDef[] = [
   // Evolutions appear when their parent stackable upgrade reaches max stacks.
   // They are NOT offered in the normal upgrade pool.
 
-  { name: 'Spell Mastery', desc: 'All spells deal +5 damage and cooldowns -30%', isEvolution: true, evolvesFrom: 0, color: '#ffaa00',
-    apply: (p: Player, _s: number) => { for (const s of p.cls.spells) { s.dmg = (s.dmg || 0) + 5; s.cd *= 0.7; } } },
+  { name: 'Spell Mastery', desc: 'Caps total spell damage bonus at +7 and cooldowns -30%', isEvolution: true, evolvesFrom: 0, color: '#ffaa00',
+    apply: (p: Player, _s: number) => {
+      const parentStacks = p.takenUpgrades.get(0) || 0;
+      let parentTotal = 0;
+      for (let i = 1; i <= parentStacks; i++) parentTotal += flatScaling(1, i);
+      const bonus = Math.max(0, 7 - parentTotal);
+      for (const s of p.cls.spells) { s.dmg = (s.dmg || 0) + bonus; s.cd *= 0.7; }
+    } },
 
-  { name: 'Primary Overload', desc: 'Primary +6 damage and explodes on hit (3 AoE dmg)', isEvolution: true, evolvesFrom: 1, color: '#ffaa00',
-    apply: (p: Player, _s: number) => { p.cls.spells[0].dmg += 6; p.cls.spells[0].explode = (p.cls.spells[0].explode || 0) + 40; } },
+  { name: 'Primary Overload', desc: 'Caps total primary bonus at +10 and explodes on hit (3 AoE dmg)', isEvolution: true, evolvesFrom: 1, color: '#ffaa00',
+    apply: (p: Player, _s: number) => {
+      const parentStacks = p.takenUpgrades.get(1) || 0;
+      let parentTotal = 0;
+      for (let i = 1; i <= parentStacks; i++) parentTotal += flatScaling(2, i);
+      p.cls.spells[0].dmg += Math.max(0, 10 - parentTotal);
+      p.cls.spells[0].explode = (p.cls.spells[0].explode || 0) + 40;
+    } },
 
   { name: 'Lethal Precision', desc: 'Crits deal 2.5x damage and +25% crit chance', isEvolution: true, evolvesFrom: 4, color: '#ffaa00',
     apply: (p: Player, _s: number) => { p.critChance = (p.critChance || 0) + 0.25; p.critMul = 2.5; } },
