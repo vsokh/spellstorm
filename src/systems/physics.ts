@@ -160,7 +160,7 @@ export function updatePlayers(state: GameState, dt: number): void {
       if (p.splitShot) {
         for (let ss = 1; ss <= p.splitShot; ss++) {
           const off = Math.ceil(ss / 2) * WAVE_PHYSICS.SPLIT_SHOT_ANGLE * (ss % 2 === 0 ? 1 : -1);
-          castSpellSilent(state, p, 0, input.angle + off);
+          castSpellSilent(state, p, 0, input.angle + off, COMBAT.SPLIT_SHOT_SIDE_DAMAGE_MULT);
         }
       }
       // Double tap: fire again after short delay
