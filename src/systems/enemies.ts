@@ -12,6 +12,19 @@ export function updateEnemies(state: GameState, dt: number): void {
   for (const e of state.enemies) {
     if (!e.alive) continue;
 
+    // Tick animation timers
+    if (e._hitFlash > 0) e._hitFlash -= dt;
+    if (e._atkAnim > 0) e._atkAnim -= dt;
+
+    // Death animation timer
+    if (e._deathTimer >= 0) {
+      e._deathTimer -= dt;
+      if (e._deathTimer <= 0) {
+        e.alive = false;  // Actually remove after animation completes
+      }
+      continue;  // Skip all AI/movement while dying
+    }
+
     // Friendly summons (necro ult)
     if (e._friendly) {
       e._lifespan -= dt;
@@ -144,6 +157,7 @@ export function updateEnemies(state: GameState, dt: number): void {
     e.atkTimer -= dt;
     if (e.atkTimer <= 0 && d < et.atkR) {
       e.atkTimer = et.atkCd;
+      e._atkAnim = 0.2;
       if (et.ai === EnemyAI.Chase) {
         if (target.iframes <= 0) damagePlayer(state, target, Math.ceil(et.dmg * (e._dmgMul || 1)), e);
       } else if (et.projSpd) {

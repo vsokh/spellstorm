@@ -48,7 +48,7 @@ export function updateHUD(state: GameState): void {
 
   const hudRoom = document.getElementById('hud-room');
   if (hudRoom) {
-    const aliveEnemies = state.enemies.filter(e => e.alive && !e._friendly).length;
+    const aliveEnemies = state.enemies.filter(e => e.alive && !e._friendly && e._deathTimer < 0).length;
     hudRoom.textContent = `Wave ${state.wave} / ${MAX_WAVES} \u00b7 ${aliveEnemies} enemies \u00b7 ${state.totalKills} kills`;
   }
 

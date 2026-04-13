@@ -282,6 +282,7 @@ function applyState(state: GameState, msg: NetStateMessage): void {
         vx: 0, vy: 0, atkTimer: 1, iframes: 0, slowTimer: 0, stunTimer: 0,
         _burnTimer: 0, _burnTick: 0, _burnOwner: 0, _friendly: false, _owner: 0, _lifespan: 0,
         _spdMul: 1, _dmgMul: 1, _teleportTimer: 0,
+        _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
       });
     }
   }

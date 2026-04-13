@@ -338,6 +338,11 @@ export interface Enemy {
 
   // Teleport ability timer
   _teleportTimer: number;
+
+  // Animation state
+  _hitFlash: number;    // timer for white flash on hit (starts at 0.12, counts down)
+  _deathTimer: number;  // death animation timer (-1 = alive, 0.4 = just died, counts down to 0)
+  _atkAnim: number;     // attack wind-up animation timer (starts at 0.2, counts down)
 }
 
 export interface Spell {

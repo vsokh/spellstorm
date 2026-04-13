@@ -1671,84 +1671,96 @@ function drawEnemyBody(ctx: CanvasRenderingContext2D, e: { x: number; y: number;
     }
 
   } else if (eType === 'necro') {
-    // ── NECRO: hooded figure with staff and dark aura ──
-    // Dark aura
-    const nAura = ctx.createRadialGradient(x, y, size * 0.3, x, y, size * 1.6);
+    // ── NECRO: hooded figure with staff and dark aura + floating bob ──
+    const floatY = Math.sin(time * 2) * 3; // gentle float
+    const fy = y + floatY;
+
+    // Dark aura (pulsing)
+    const auraPulse = 1 + Math.sin(time * 1.5) * 0.1;
+    const nAura = ctx.createRadialGradient(x, fy, size * 0.3, x, fy, size * 1.6 * auraPulse);
     nAura.addColorStop(0, 'rgba(50,100,70,0.12)');
     nAura.addColorStop(1, 'transparent');
     ctx.fillStyle = nAura;
-    ctx.beginPath(); ctx.arc(x, y, size * 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x, fy, size * 1.6 * auraPulse, 0, Math.PI * 2); ctx.fill();
 
     // Hood
     ctx.fillStyle = '#3d7755';
     ctx.beginPath();
-    ctx.moveTo(x, y - size * 1.1);
-    ctx.lineTo(x + size * 0.7, y + size * 0.3);
-    ctx.lineTo(x - size * 0.7, y + size * 0.3);
+    ctx.moveTo(x, fy - size * 1.1);
+    ctx.lineTo(x + size * 0.7, fy + size * 0.3);
+    ctx.lineTo(x - size * 0.7, fy + size * 0.3);
     ctx.closePath(); ctx.fill();
     // Face shadow
     ctx.fillStyle = '#2a5540';
-    ctx.beginPath(); ctx.arc(x, y - size * 0.1, size * 0.35, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x, fy - size * 0.1, size * 0.35, 0, Math.PI * 2); ctx.fill();
     // Robe bottom
     ctx.fillStyle = '#3d7755';
-    ctx.fillRect(x - size * 0.5, y + size * 0.1, size, size * 0.7);
+    ctx.fillRect(x - size * 0.5, fy + size * 0.1, size, size * 0.7);
 
     // Staff
     ctx.strokeStyle = '#664422'; ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(x + size * 0.8, y - size * 0.8);
-    ctx.lineTo(x + size * 0.6, y + size * 0.8);
+    ctx.moveTo(x + size * 0.8, fy - size * 0.8);
+    ctx.lineTo(x + size * 0.6, fy + size * 0.8);
     ctx.stroke();
-    // Staff orb
+    // Staff orb (pulsing glow)
+    const orbGlow = 3 + Math.sin(time * 4) * 1.5;
     ctx.fillStyle = '#77cc99';
-    ctx.beginPath(); ctx.arc(x + size * 0.8, y - size * 0.8, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + size * 0.8, fy - size * 0.8, orbGlow, 0, Math.PI * 2); ctx.fill();
+    // Orb glow halo
+    ctx.fillStyle = `rgba(119,204,153,${0.2 + Math.sin(time * 4) * 0.1})`;
+    ctx.beginPath(); ctx.arc(x + size * 0.8, fy - size * 0.8, orbGlow + 3, 0, Math.PI * 2); ctx.fill();
 
     // Eyes
     ctx.fillStyle = '#77cc99';
-    ctx.beginPath(); ctx.arc(x - size * 0.12, y - size * 0.2, 1.5, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(x + size * 0.12, y - size * 0.2, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x - size * 0.12, fy - size * 0.2, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + size * 0.12, fy - size * 0.2, 1.5, 0, Math.PI * 2); ctx.fill();
 
   } else if (eType === 'shieldbearer') {
-    // ── SHIELD BEARER: armored look with visible shield ──
+    // ── SHIELD BEARER: armored look with visible shield + breathing ──
+    const breathe = 1 + Math.sin(time * 3) * 0.03; // subtle size pulse
+    const bSize = size * breathe;
+
     // Body (armored)
-    const armorG = ctx.createRadialGradient(x, y, size * 0.2, x, y, size);
+    const armorG = ctx.createRadialGradient(x, y, bSize * 0.2, x, y, bSize);
     armorG.addColorStop(0, '#99aacc');
     armorG.addColorStop(0.5, '#7788aa');
     armorG.addColorStop(1, '#556677');
     ctx.fillStyle = armorG;
-    ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, bSize, 0, Math.PI * 2); ctx.fill();
 
     // Armor plates (lines across body)
     ctx.strokeStyle = 'rgba(180,200,220,0.4)'; ctx.lineWidth = 0.8;
     ctx.beginPath();
-    ctx.moveTo(x - size * 0.6, y - size * 0.2); ctx.lineTo(x + size * 0.6, y - size * 0.2);
-    ctx.moveTo(x - size * 0.5, y + size * 0.2); ctx.lineTo(x + size * 0.5, y + size * 0.2);
+    ctx.moveTo(x - bSize * 0.6, y - bSize * 0.2); ctx.lineTo(x + bSize * 0.6, y - bSize * 0.2);
+    ctx.moveTo(x - bSize * 0.5, y + bSize * 0.2); ctx.lineTo(x + bSize * 0.5, y + bSize * 0.2);
     ctx.stroke();
 
-    // Shield in front (facing target)
-    const shieldDist = size * 0.8;
+    // Shield in front (facing target) with shimmer
+    const shieldDist = bSize * 0.8;
     const shieldX = x + Math.cos(eyeAngle) * shieldDist;
     const shieldY = y + Math.sin(eyeAngle) * shieldDist;
     const shieldPerp = eyeAngle + Math.PI / 2;
+    const shimmer = 0.5 + Math.sin(time * 5) * 0.15; // shield shimmer
     const shG = ctx.createLinearGradient(
-      shieldX - Math.cos(shieldPerp) * size * 0.5,
-      shieldY - Math.sin(shieldPerp) * size * 0.5,
-      shieldX + Math.cos(shieldPerp) * size * 0.5,
-      shieldY + Math.sin(shieldPerp) * size * 0.5
+      shieldX - Math.cos(shieldPerp) * bSize * 0.5,
+      shieldY - Math.sin(shieldPerp) * bSize * 0.5,
+      shieldX + Math.cos(shieldPerp) * bSize * 0.5,
+      shieldY + Math.sin(shieldPerp) * bSize * 0.5
     );
     shG.addColorStop(0, '#8899bb');
-    shG.addColorStop(0.5, '#aabbdd');
+    shG.addColorStop(shimmer, '#ccddff');
     shG.addColorStop(1, '#8899bb');
     ctx.fillStyle = shG;
     ctx.beginPath();
-    ctx.moveTo(shieldX - Math.cos(shieldPerp) * size * 0.6, shieldY - Math.sin(shieldPerp) * size * 0.6);
-    ctx.lineTo(shieldX + Math.cos(eyeAngle) * size * 0.3, shieldY + Math.sin(eyeAngle) * size * 0.3);
-    ctx.lineTo(shieldX + Math.cos(shieldPerp) * size * 0.6, shieldY + Math.sin(shieldPerp) * size * 0.6);
+    ctx.moveTo(shieldX - Math.cos(shieldPerp) * bSize * 0.6, shieldY - Math.sin(shieldPerp) * bSize * 0.6);
+    ctx.lineTo(shieldX + Math.cos(eyeAngle) * bSize * 0.3, shieldY + Math.sin(eyeAngle) * bSize * 0.3);
+    ctx.lineTo(shieldX + Math.cos(shieldPerp) * bSize * 0.6, shieldY + Math.sin(shieldPerp) * bSize * 0.6);
     ctx.closePath(); ctx.fill();
     ctx.strokeStyle = '#99aacc'; ctx.lineWidth = 1; ctx.stroke();
 
     // Eyes
-    const ed3 = size * 0.3;
+    const ed3 = bSize * 0.3;
     ctx.fillStyle = 'rgba(200,220,255,0.8)';
     ctx.beginPath(); ctx.arc(x + Math.cos(eyeAngle - 0.3) * ed3, y + Math.sin(eyeAngle - 0.3) * ed3, 1.5, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(x + Math.cos(eyeAngle + 0.3) * ed3, y + Math.sin(eyeAngle + 0.3) * ed3, 1.5, 0, Math.PI * 2); ctx.fill();
@@ -1857,33 +1869,52 @@ function drawEnemyBody(ctx: CanvasRenderingContext2D, e: { x: number; y: number;
     ctx.fill();
 
   } else if (eType === 'splitter') {
-    // ── SPLITTER: two-toned blob with split line ──
+    // ── SPLITTER: two-toned blob with pulsing split line + wobble ──
+    const splitPulse = 0.5 + Math.sin(time * 4) * 0.5;
+    const wobbleX = Math.sin(time * 3) * 1.5; // subtle wobble
+    const wobbleScale = 1 + Math.sin(time * 2.5) * 0.04;
+    const wSize = size * wobbleScale;
+
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.arc(x + wobbleX, y, wSize, 0, Math.PI * 2);
     ctx.fill();
-    // Split line down the middle
-    ctx.strokeStyle = '#66aa66';
-    ctx.lineWidth = 1.5;
+    // Two-tone halves
+    ctx.fillStyle = 'rgba(80,140,80,0.15)';
     ctx.beginPath();
-    ctx.moveTo(x, y - size);
-    ctx.lineTo(x, y + size);
+    ctx.arc(x + wobbleX, y, wSize, -Math.PI / 2, Math.PI / 2);
+    ctx.fill();
+
+    // Split line down the middle (pulsing)
+    ctx.strokeStyle = `rgba(102,170,102,${0.4 + splitPulse * 0.6})`;
+    ctx.lineWidth = 1 + splitPulse * 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x + wobbleX, y - wSize);
+    ctx.lineTo(x + wobbleX, y + wSize);
     ctx.stroke();
+    // Split line glow
+    ctx.strokeStyle = `rgba(102,170,102,${splitPulse * 0.2})`;
+    ctx.lineWidth = 4 + splitPulse * 2;
+    ctx.beginPath();
+    ctx.moveTo(x + wobbleX, y - wSize);
+    ctx.lineTo(x + wobbleX, y + wSize);
+    ctx.stroke();
+
     // Two pairs of eyes
-    const spEd = size * 0.35;
+    const spEd = wSize * 0.35;
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(x - spEd, y - spEd * 0.5, 2, 0, Math.PI * 2);
+    ctx.arc(x + wobbleX - spEd, y - spEd * 0.5, 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(x + spEd, y - spEd * 0.5, 2, 0, Math.PI * 2);
+    ctx.arc(x + wobbleX + spEd, y - spEd * 0.5, 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#224422';
     ctx.beginPath();
-    ctx.arc(x - spEd, y - spEd * 0.5, 1, 0, Math.PI * 2);
+    ctx.arc(x + wobbleX - spEd, y - spEd * 0.5, 1, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(x + spEd, y - spEd * 0.5, 1, 0, Math.PI * 2);
+    ctx.arc(x + wobbleX + spEd, y - spEd * 0.5, 1, 0, Math.PI * 2);
     ctx.fill();
 
   } else if (eType === 'splitling') {
@@ -1934,6 +1965,95 @@ function drawEnemyBody(ctx: CanvasRenderingContext2D, e: { x: number; y: number;
     ctx.arc(x + bEd, y - bEd * 0.5, 2, 0, Math.PI * 2);
     ctx.fill();
 
+  } else if (eType === 'swarm_bat') {
+    // ── SWARM BAT: small bat using same wing structure as bat ──
+    const flap = Math.sin(time * 20) * 0.7; // faster flap for swarm bats
+    // Wings
+    for (const side of [-1, 1]) {
+      ctx.fillStyle = 'rgba(100,70,140,0.5)';
+      ctx.beginPath();
+      const wingTip1X = x + side * size * 2.2;
+      const wingTip1Y = y - size * 0.4 + flap * size * side * 0.3;
+      const wingTip2X = x + side * size * 1.5;
+      const wingTip2Y = y + size * 0.4 - flap * size * side * 0.2;
+      ctx.moveTo(x + side * size * 0.3, y - size * 0.3);
+      ctx.quadraticCurveTo(x + side * size * 1.2, y - size * 0.8 + flap * size, wingTip1X, wingTip1Y);
+      ctx.lineTo(wingTip2X, wingTip2Y);
+      ctx.quadraticCurveTo(x + side * size * 0.6, y + size * 0.2, x + side * size * 0.3, y + size * 0.2);
+      ctx.closePath(); ctx.fill();
+    }
+    // Small body
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(x, y, size * 0.65, 0, Math.PI * 2); ctx.fill();
+    // Eyes
+    ctx.fillStyle = '#ff5555';
+    ctx.beginPath(); ctx.arc(x - size * 0.15, y - size * 0.1, 0.8, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + size * 0.15, y - size * 0.1, 0.8, 0, Math.PI * 2); ctx.fill();
+
+  } else if (eType === 'archlord') {
+    // ── ARCHLORD: imposing dark lord with crown and swirling aura ──
+    // Outer dark aura (swirling)
+    const swirl = time * 1.5;
+    for (let i = 0; i < 6; i++) {
+      const sa = swirl + (i / 6) * Math.PI * 2;
+      const sd = size * 1.8 + Math.sin(time * 2 + i) * 4;
+      const sx = x + Math.cos(sa) * sd;
+      const sy = y + Math.sin(sa) * sd;
+      const orbR = 3 + Math.sin(time * 3 + i * 2) * 1;
+      ctx.fillStyle = `rgba(255,170,0,${0.15 + Math.sin(time * 2 + i) * 0.08})`;
+      ctx.beginPath(); ctx.arc(sx, sy, orbR, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Dark aura gradient
+    const lordAura = ctx.createRadialGradient(x, y, size * 0.4, x, y, size * 2.2);
+    lordAura.addColorStop(0, 'rgba(80,30,10,0.15)');
+    lordAura.addColorStop(0.5, 'rgba(200,100,20,0.06)');
+    lordAura.addColorStop(1, 'transparent');
+    ctx.fillStyle = lordAura;
+    ctx.beginPath(); ctx.arc(x, y, size * 2.2, 0, Math.PI * 2); ctx.fill();
+
+    // Body (dark imposing form)
+    const lordG = ctx.createRadialGradient(x, y - size * 0.2, size * 0.2, x, y, size);
+    lordG.addColorStop(0, '#553300');
+    lordG.addColorStop(0.4, '#331100');
+    lordG.addColorStop(1, '#110000');
+    ctx.fillStyle = lordG;
+    ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
+    // Rim lighting
+    ctx.strokeStyle = `rgba(255,170,0,${0.3 + Math.sin(time * 2) * 0.15})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.stroke();
+
+    // Crown (3 points above the body)
+    const crownY = y - size * 0.7;
+    ctx.fillStyle = '#ffcc22';
+    ctx.beginPath();
+    ctx.moveTo(x - size * 0.5, crownY + 3);
+    ctx.lineTo(x - size * 0.35, crownY - size * 0.5);
+    ctx.lineTo(x - size * 0.15, crownY + 1);
+    ctx.lineTo(x, crownY - size * 0.65);
+    ctx.lineTo(x + size * 0.15, crownY + 1);
+    ctx.lineTo(x + size * 0.35, crownY - size * 0.5);
+    ctx.lineTo(x + size * 0.5, crownY + 3);
+    ctx.closePath(); ctx.fill();
+    // Crown gems
+    ctx.fillStyle = '#ff3322';
+    ctx.beginPath(); ctx.arc(x, crownY - size * 0.4, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ff6622';
+    ctx.beginPath(); ctx.arc(x - size * 0.35, crownY - size * 0.25, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + size * 0.35, crownY - size * 0.25, 1.5, 0, Math.PI * 2); ctx.fill();
+
+    // Eyes (menacing, glowing)
+    const lordEd = size * 0.25;
+    const eyeGlow = 0.7 + Math.sin(time * 3) * 0.3;
+    ctx.fillStyle = `rgba(255,${Math.floor(120 + eyeGlow * 80)},0,${eyeGlow})`;
+    ctx.beginPath(); ctx.arc(x + Math.cos(eyeAngle - 0.3) * lordEd, y + Math.sin(eyeAngle - 0.3) * lordEd, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + Math.cos(eyeAngle + 0.3) * lordEd, y + Math.sin(eyeAngle + 0.3) * lordEd, 2.5, 0, Math.PI * 2); ctx.fill();
+    // Eye glow halos
+    ctx.fillStyle = `rgba(255,170,0,${eyeGlow * 0.2})`;
+    ctx.beginPath(); ctx.arc(x + Math.cos(eyeAngle - 0.3) * lordEd, y + Math.sin(eyeAngle - 0.3) * lordEd, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + Math.cos(eyeAngle + 0.3) * lordEd, y + Math.sin(eyeAngle + 0.3) * lordEd, 5, 0, Math.PI * 2); ctx.fill();
+
   } else {
     // ── DEFAULT ENEMY: gradient circle with eyes ──
     const defG = ctx.createRadialGradient(x - size * 0.2, y - size * 0.2, size * 0.1, x, y, size);
@@ -1956,7 +2076,8 @@ export function drawEnemies(ctx: CanvasRenderingContext2D, state: GameState): vo
   for (const e of state.enemies) {
     if (!e.alive) continue;
     const et = ENEMIES[e.type];
-    if (e.iframes > 0 && Math.sin(state.time * 30) > 0) continue;
+    // Skip iframe flicker for dying enemies (they should stay visible during death anim)
+    if (e._deathTimer < 0 && e.iframes > 0 && Math.sin(state.time * 30) > 0) continue;
 
     // ── Friendly summons: custom rendering ──
     if (e._friendly) {
@@ -2009,6 +2130,27 @@ export function drawEnemies(ctx: CanvasRenderingContext2D, state: GameState): vo
 
     // ── Regular enemies ──
 
+    // Death animation: shrink + fade + spin
+    if (e._deathTimer >= 0) {
+      const deathProgress = 1 - (e._deathTimer / 0.4); // 0 -> 1
+      const deathScale = 1 - deathProgress * 0.8; // shrink to 20% size
+      const deathAlpha = 1 - deathProgress; // fade out
+      ctx.save();
+      ctx.globalAlpha *= deathAlpha;
+      ctx.translate(e.x, e.y);
+      ctx.rotate(deathProgress * Math.PI * 0.5); // quarter spin
+      ctx.scale(deathScale, deathScale);
+      ctx.translate(-e.x, -e.y);
+
+      // Eye direction
+      const target = state.players[e.target];
+      const ea = target ? Math.atan2(target.y - e.y, target.x - e.x) : 0;
+      drawEnemyBody(ctx, { x: e.x, y: e.y, type: e.type, hp: e.hp, maxHp: e.maxHp }, et, ea, state.time);
+
+      ctx.restore();
+      continue; // skip health bar etc for dying enemies
+    }
+
     // Boss aura
     if (et.boss) {
       const bg2 = ctx.createRadialGradient(e.x, e.y, et.size * 0.5, e.x, e.y, et.size * 2);
@@ -2024,8 +2166,31 @@ export function drawEnemies(ctx: CanvasRenderingContext2D, state: GameState): vo
     const target = state.players[e.target];
     const ea = target ? Math.atan2(target.y - e.y, target.x - e.x) : 0;
 
+    // Attack wind-up: brief lunge/pulse toward target
+    let atkTransformApplied = false;
+    if (e._atkAnim > 0 && e._deathTimer < 0) {
+      const atkProgress = e._atkAnim / 0.2; // 1 -> 0
+      const atkScale = 1 + Math.sin(atkProgress * Math.PI) * 0.15; // pulse up then back
+      ctx.save();
+      ctx.translate(e.x, e.y);
+      ctx.scale(atkScale, atkScale);
+      ctx.translate(-e.x, -e.y);
+      atkTransformApplied = true;
+    }
+
     // Type-specific body rendering
     drawEnemyBody(ctx, { x: e.x, y: e.y, type: e.type, hp: e.hp, maxHp: e.maxHp }, et, ea, state.time);
+
+    // Hit flash: white overlay
+    if (e._hitFlash > 0) {
+      const flashAlpha = e._hitFlash / 0.12; // 1 -> 0
+      ctx.fillStyle = `rgba(255,255,255,${flashAlpha * 0.6})`;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, et.size * 1.1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (atkTransformApplied) ctx.restore();
 
     // Health bar (only when damaged)
     if (e.hp < e.maxHp) {

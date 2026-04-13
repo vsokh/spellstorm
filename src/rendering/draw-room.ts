@@ -553,7 +553,7 @@ export function drawRoom(ctx: CanvasRenderingContext2D, state: GameState): void 
 
   // Enemy count
   if (state.waveActive) {
-    const alive = state.enemies.filter(e => e.alive && !e._friendly).length;
+    const alive = state.enemies.filter(e => e.alive && !e._friendly && e._deathTimer < 0).length;
     ctx.fillStyle = 'rgba(180,80,80,.15)';
     ctx.font = '11px Courier New';
     ctx.textAlign = 'center';

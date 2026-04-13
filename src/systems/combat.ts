@@ -39,6 +39,8 @@ import { createFriendlyEnemy } from './dungeon';
 
 export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: number): void {
   if (e.iframes > 0) return;
+  // Already in death animation — don't re-trigger death effects
+  if (e._deathTimer >= 0) return;
   const p = state.players[pIdx];
   let dmg = rawDmg;
 
@@ -61,6 +63,7 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
 
   e.hp -= dmg;
   e.iframes = 0.1;
+  e._hitFlash = 0.12;
   spawnParticles(state, e.x, e.y, '#ff6644', 5, 0.5);
   sfx(SfxName.Hit);
 
@@ -110,7 +113,8 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
   }
 
   if (e.hp <= 0) {
-    e.alive = false;
+    // Start death animation instead of immediately removing
+    e._deathTimer = 0.4;
     state.totalKills++;
     const et = ENEMIES[e.type];
 
@@ -264,6 +268,7 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
           _spdMul: spdScale,
           _dmgMul: e._dmgMul || 1,
           _teleportTimer: 0,
+          _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
         });
       }
       spawnText(state, e.x, e.y - 15, 'SPLIT!', '#66aa66');

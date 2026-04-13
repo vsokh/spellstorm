@@ -101,6 +101,9 @@ export function spawnEnemy(state: GameState, type: string, hpScale: number, spdS
     _spdMul: spdScale,
     _dmgMul: timeMul,
     _teleportTimer: 0,
+    _hitFlash: 0,
+    _deathTimer: -1,
+    _atkAnim: 0,
   });
 }
 
@@ -133,6 +136,7 @@ export function startWave(state: GameState): void {
       _spdMul: 1,
       _dmgMul: timeMul,
       _teleportTimer: 0,
+      _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
     });
     // Elite guard — spawn 8 mixed elites
     const elitePool = ['shieldbearer', 'necro', 'assassin', 'wraith'];
@@ -180,6 +184,7 @@ export function startWave(state: GameState): void {
       _spdMul: 1,
       _dmgMul: timeMul,
       _teleportTimer: 0,
+      _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
     });
     // Minions scale with wave
     const minionCount = 2 + Math.floor(wave / 3);
@@ -231,7 +236,7 @@ export function startWave(state: GameState): void {
 export function checkWaveComplete(state: GameState): void {
   if (!state.waveActive) return;
   if (state.waveSpawnQueue > 0) return; // still trickle spawning
-  const alive = state.enemies.filter(e => e.alive && !e._friendly).length;
+  const alive = state.enemies.filter(e => e.alive && !e._friendly && e._deathTimer < 0).length;
   if (alive <= 0) {
     state.waveActive = false;
     state.waveBreakTimer = 2; // 2 second break between waves
@@ -345,5 +350,8 @@ export function createFriendlyEnemy(x: number, y: number, ownerIdx: number): Ene
     _spdMul: 1,
     _dmgMul: 1,
     _teleportTimer: 0,
+    _hitFlash: 0,
+    _deathTimer: -1,
+    _atkAnim: 0,
   };
 }
