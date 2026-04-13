@@ -478,15 +478,17 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
 // ═══════════════════════════════════
 
 /** Silent cast: no mana cost, no cooldown, no sound (for split shot / double tap) */
-export function castSpellSilent(state: GameState, p: Player, idx: number, angle: number): void {
+export function castSpellSilent(state: GameState, p: Player, idx: number, angle: number, dmgMult = 1): void {
   const def = p.cls.spells[idx];
   if (def.type === SpellType.Projectile || def.type === SpellType.Homing) {
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
     const sx = p.x + cos * WIZARD_SIZE * 1.5;
     const sy = p.y + sin * WIZARD_SIZE * 1.5;
+    const rt = spellToRuntime(def);
+    if (dmgMult !== 1) rt.dmg = Math.ceil(rt.dmg * dmgMult);
     state.spells.push({
-      ...spellToRuntime(def),
+      ...rt,
       x: sx, y: sy,
       vx: cos * def.speed, vy: sin * def.speed,
       owner: p.idx, age: 0, zapTimer: 0, pierceLeft: (p.pierce || 0) + (def.pierce || 0),
