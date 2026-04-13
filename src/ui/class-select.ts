@@ -49,7 +49,9 @@ export function setupClassSelect(
   state: GameState,
   onBeginGame: (c1: string, c2: string) => void,
 ): void {
-  (window as unknown as Record<string, unknown>)['confirmClass'] = () => {
+  const btnReady = document.getElementById('btn-ready');
+  if (!btnReady) return;
+  btnReady.addEventListener('click', () => {
     const cls = CLASS_ORDER[state.selectedClassIndex];
 
     if (state.mode === NetworkMode.Local) {
@@ -67,5 +69,5 @@ export function setupClassSelect(
       const statusEl = document.getElementById('select-status');
       if (statusEl) statusEl.textContent = 'Waiting for host...';
     }
-  };
+  });
 }

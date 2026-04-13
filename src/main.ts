@@ -34,6 +34,7 @@ import { updateHUD } from './rendering/draw-hud';
 
 import { setupLobby } from './ui/lobby';
 import { showSelect, setupClassSelect } from './ui/class-select';
+import { setupGameOver } from './ui/game-over';
 
 // ═══════════════════════════════════
 //          INITIALIZATION
@@ -117,9 +118,10 @@ setNetworkCallbacks(
   (c1: string, c2: string) => beginGame(c1, c2),
 );
 
-// Wire up lobby and class select
+// Wire up lobby, class select, and game over
 setupLobby(state, () => showSelect(state));
 setupClassSelect(state, beginGame);
+setupGameOver();
 
 // ═══════════════════════════════════
 //       MAIN LOOP
