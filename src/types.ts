@@ -605,10 +605,10 @@ export interface NetStateEnemyData {
   t: string;
   x: number;
   y: number;
-  hp: number;
-  mhp: number;
+  hp?: number;
+  mhp?: number;
   al: boolean;
-  tgt: number;
+  tgt?: number;
 }
 
 export interface NetStateSpellData {

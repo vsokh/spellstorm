@@ -37,6 +37,11 @@ export const NET_SEND_INTERVAL_MIN = 0.033;
 /** Maximum network send interval (slowest rate during congestion) */
 export const NET_SEND_INTERVAL_MAX = 0.15;
 
+/** Distance from guest player beyond which entities are not sent */
+export const NET_CULL_RADIUS = 1200;
+/** Distance from guest player beyond which entities use reduced detail */
+export const NET_LOD_RADIUS = 600;
+
 /** Countdown duration in seconds */
 export const COUNTDOWN_DURATION = 3;
 

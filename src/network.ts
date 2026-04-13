@@ -10,7 +10,7 @@ import {
   Enemy,
   PlayerInput,
 } from './types';
-import { UPGRADE_POOL, CLASSES, NET_SEND_INTERVAL, NET_SEND_INTERVAL_MAX } from './constants';
+import { UPGRADE_POOL, CLASSES, NET_SEND_INTERVAL, NET_SEND_INTERVAL_MAX, NET_CULL_RADIUS, NET_LOD_RADIUS } from './constants';
 import { initAudio } from './audio';
 import { showUpgradeFromHost, checkBothPicked, finishUpgrade } from './systems/upgrades';
 
@@ -270,8 +270,21 @@ export function joinGame(state: GameState): void {
 //       SEND STATE (host only)
 // ═══════════════════════════════════
 
+function distSq(x1: number, y1: number, x2: number, y2: number): number {
+  const dx = x1 - x2;
+  const dy = y1 - y2;
+  return dx * dx + dy * dy;
+}
+
 export function sendState(state: GameState): void {
   if (!conn || !conn.open || state.mode !== NetworkMode.Host) return;
+
+  // Reference point for culling: guest player position, or room center if unavailable
+  const guest = state.players[1];
+  const gx = (guest && guest.alive) ? guest.x : 500;
+  const gy = (guest && guest.alive) ? guest.y : 350;
+  const cullSq = NET_CULL_RADIUS * NET_CULL_RADIUS;
+  const lodSq = NET_LOD_RADIUS * NET_LOD_RADIUS;
 
   // Build all field values (same mapping/rounding as before)
   const fields = {
@@ -280,23 +293,30 @@ export function sendState(state: GameState): void {
       hp: p.hp, mhp: p.maxHp, mn: ~~p.mana, mmn: p.maxMana,
       al: p.alive, cd: p.cd.map(c => Math.round(c * 10) / 10), if: p.iframes > 0,
     })),
-    e: state.enemies.map(e => ({
-      i: e.id, t: e.type, x: ~~e.x, y: ~~e.y, hp: e.hp, mhp: e.maxHp, al: e.alive, tgt: e.target,
-    })),
-    sp: state.spells.map(s => ({
+    e: state.enemies.filter(e => distSq(e.x, e.y, gx, gy) < cullSq).map(e => {
+      const d = distSq(e.x, e.y, gx, gy);
+      if (d < lodSq) {
+        // Full detail
+        return { i: e.id, t: e.type, x: ~~e.x, y: ~~e.y, hp: e.hp, mhp: e.maxHp, al: e.alive, tgt: e.target };
+      } else {
+        // LOD: omit hp, maxHp, target
+        return { i: e.id, t: e.type, x: ~~e.x, y: ~~e.y, al: e.alive };
+      }
+    }),
+    sp: state.spells.filter(s => distSq(s.x, s.y, gx, gy) < cullSq).map(s => ({
       x: ~~s.x, y: ~~s.y, vx: ~~s.vx, vy: ~~s.vy, r: ~~s.radius, c: s.color, o: s.owner,
       k: s.clsKey, t: s.type, tr: s.trail,
       ex: s.explode, sl: s.slow, ho: s.homing, z: s.zap,
       dr: s.drain, bn: s.burn, st: s.stun,
       l: Math.round(s.life * 100) / 100, ag: Math.round(s.age * 100) / 100,
     })),
-    ep: state.eProj.map(p => ({
+    ep: state.eProj.filter(p => distSq(p.x, p.y, gx, gy) < cullSq).map(p => ({
       x: ~~p.x, y: ~~p.y, r: ~~p.radius, c: p.color,
     })),
-    zn: state.zones.map(z => ({
+    zn: state.zones.filter(z => distSq(z.x, z.y, gx, gy) < cullSq).map(z => ({
       x: ~~z.x, y: ~~z.y, r: ~~z.radius, c: z.color, age: Math.round(z.age * 10) / 10, dur: Math.round(z.duration * 10) / 10,
     })),
-    aoe: state.aoeMarkers.map(m => ({
+    aoe: state.aoeMarkers.filter(m => distSq(m.x, m.y, gx, gy) < cullSq).map(m => ({
       x: ~~m.x, y: ~~m.y, r: ~~m.radius, c: m.color, age: Math.round(m.age * 10) / 10, del: Math.round(m.delay * 10) / 10,
     })),
     pk: state.pickups.filter(p => !p.collected).map(p => ({
@@ -479,16 +499,16 @@ function applyState(state: GameState, msg: NetStateMessage): void {
         existing._targetX = ed.x;
         existing._targetY = ed.y;
         existing._lerpT = 0;
-        existing.hp = ed.hp;
-        existing.maxHp = ed.mhp;
+        if (ed.hp !== undefined) existing.hp = ed.hp;
+        if (ed.mhp !== undefined) existing.maxHp = ed.mhp;
         existing.alive = ed.al;
-        existing.target = ed.tgt;
+        if (ed.tgt !== undefined) existing.target = ed.tgt;
         state.enemies.push(existing);
       } else {
         // New enemy — no interpolation, snap to position
         const newEnemy: Enemy = {
           id: ed.i,
-          type: ed.t, x: ed.x, y: ed.y, hp: ed.hp, maxHp: ed.mhp, alive: ed.al, target: ed.tgt,
+          type: ed.t, x: ed.x, y: ed.y, hp: ed.hp ?? 1, maxHp: ed.mhp ?? 1, alive: ed.al, target: ed.tgt ?? 0,
           vx: 0, vy: 0, atkTimer: 1, iframes: 0, slowTimer: 0, stunTimer: 0,
           _burnTimer: 0, _burnTick: 0, _burnOwner: 0, _friendly: false, _owner: 0, _lifespan: 0,
           _spdMul: 1, _dmgMul: 1, _teleportTimer: 0,
