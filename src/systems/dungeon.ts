@@ -109,6 +109,7 @@ export function spawnEnemy(state: GameState, type: string, hpScale: number, spdS
     _hitFlash: 0,
     _deathTimer: -1,
     _atkAnim: 0,
+    _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
   });
 }
 
@@ -143,6 +144,7 @@ export function startWave(state: GameState): void {
       _dmgMul: timeMul,
       _teleportTimer: 0,
       _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
+      _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
     });
     // Elite guard — spawn 8 mixed elites
     const elitePool = ['shieldbearer', 'necro', 'assassin', 'wraith'];
@@ -191,6 +193,7 @@ export function startWave(state: GameState): void {
       _dmgMul: timeMul,
       _teleportTimer: 0,
       _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
+      _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
     });
     // Minions scale with wave
     const minionCount = 2 + Math.floor(wave / 3);
@@ -370,5 +373,6 @@ export function createFriendlyEnemy(x: number, y: number, ownerIdx: number): Ene
     _hitFlash: 0,
     _deathTimer: -1,
     _atkAnim: 0,
+    _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
   };
 }

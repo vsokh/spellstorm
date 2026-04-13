@@ -353,6 +353,11 @@ export interface Enemy {
   _deathTimer: number;  // death animation timer (-1 = alive, 0.4 = just died, counts down to 0)
   _atkAnim: number;     // attack wind-up animation timer (starts at 0.2, counts down)
 
+  // Boss damage reduction phase (wave 15+)
+  _dmgReductionActive: boolean;  // true during the 3s reduction phase
+  _dmgReductionTimer: number;    // countdown timer (starts at 3, counts to 0)
+  _dmgReductionTriggered: boolean; // true once triggered (prevents re-trigger)
+
   // Network interpolation (guest only)
   _targetX?: number;
   _targetY?: number;

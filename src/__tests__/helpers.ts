@@ -107,6 +107,9 @@ export function createTestEnemy(overrides: Partial<import('../types').Enemy> = {
     _hitFlash: 0,
     _deathTimer: -1,
     _atkAnim: 0,
+    _dmgReductionActive: false,
+    _dmgReductionTimer: 0,
+    _dmgReductionTriggered: false,
     ...overrides,
   };
 }

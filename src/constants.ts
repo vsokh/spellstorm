@@ -166,6 +166,10 @@ export const COMBAT = {
   MONK_DODGE_CHANCE: 0.2,
   SPLIT_SHOT_SIDE_DAMAGE_MULT: 0.6,
   DAMAGE_CAP: 8,
+  BOSS_DMG_REDUCTION_MULT: 0.5,       // 50% damage during phase
+  BOSS_DMG_REDUCTION_DURATION: 3,     // 3 seconds
+  BOSS_DMG_REDUCTION_HP_THRESHOLD: 0.5, // triggers at 50% HP
+  BOSS_DMG_REDUCTION_MIN_WAVE: 15,    // only wave 15+ bosses
 } as const;
 
 export const TIMING = {

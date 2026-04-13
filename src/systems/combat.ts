@@ -82,7 +82,25 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
   const maxDmg = rawDmg * COMBAT.DAMAGE_CAP;
   if (dmg > maxDmg) dmg = maxDmg;
 
+  // Boss damage reduction phase: 50% damage while active
+  if (e._dmgReductionActive) {
+    dmg = Math.ceil(dmg * COMBAT.BOSS_DMG_REDUCTION_MULT);
+    spawnText(state, e.x, e.y - 35, 'RESISTED', '#88aaff');
+  }
+
   e.hp -= dmg;
+
+  // Trigger boss damage reduction phase at 50% HP (wave 15+ only)
+  const et_check = ENEMIES[e.type];
+  if (et_check.boss && state.wave >= COMBAT.BOSS_DMG_REDUCTION_MIN_WAVE
+      && !e._dmgReductionTriggered
+      && e.hp <= e.maxHp * COMBAT.BOSS_DMG_REDUCTION_HP_THRESHOLD && e.hp > 0) {
+    e._dmgReductionActive = true;
+    e._dmgReductionTimer = COMBAT.BOSS_DMG_REDUCTION_DURATION;
+    e._dmgReductionTriggered = true;
+    spawnText(state, e.x, e.y - 50, 'HARDENED!', '#6688ff');
+  }
+
   e.iframes = 0.1;
   e._hitFlash = 0.12;
   spawnParticles(state, e.x, e.y, '#ff6644', 5, TIMING.HIT_PARTICLE_SCALE);
@@ -300,6 +318,7 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
           _dmgMul: e._dmgMul || 1,
           _teleportTimer: 0,
           _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
+          _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
         });
       }
       spawnText(state, e.x, e.y - 15, 'SPLIT!', '#66aa66');

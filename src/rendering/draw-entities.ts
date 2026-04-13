@@ -2624,6 +2624,36 @@ export function drawEnemies(ctx: CanvasRenderingContext2D, state: GameState): vo
       ctx.fill();
     }
 
+    // Boss damage reduction shield effect
+    if (e._dmgReductionActive) {
+      const pulse = 0.8 + 0.2 * Math.sin(state.time * 6);
+      // Outer shield ring
+      ctx.strokeStyle = `rgba(100,140,255,${0.5 * pulse})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, et.size * 1.5, 0, Math.PI * 2);
+      ctx.stroke();
+      // Inner glow
+      const sg = ctx.createRadialGradient(e.x, e.y, et.size * 0.3, e.x, e.y, et.size * 1.6);
+      sg.addColorStop(0, `rgba(100,150,255,${0.12 * pulse})`);
+      sg.addColorStop(0.6, `rgba(80,120,220,${0.06 * pulse})`);
+      sg.addColorStop(1, 'transparent');
+      ctx.fillStyle = sg;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, et.size * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+      // Rotating shield segments
+      for (let i = 0; i < 4; i++) {
+        const segAngle = state.time * 2 + (i * Math.PI / 2);
+        const segX = e.x + Math.cos(segAngle) * et.size * 1.3;
+        const segY = e.y + Math.sin(segAngle) * et.size * 1.3;
+        ctx.fillStyle = `rgba(120,170,255,${0.3 * pulse})`;
+        ctx.beginPath();
+        ctx.arc(segX, segY, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
     // Eye direction
     const target = state.players[e.target];
     const ea = target ? Math.atan2(target.y - e.y, target.x - e.x) : 0;

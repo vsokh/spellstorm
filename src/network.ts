@@ -403,6 +403,7 @@ function applyState(state: GameState, msg: NetStateMessage): void {
           _burnTimer: 0, _burnTick: 0, _burnOwner: 0, _friendly: false, _owner: 0, _lifespan: 0,
           _spdMul: 1, _dmgMul: 1, _teleportTimer: 0,
           _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
+          _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
         };
         newEnemy._prevX = ed.x;
         newEnemy._prevY = ed.y;
