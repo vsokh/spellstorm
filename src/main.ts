@@ -261,19 +261,17 @@ function loop(now: number): void {
     // Interpolate all players except local (local uses prediction above)
     for (let i = 0; i < state.players.length; i++) {
       if (i === state.localIdx) {
-        // Local player: error-threshold correction for client prediction
+        // Local player: smooth reconciliation for client prediction
         const p = state.players[i];
         if (p._targetX !== undefined && p._targetY !== undefined) {
           const errX = p._targetX - p.x;
           const errY = p._targetY - p.y;
           const errDist = Math.sqrt(errX * errX + errY * errY);
-          if (errDist > 50) {
-            // Large divergence: snap to authoritative
-            p.x = p._targetX;
-            p.y = p._targetY;
-          } else if (errDist > 4) {
-            // Moderate error: gentle frame-rate-independent correction
-            const t = Math.min(1, 3 * dt);
+          if (errDist > 4) {
+            // Exponential blend: converge toward server position smoothly
+            // Higher error = faster correction rate, but always smooth (never snap)
+            const rate = Math.min(15, 3 + errDist * 0.1);
+            const t = Math.min(1, rate * dt);
             p.x += errX * t;
             p.y += errY * t;
           }
@@ -284,8 +282,16 @@ function loop(now: number): void {
       const p = state.players[i];
       if (p._targetX !== undefined && p._targetY !== undefined) {
         p._lerpT = Math.min(1, (p._lerpT || 0) + dt * lerpSpeed);
-        p.x = lerp(p._prevX ?? p.x, p._targetX, p._lerpT);
-        p.y = lerp(p._prevY ?? p.y, p._targetY, p._lerpT);
+        let ix = lerp(p._prevX ?? p.x, p._targetX, p._lerpT);
+        let iy = lerp(p._prevY ?? p.y, p._targetY, p._lerpT);
+        // Extrapolate past target using server velocity to reduce stutter between updates
+        if (p._lerpT >= 1 && (p._serverVx || p._serverVy)) {
+          const overTime = ((p._lerpT || 1) - 1) * NET_SEND_INTERVAL;
+          ix += (p._serverVx || 0) * overTime;
+          iy += (p._serverVy || 0) * overTime;
+        }
+        p.x = ix;
+        p.y = iy;
       }
     }
 

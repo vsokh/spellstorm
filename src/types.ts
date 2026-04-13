@@ -316,6 +316,8 @@ export interface Player {
   _prevX?: number;
   _prevY?: number;
   _lerpT?: number;
+  _serverVx?: number;   // last known host velocity
+  _serverVy?: number;
 }
 
 export interface Enemy {
@@ -587,6 +589,8 @@ export interface NetStatePlayerData {
   x: number;
   y: number;
   a: number;
+  vx: number;   // x velocity for prediction
+  vy: number;   // y velocity for prediction
   hp: number;
   mhp: number;
   mn: number;

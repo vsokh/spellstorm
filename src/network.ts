@@ -268,7 +268,7 @@ export function sendState(state: GameState): void {
   const msg: NetStateMessage = {
     type: 'state',
     p: state.players.map(p => ({
-      x: ~~p.x, y: ~~p.y, a: Math.round(p.angle * 100) / 100,
+      x: ~~p.x, y: ~~p.y, a: Math.round(p.angle * 100) / 100, vx: ~~p.vx, vy: ~~p.vy,
       hp: p.hp, mhp: p.maxHp, mn: ~~p.mana, mmn: p.maxMana,
       al: p.alive, cd: p.cd.map(c => Math.round(c * 10) / 10), if: p.iframes > 0,
     })),
@@ -350,6 +350,8 @@ function applyState(state: GameState, msg: NetStateMessage): void {
         p._targetX = pd.x;
         p._targetY = pd.y;
         p._lerpT = 0;
+        p._serverVx = pd.vx;
+        p._serverVy = pd.vy;
       } else {
         // Remote player: standard interpolation from current to new target
         p._prevX = p.x;
@@ -357,6 +359,8 @@ function applyState(state: GameState, msg: NetStateMessage): void {
         p._targetX = pd.x;
         p._targetY = pd.y;
         p._lerpT = 0;
+        p._serverVx = pd.vx;
+        p._serverVy = pd.vy;
       }
 
       p.angle = pd.a;
