@@ -8,7 +8,7 @@ import {
   NetInputMessage,
   PickupType,
 } from './types';
-import { UPGRADE_POOL } from './constants';
+import { UPGRADE_POOL, CLASSES } from './constants';
 import { initAudio } from './audio';
 import { showUpgradeFromHost, checkBothPicked, finishUpgrade } from './systems/upgrades';
 
@@ -97,6 +97,7 @@ export function hostGame(state: GameState): void {
       }
       if (data.type === 'cls') {
         const clsMsg = data as { type: 'cls'; cls: string };
+        if (typeof clsMsg.cls !== 'string' || !(clsMsg.cls in CLASSES)) return;
         if (onStartWithClasses && state.hostClassKey) {
           conn!.send({ type: 'go', h: state.hostClassKey, g: clsMsg.cls });
           onStartWithClasses(state.hostClassKey, clsMsg.cls);
@@ -106,10 +107,12 @@ export function hostGame(state: GameState): void {
       }
       if (data.type === 'guest_picked') {
         const pickMsg = data as { type: 'guest_picked'; idx: number };
-        const up = UPGRADE_POOL[pickMsg.idx];
+        const idx = pickMsg.idx;
+        if (!Number.isInteger(idx) || idx < 0 || idx >= UPGRADE_POOL.length) return;
+        const up = UPGRADE_POOL[idx];
         if (up && state.players[1]) {
-          const newCount = (state.players[1].takenUpgrades.get(pickMsg.idx) || 0) + 1;
-          state.players[1].takenUpgrades.set(pickMsg.idx, newCount);
+          const newCount = (state.players[1].takenUpgrades.get(idx) || 0) + 1;
+          state.players[1].takenUpgrades.set(idx, newCount);
           up.apply(state.players[1], newCount);
         }
         state.upgradePickedRemote = true;
@@ -169,18 +172,23 @@ export function joinGame(state: GameState): void {
       }
       if (data.type === 'go') {
         const goMsg = data as { type: 'go'; h: string; g: string };
+        if (!(goMsg.h in CLASSES) || !(goMsg.g in CLASSES)) return;
         if (onStartWithClasses) onStartWithClasses(goMsg.h, goMsg.g);
       }
       if (data.type === 'upgrade') {
         const upMsg = data as { type: 'upgrade'; indices: number[] };
-        showUpgradeFromHost(state, upMsg.indices);
+        if (!Array.isArray(upMsg.indices)) return;
+        const valid = upMsg.indices.filter(i => Number.isInteger(i) && i >= 0 && i < UPGRADE_POOL.length);
+        if (valid.length > 0) showUpgradeFromHost(state, valid);
       }
       if (data.type === 'host_picked') {
         const pickMsg = data as { type: 'host_picked'; idx: number };
-        const up = UPGRADE_POOL[pickMsg.idx];
+        const idx = pickMsg.idx;
+        if (!Number.isInteger(idx) || idx < 0 || idx >= UPGRADE_POOL.length) return;
+        const up = UPGRADE_POOL[idx];
         if (up && state.players[0]) {
-          const newCount = (state.players[0].takenUpgrades.get(pickMsg.idx) || 0) + 1;
-          state.players[0].takenUpgrades.set(pickMsg.idx, newCount);
+          const newCount = (state.players[0].takenUpgrades.get(idx) || 0) + 1;
+          state.players[0].takenUpgrades.set(idx, newCount);
           up.apply(state.players[0], newCount);
         }
       }

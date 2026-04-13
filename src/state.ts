@@ -181,7 +181,7 @@ export function createInitialState(): GameState {
 
 /** Deep-copy a class definition so upgrades don't mutate the constant */
 export function cloneClassDef(key: string): ClassDef {
-  const src = CLASSES[key];
+  const src = CLASSES[key] ?? CLASSES[Object.keys(CLASSES)[0]];
   return {
     name: src.name,
     color: src.color,
