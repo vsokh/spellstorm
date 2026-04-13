@@ -470,6 +470,7 @@ export const CLASS_ORDER: string[] = [
 export const BOSS_HP_EXPONENT = 1.4;
 export const BOSS_HP_EXPONENT_DIVISOR = 5;
 export const TIME_SCALING_FACTOR = 0.12;
+export const ENEMY_HP_WAVE_MULT = 0.04;
 export const BOSS_WAVE_XP: Record<number, number> = { 5: 60, 10: 80, 15: 100, 20: 150 };
 
 // ═══════════════════════════════════

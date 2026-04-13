@@ -17,6 +17,7 @@ import {
   BOSS_HP_EXPONENT,
   BOSS_HP_EXPONENT_DIVISOR,
   TIME_SCALING_FACTOR,
+  ENEMY_HP_WAVE_MULT,
 } from '../constants';
 
 import { sfx } from '../audio';
@@ -123,12 +124,13 @@ export function startWave(state: GameState): void {
   const isBoss = wave % 5 === 0;
   const hpScale = 1 + Math.floor(wave * 0.6);
   const spdScale = 1 + wave * 0.03;
-  const timeMul = 1 + (state.time / 60) * TIME_SCALING_FACTOR;
+  const baseTimeMul = 1 + (state.time / 60) * TIME_SCALING_FACTOR;
+  const timeMul = baseTimeMul * (1 + wave * ENEMY_HP_WAVE_MULT);
 
   // FINALE — The Archlord (wave 20)
   if (wave === MAX_WAVES) {
     const et = ENEMIES['archlord'];
-    const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR) * timeMul);
+    const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR) * baseTimeMul);
     state.enemies.push({
       id: nextEnemyId(state),
       type: 'archlord',
@@ -144,7 +146,7 @@ export function startWave(state: GameState): void {
       _burnTimer: 0, _burnTick: 0, _burnOwner: 0,
       _friendly: false, _owner: 0, _lifespan: 0,
       _spdMul: 1,
-      _dmgMul: timeMul,
+      _dmgMul: baseTimeMul,
       _teleportTimer: 0,
       _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
       _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
@@ -171,7 +173,7 @@ export function startWave(state: GameState): void {
     // Boss wave
     const bossType = wave % 10 === 0 ? 'demon' : 'golem';
     const et = ENEMIES[bossType];
-    const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR) * timeMul);
+    const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR) * baseTimeMul);
     state.enemies.push({
       id: nextEnemyId(state),
       type: bossType,
@@ -194,7 +196,7 @@ export function startWave(state: GameState): void {
       _owner: 0,
       _lifespan: 0,
       _spdMul: 1,
-      _dmgMul: timeMul,
+      _dmgMul: baseTimeMul,
       _teleportTimer: 0,
       _hitFlash: 0, _deathTimer: -1, _atkAnim: 0,
       _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
@@ -317,7 +319,7 @@ export function updateWaves(state: GameState, dt: number): void {
       if (state.waveSpawnTimer <= 0) {
         const hpScale = 1 + Math.floor(state.wave * 0.6);
         const spdScale = 1 + state.wave * DUNGEON_TIMING.TRICKLE_SPEED_SCALE;
-        const timeMul = 1 + (state.time / 60) * TIME_SCALING_FACTOR;
+        const timeMul = (1 + (state.time / 60) * TIME_SCALING_FACTOR) * (1 + state.wave * ENEMY_HP_WAVE_MULT);
         const batch = Math.min(2 + Math.floor(Math.random() * 2), state.waveSpawnQueue); // 2-3
         for (let i = 0; i < batch; i++) {
           spawnEnemy(state, pickWaveEnemy(state.wave), hpScale, spdScale, timeMul);
