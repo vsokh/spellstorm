@@ -5,13 +5,30 @@ import {
   NetworkMode,
   NetMessage,
   NetStateMessage,
-  NetInputMessage,
   PickupType,
   Enemy,
 } from './types';
 import { UPGRADE_POOL, CLASSES } from './constants';
 import { initAudio } from './audio';
 import { showUpgradeFromHost, checkBothPicked, finishUpgrade } from './systems/upgrades';
+
+// ═══════════════════════════════════
+//       MESSAGE VALIDATION
+// ═══════════════════════════════════
+
+const VALID_MSG_TYPES = new Set(['input', 'cls', 'go', 'upgrade', 'host_picked', 'guest_picked', 'resume', 'state']);
+
+function isNetMessage(msg: unknown): msg is NetMessage {
+  return typeof msg === 'object' && msg !== null && 'type' in msg &&
+    typeof (msg as Record<string, unknown>).type === 'string' &&
+    VALID_MSG_TYPES.has((msg as Record<string, unknown>).type as string);
+}
+
+const GAME_PHASES = new Set(Object.values(GamePhase));
+
+function isGamePhase(v: unknown): v is GamePhase {
+  return typeof v === 'string' && GAME_PHASES.has(v as GamePhase);
+}
 
 // ═══════════════════════════════════
 //          NETWORKING
@@ -82,33 +99,30 @@ export function hostGame(state: GameState): void {
     });
 
     conn.on('data', (msg: unknown) => {
-      const data = msg as NetMessage;
-      if (data.type === 'input') {
-        const inputMsg = data as NetInputMessage;
+      if (!isNetMessage(msg)) return;
+      if (msg.type === 'input') {
         state.remoteInput = {
-          angle: inputMsg.angle,
-          mx: inputMsg.mx,
-          my: inputMsg.my,
-          shoot: inputMsg.shoot,
-          shoot2: inputMsg.shoot2,
-          ability: inputMsg.ability,
-          ult: inputMsg.ult,
-          dash: inputMsg.dash,
+          angle: msg.angle,
+          mx: msg.mx,
+          my: msg.my,
+          shoot: msg.shoot,
+          shoot2: msg.shoot2,
+          ability: msg.ability,
+          ult: msg.ult,
+          dash: msg.dash,
         };
       }
-      if (data.type === 'cls') {
-        const clsMsg = data as { type: 'cls'; cls: string };
-        if (typeof clsMsg.cls !== 'string' || !(clsMsg.cls in CLASSES)) return;
+      if (msg.type === 'cls') {
+        if (typeof msg.cls !== 'string' || !(msg.cls in CLASSES)) return;
         if (onStartWithClasses && state.hostClassKey) {
-          conn!.send({ type: 'go', h: state.hostClassKey, g: clsMsg.cls });
-          onStartWithClasses(state.hostClassKey, clsMsg.cls);
+          conn!.send({ type: 'go', h: state.hostClassKey, g: msg.cls });
+          onStartWithClasses(state.hostClassKey, msg.cls);
         } else {
-          state.guestClassKey = clsMsg.cls;
+          state.guestClassKey = msg.cls;
         }
       }
-      if (data.type === 'guest_picked') {
-        const pickMsg = data as { type: 'guest_picked'; idx: number };
-        const idx = pickMsg.idx;
+      if (msg.type === 'guest_picked') {
+        const idx = msg.idx;
         if (!Number.isInteger(idx) || idx < 0 || idx >= UPGRADE_POOL.length) return;
         const up = UPGRADE_POOL[idx];
         if (up && state.players[1]) {
@@ -167,24 +181,21 @@ export function joinGame(state: GameState): void {
     });
 
     conn.on('data', (msg: unknown) => {
-      const data = msg as NetMessage;
-      if (data.type === 'state') {
-        applyState(state, data as NetStateMessage);
+      if (!isNetMessage(msg)) return;
+      if (msg.type === 'state') {
+        applyState(state, msg);
       }
-      if (data.type === 'go') {
-        const goMsg = data as { type: 'go'; h: string; g: string };
-        if (!(goMsg.h in CLASSES) || !(goMsg.g in CLASSES)) return;
-        if (onStartWithClasses) onStartWithClasses(goMsg.h, goMsg.g);
+      if (msg.type === 'go') {
+        if (!(msg.h in CLASSES) || !(msg.g in CLASSES)) return;
+        if (onStartWithClasses) onStartWithClasses(msg.h, msg.g);
       }
-      if (data.type === 'upgrade') {
-        const upMsg = data as { type: 'upgrade'; indices: number[] };
-        if (!Array.isArray(upMsg.indices)) return;
-        const valid = upMsg.indices.filter(i => Number.isInteger(i) && i >= 0 && i < UPGRADE_POOL.length);
+      if (msg.type === 'upgrade') {
+        if (!Array.isArray(msg.indices)) return;
+        const valid = msg.indices.filter(i => Number.isInteger(i) && i >= 0 && i < UPGRADE_POOL.length);
         if (valid.length > 0) showUpgradeFromHost(state, valid);
       }
-      if (data.type === 'host_picked') {
-        const pickMsg = data as { type: 'host_picked'; idx: number };
-        const idx = pickMsg.idx;
+      if (msg.type === 'host_picked') {
+        const idx = msg.idx;
         if (!Number.isInteger(idx) || idx < 0 || idx >= UPGRADE_POOL.length) return;
         const up = UPGRADE_POOL[idx];
         if (up && state.players[0]) {
@@ -193,7 +204,7 @@ export function joinGame(state: GameState): void {
           up.apply(state.players[0], newCount);
         }
       }
-      if (data.type === 'resume') {
+      if (msg.type === 'resume') {
         const screen = document.getElementById('upgrade-screen');
         if (screen) screen.style.display = 'none';
         document.body.classList.add('in-game');
@@ -444,7 +455,7 @@ function applyState(state: GameState, msg: NetStateMessage): void {
   // Globals
   if (msg.g !== undefined) state.gold = msg.g;
   if (msg.tk !== undefined) state.totalKills = msg.tk;
-  if (msg.gp) state.gamePhase = msg.gp as GamePhase;
+  if (isGamePhase(msg.gp)) state.gamePhase = msg.gp;
   if (msg.ct !== undefined) state.countdownTimer = msg.ct;
   if (msg.sc > 0) state.screenFlash = Math.max(state.screenFlash, msg.sc);
   if (msg.sk > 0) shake(state, msg.sk);

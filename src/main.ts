@@ -49,8 +49,12 @@ import { setupGameOver } from './ui/game-over';
 //          INITIALIZATION
 // ═══════════════════════════════════
 
-const canvas = document.getElementById('c') as HTMLCanvasElement;
-const ctx = canvas.getContext('2d')!;
+const canvasEl = document.getElementById('c');
+if (!(canvasEl instanceof HTMLCanvasElement)) throw new Error('Canvas element #c not found');
+const canvas: HTMLCanvasElement = canvasEl;
+const ctx2d = canvas.getContext('2d');
+if (!ctx2d) throw new Error('Could not get 2d context');
+const ctx: CanvasRenderingContext2D = ctx2d;
 
 const state: GameState = createInitialState();
 
