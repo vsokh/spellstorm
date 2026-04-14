@@ -286,6 +286,18 @@ export function updateSpells(state: GameState, dt: number): void {
             damageEnemy(state, e, 1, s.owner);
           }
         }
+
+        // Pyroclasm: explosions leave fire zones
+        const fireZoneOwner = state.players[s.owner];
+        if (fireZoneOwner && fireZoneOwner.fireZoneOnExplode) {
+          const fireZone = state.zones.acquire();
+          if (fireZone) {
+            fireZone.x = s.x; fireZone.y = s.y; fireZone.radius = 35; fireZone.duration = 2;
+            fireZone.dmg = 1; fireZone.color = '#ff4400'; fireZone.owner = s.owner;
+            fireZone.slow = 0; fireZone.stun = 0; fireZone.tickRate = TIMING.ZONE_TICK; fireZone.tickTimer = 0; fireZone.age = 0;
+            fireZone.drain = 0; fireZone.heal = 0; fireZone.pull = 0; fireZone.freezeAfter = 0;
+          }
+        }
       } else if (hitP || hitE) {
         spawnParticles(state, s.x, s.y, s.color, 6, WAVE_PHYSICS.HIT_PARTICLE_LIFE);
         shake(state, 1);

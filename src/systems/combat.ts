@@ -485,6 +485,13 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
     }
   }
 
+  // Magma Armor: attackers catch fire
+  if (p.magmaArmor && attacker && attacker.alive) {
+    attacker._burnTimer = (attacker._burnTimer || 0) + 3;
+    attacker._burnOwner = p.idx;
+    spawnParticles(state, attacker.x, attacker.y, '#ff6633', 4, 0.3);
+  }
+
   if (p.hp <= 0) {
     // Second wind
     if (p.secondWind && p.secondWind > 0) {

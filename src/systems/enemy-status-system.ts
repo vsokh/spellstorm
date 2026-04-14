@@ -56,6 +56,20 @@ export function enemyStatus(state: GameState, dt: number): void {
       if (e._burnTick <= 0) {
         e._burnTick = TIMING.BURN_TICK;
         damageEnemy(state, e, 1, e._burnOwner || 0);
+
+        // Wildfire: burn spreads to nearby enemies
+        const burnOwner = state.players[e._burnOwner || 0];
+        if (burnOwner && burnOwner.burnSpread) {
+          const spreadCandidates = state.enemyGrid.queryArea(e.x, e.y, 80);
+          for (const idx of spreadCandidates) {
+            const e2 = state.enemies.at(idx);
+            if (!e2.alive || e2 === e || e2._burnTimer > 0) continue;
+            if (dist(e.x, e.y, e2.x, e2.y) < 80) {
+              e2._burnTimer = 2;
+              e2._burnOwner = e._burnOwner;
+            }
+          }
+        }
       }
     }
   }
