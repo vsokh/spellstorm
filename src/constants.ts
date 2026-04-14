@@ -565,7 +565,7 @@ export const UPGRADE_POOL: UpgradeDef[] = [
   { name: 'Ultimate Power', desc: 'Ultimate spell +3 damage', apply: (p: Player) => { if (p.cls.spells[2].dmg) p.cls.spells[2].dmg += 3; } },
   { name: 'Glass Cannon', desc: '+3 spell damage, -2 max HP', apply: (p: Player) => { for (const s of p.cls.spells) s.dmg = (s.dmg || 0) + 3; p.maxHp = Math.max(1, p.maxHp - 2); p.hp = Math.min(p.hp, p.maxHp); } },
   { name: 'Critical Strike', desc: '15% chance to deal 2x damage', stackable: true, maxStacks: 3, apply: (p: Player) => { p.critChance = hyperStack(p, 'critChance', 0.15); } },
-  { name: 'Overkill', desc: 'Excess kill damage chains to nearby enemy', apply: (p: Player) => { p.overkill = true; } },
+  { name: 'Overkill', desc: 'Leftover damage from a kill splashes to a nearby enemy', apply: (p: Player) => { p.overkill = true; } },
 
   // -- PROJECTILE MODIFIERS --
   { name: 'Piercing', desc: 'Primary passes through +1 enemy', stackable: true, maxStacks: 4,
@@ -575,7 +575,7 @@ export const UPGRADE_POOL: UpgradeDef[] = [
   { name: 'Velocity', desc: 'Projectile speed +40%', apply: (p: Player) => { for (const s of p.cls.spells) if (s.speed) s.speed *= 1.4; } },
   { name: 'Chain Hit', desc: 'Hits jump to 1 nearby enemy for 50% dmg', stackable: true, maxStacks: 3,
     apply: (p, stacks) => { p.chainHit = (p.chainHit || 0) + flatScaling(1, stacks); } },
-  { name: 'Homing Bolts', desc: 'Primary slightly tracks enemies', apply: (p: Player) => { const s = p.cls.spells[0]; s.homing = (s.homing || 0) + 1.5; } },
+  { name: 'Homing Bolts', desc: 'Primary gently curves toward nearby enemies', apply: (p: Player) => { const s = p.cls.spells[0]; s.homing = (s.homing || 0) + 1.5; } },
   { name: 'Big Spells', desc: 'Projectile size +30%', apply: (p: Player) => { for (const s of p.cls.spells) if (s.radius) s.radius *= 1.3; } },
   { name: 'Blast Radius', desc: 'Explosions +50% area', apply: (p: Player) => { for (const s of p.cls.spells) { if (s.explode) s.explode *= 1.5; if (s.radius && s.type === SpellType.AoeDelayed) s.radius *= 1.5; } } },
 
@@ -588,14 +588,14 @@ export const UPGRADE_POOL: UpgradeDef[] = [
   // -- MANA --
   { name: 'Efficiency', desc: 'Mana costs -25%', apply: (p: Player) => { for (const s of p.cls.spells) s.mana *= 0.75; } },
   { name: 'Mana Flow', desc: 'Mana regen +50%', apply: (p: Player) => { p.manaRegen *= 1.5; } },
-  { name: 'Max Mana +30', desc: 'Bigger mana pool', apply: (p: Player) => { p.maxMana += 30; p.mana += 30; } },
+  { name: 'Max Mana +30', desc: '+30 max mana, immediately restored', apply: (p: Player) => { p.maxMana += 30; p.mana += 30; } },
   { name: 'Mana on Kill', desc: 'Restore 8 mana per kill', apply: (p: Player) => { p.manaOnKill = (p.manaOnKill || 0) + 8; } },
   { name: 'Spell Thief', desc: 'Hits restore 2 mana', apply: (p: Player) => { p.manaOnHit = (p.manaOnHit || 0) + 2; } },
 
   // -- SURVIVABILITY --
   { name: 'Vitality', desc: 'Max HP +2, heal to full', stackable: true, maxStacks: 5,
     apply: (p, stacks) => { p.maxHp += flatScaling(2, stacks); p.hp = p.maxHp; } },
-  { name: 'Armor', desc: 'Take -1 damage (min 1)', stackable: true, maxStacks: 4,
+  { name: 'Armor', desc: 'Reduce all damage taken by 1 (you always take at least 1)', stackable: true, maxStacks: 4,
     apply: (p, stacks) => { p.armor = (p.armor || 0) + flatScaling(1, stacks); } },
   { name: 'Vampirism', desc: 'Heal 1 HP per 4 kills', apply: (p: Player) => { p.vampirism = (p.vampirism || 0) + 1; p.vampKillReq = 4; } },
   { name: 'Life Steal', desc: '5% of damage dealt heals you', apply: (p: Player) => { p.lifeSteal = hyperStack(p, 'lifeSteal', 0.05); } },
@@ -614,43 +614,43 @@ export const UPGRADE_POOL: UpgradeDef[] = [
   { name: 'Aftershock', desc: 'AoE spells leave a damage zone for 2s', apply: (p: Player) => { p.aftershock = true; } },
 
   // -- SECONDARY (RMB) UPGRADES --
-  { name: 'Secondary Mastery', desc: 'RMB cooldown -40%', apply: (p: Player) => { if (p.cls.spells[1]) p.cls.spells[1].cd *= 0.6; } },
-  { name: 'Double Secondary', desc: 'RMB fires/activates twice', apply: (p: Player) => { p.doubleSecondary = (p.doubleSecondary || 0) + 1; } },
-  { name: 'Secondary Power', desc: 'RMB +3 damage', apply: (p: Player) => { if (p.cls.spells[1]) p.cls.spells[1].dmg = (p.cls.spells[1].dmg || 0) + 3; } },
-  { name: 'Free Cast', desc: 'RMB costs no mana (extra 2s cooldown)', apply: (p: Player) => { if (p.cls.spells[1]) { p.cls.spells[1].mana = 0; p.cls.spells[1].cd += 2; } } },
-  { name: 'Combo', desc: 'RMB deals +50% dmg if target was hit by LMB recently', apply: (p: Player) => { p.comboBonus = true; } },
-  { name: 'Area Secondary', desc: 'RMB range/radius +50%', apply: (p: Player) => { const s = p.cls.spells[1]; if (s) { if (s.range) s.range *= 1.5; if (s.radius) s.radius *= 1.5; if (s.aoeR) s.aoeR *= 1.5; } } },
+  { name: 'Secondary Mastery', desc: 'Secondary spell cooldown -40%', apply: (p: Player) => { if (p.cls.spells[1]) p.cls.spells[1].cd *= 0.6; } },
+  { name: 'Double Secondary', desc: 'Secondary spell triggers twice per cast', apply: (p: Player) => { p.doubleSecondary = (p.doubleSecondary || 0) + 1; } },
+  { name: 'Secondary Power', desc: 'Secondary spell +3 damage', apply: (p: Player) => { if (p.cls.spells[1]) p.cls.spells[1].dmg = (p.cls.spells[1].dmg || 0) + 3; } },
+  { name: 'Free Cast', desc: 'Secondary spell costs no mana (+2s cooldown)', apply: (p: Player) => { if (p.cls.spells[1]) { p.cls.spells[1].mana = 0; p.cls.spells[1].cd += 2; } } },
+  { name: 'Combo', desc: 'Secondary deals +50% damage to targets hit by primary recently', apply: (p: Player) => { p.comboBonus = true; } },
+  { name: 'Area Secondary', desc: 'Secondary spell range and radius +50%', apply: (p: Player) => { const s = p.cls.spells[1]; if (s) { if (s.range) s.range *= 1.5; if (s.radius) s.radius *= 1.5; if (s.aoeR) s.aoeR *= 1.5; } } },
 
   // -- ULTIMATE (R) UPGRADES --
   { name: 'Quick Charge', desc: 'Ultimate charges 50% faster', apply: (p: Player) => { p.ultChargeRate = (p.ultChargeRate || 1) * 1.5; } },
   { name: 'Ult Mastery', desc: 'Ultimate deals 2x damage/effect', apply: (p: Player) => { p.ultPower = (p.ultPower || 1) * 2; } },
   { name: 'Overflow', desc: 'Ult charges to 200% for double cast', apply: (p: Player) => { p.ultOverflow = true; } },
-  { name: 'Ult Echo', desc: 'After ult, next 5 primary shots deal 2x', apply: (p: Player) => { p.ultEcho = (p.ultEcho || 0) + 5; } },
+  { name: 'Ult Echo', desc: 'After using ultimate, your next 5 primary shots deal double damage', apply: (p: Player) => { p.ultEcho = (p.ultEcho || 0) + 5; } },
   { name: 'Ult Regen', desc: 'Using ult restores 50% HP', apply: (p: Player) => { p.ultHeal = true; } },
 
   // -- CROSS-SPELL SYNERGIES --
-  { name: 'Spell Weaving', desc: 'Alternating LMB/RMB: +25% dmg per swap (3x max)', apply: (p: Player) => { p.spellWeaving = true; } },
-  { name: 'Cooldown Cascade', desc: 'LMB kills reduce RMB cooldown by 1s', apply: (p: Player) => { p.cdCascade = true; } },
-  { name: 'Full Rotation', desc: 'Use all 3 spells in 5s: 3x attack speed for 3s', apply: (p: Player) => { p.fullRotation = true; } },
+  { name: 'Spell Weaving', desc: 'Switching between primary and secondary grants +25% damage (up to 3 stacks)', apply: (p: Player) => { p.spellWeaving = true; } },
+  { name: 'Cooldown Cascade', desc: 'Primary kills reduce secondary cooldown by 1s', apply: (p: Player) => { p.cdCascade = true; } },
+  { name: 'Full Rotation', desc: 'Cast all 3 spells within 5s to gain 3x attack speed for 3s', apply: (p: Player) => { p.fullRotation = true; } },
   { name: 'Q Mastery', desc: 'Q skill cooldown -35%, +2 damage', apply: (p: Player) => { if (p.cls.spells[2]) { p.cls.spells[2].cd *= 0.65; p.cls.spells[2].dmg = (p.cls.spells[2].dmg || 0) + 2; } } },
-  { name: 'Skill Reset', desc: 'Using ult resets Q and RMB cooldowns', apply: (p: Player) => { p.ultResetCDs = true; } },
+  { name: 'Skill Reset', desc: 'Using ultimate resets skill and secondary cooldowns', apply: (p: Player) => { p.ultResetCDs = true; } },
 
   // -- WILD / FUN --
-  { name: 'Chaos Bolts', desc: 'Primary deals random 1-4 damage', apply: (p: Player) => { p.chaosDmg = true; } },
-  { name: 'Magnet', desc: 'Pickups fly to you from further away', apply: (p: Player) => { p.magnetRange = (p.magnetRange || 30) + 60; } },
+  { name: 'Chaos Bolts', desc: 'Primary damage randomized between 1 and 4 per hit', apply: (p: Player) => { p.chaosDmg = true; } },
+  { name: 'Magnet', desc: 'Pickup attraction range doubled', apply: (p: Player) => { p.magnetRange = (p.magnetRange || 30) + 60; } },
   { name: 'Gold Rush', desc: 'Enemies drop 2x gold', apply: (p: Player) => { p.goldMul = (p.goldMul || 1) * 2; } },
   { name: 'XP Boost', desc: 'Gain upgrades 30% more often', apply: (p: Player) => { p.xpBoost = hyperStack(p, 'xpBoost', 0.3); } },
   { name: 'Friendly Fire', desc: '+2 dmg but your spells can hurt you', apply: (p: Player) => { for (const s of p.cls.spells) s.dmg = (s.dmg || 0) + 2; p.selfDmg = true; } },
 
   // -- QUALITATIVE (behavior-changing) --
   { name: 'Boomerang', desc: 'Projectiles return to you at half range, hitting enemies twice', apply: (p: Player) => { p.boomerang = true; } },
-  { name: 'Volatile', desc: 'Projectiles explode when they expire (40px, 2 dmg)', apply: (p: Player) => { p.volatile = true; } },
+  { name: 'Volatile', desc: 'Projectiles explode when they expire (2 dmg)', apply: (p: Player) => { p.volatile = true; } },
   { name: 'Fork', desc: 'Kills spawn 2 mini-projectiles from the corpse', apply: (p: Player) => { p.forkOnKill = true; } },
   { name: 'Gravity Pull', desc: 'Projectiles pull nearby enemies toward their path', apply: (p: Player) => { p.gravityWell = true; } },
   { name: 'Spectral', desc: 'Projectiles pass through walls and pillars', apply: (p: Player) => { p.spectral = true; } },
   { name: 'Frozen Touch', desc: '25% chance any attack freezes enemies for 1s', apply: (p: Player) => { p.frozenTouch = true; } },
-  { name: 'Seeker Mines', desc: 'Kills drop explosive proximity mines (3 dmg, 50px)', apply: (p: Player) => { p.seekerMines = true; } },
-  { name: 'Barrage Mode', desc: 'Primary fires a 3-shot burst at reduced damage', apply: (p: Player) => { p.burstFire = true; const s = p.cls.spells[0]; s.dmg = Math.max(1, Math.ceil(s.dmg * 0.4)); s.cd *= 1.5; } },
+  { name: 'Seeker Mines', desc: 'Kills drop explosive proximity mines (3 dmg each)', apply: (p: Player) => { p.seekerMines = true; } },
+  { name: 'Barrage Mode', desc: 'Primary fires a 3-shot burst (40% damage each, slower fire rate)', apply: (p: Player) => { p.burstFire = true; const s = p.cls.spells[0]; s.dmg = Math.max(1, Math.ceil(s.dmg * 0.4)); s.cd *= 1.5; } },
 
   // ══════════════════════════════════════
   //     CLASS-SPECIFIC UPGRADES (3 each)
@@ -677,13 +677,13 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p, stacks) => { p.chainLightning = (p.chainLightning || 0) + flatScaling(2, stacks); } },
   { name: 'Overcharge', desc: 'Every 3rd spell deals 3x damage', forClass: 'stormcaller', color: '#bb66ff',
     apply: (p: Player) => { p.overcharge = true; } },
-  { name: 'Storm Shield', desc: 'Lightning randomly strikes enemies near you (120px, 1 dmg/s)', forClass: 'stormcaller', color: '#bb66ff',
+  { name: 'Storm Shield', desc: 'Lightning randomly strikes nearby enemies (1 dmg/s)', forClass: 'stormcaller', color: '#bb66ff',
     apply: (p: Player) => { p.stormShield = true; } },
 
   // ── Arcanist ──
   { name: 'Arcane Amplifier', desc: 'Homing gets 3x stronger, projectiles are 50% faster', forClass: 'arcanist', color: '#ff55aa',
     apply: (p: Player) => { const s = p.cls.spells[0]; s.homing = (s.homing || 0) * 3; if (s.speed) s.speed *= 1.5; } },
-  { name: 'Phase Shift', desc: 'Blink leaves behind an explosion (4 dmg, 60px radius)', forClass: 'arcanist', color: '#ff55aa',
+  { name: 'Phase Shift', desc: 'Blink leaves behind an explosion (4 dmg)', forClass: 'arcanist', color: '#ff55aa',
     apply: (p: Player) => { p.blinkExplode = true; } },
   { name: 'Spell Mirror', desc: '30% chance to copy any spell you cast for free', forClass: 'arcanist', color: '#ff55aa',
     apply: (p: Player) => { p.spellMirror = hyperStack(p, 'spellMirror', 0.3); } },
@@ -693,7 +693,7 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p: Player) => { p.raiseDead = hyperStack(p, 'raiseDead', 0.25); } },
   { name: 'Death Mark', desc: 'Enemies below 20% HP take 3x damage', forClass: 'necromancer', color: '#55cc55',
     apply: (p: Player) => { p.deathMark = true; } },
-  { name: 'Soul Well', desc: 'Kills create a healing zone (heals 2 HP/s, 3s, 50px)', forClass: 'necromancer', color: '#55cc55',
+  { name: 'Soul Well', desc: 'Kills create a healing zone (2 HP/s for 3s)', forClass: 'necromancer', color: '#55cc55',
     apply: (p: Player) => { p.soulWell = true; } },
 
   // ── Chronomancer ──
@@ -709,7 +709,7 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p: Player) => { p.shieldBounce = (p.shieldBounce || 0) + 3; } },
   { name: 'Fortify', desc: '+5 max HP, +2 armor, move 15% slower', forClass: 'knight', color: '#aabbcc',
     apply: (p: Player) => { p.maxHp += 5; p.hp += 5; p.armor = (p.armor || 0) + 2; p.moveSpeed *= 0.85; } },
-  { name: 'Taunt Aura', desc: 'Enemies within 100px target you instead of your ally', forClass: 'knight', color: '#aabbcc',
+  { name: 'Taunt Aura', desc: 'Nearby enemies target you instead of your ally', forClass: 'knight', color: '#aabbcc',
     apply: (p: Player) => { p.tauntAura = true; } },
 
   // ── Berserker ──
@@ -765,7 +765,7 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p: Player) => { p.turretArmy = true; if (p.cls.spells[1]) p.cls.spells[1].duration = 25; } },
   { name: 'Laser Turret', desc: 'Turrets fire beams instead of shots (2x damage, hits instantly)', forClass: 'engineer', color: '#dd8833',
     apply: (p: Player) => { p.laserTurret = true; } },
-  { name: 'Self-Destruct', desc: 'Turrets explode when they expire (6 dmg, 80px radius)', forClass: 'engineer', color: '#dd8833',
+  { name: 'Self-Destruct', desc: 'Turrets explode when they expire (6 dmg, large radius)', forClass: 'engineer', color: '#dd8833',
     apply: (p: Player) => { p.turretExplode = true; } },
 
   // ══════════════════════════════════════
@@ -774,7 +774,7 @@ export const UPGRADE_POOL: UpgradeDef[] = [
   // Evolutions appear when their parent stackable upgrade reaches max stacks.
   // They are NOT offered in the normal upgrade pool.
 
-  { name: 'Spell Mastery', desc: 'Caps total spell damage bonus at +7 and cooldowns -30%', isEvolution: true, evolvesFrom: 0, color: '#ffaa00',
+  { name: 'Spell Mastery', desc: 'Sets total spell damage bonus to +7 and reduces all cooldowns by 30%', isEvolution: true, evolvesFrom: 0, color: '#ffaa00',
     apply: (p: Player, _s: number) => {
       const parentStacks = p.takenUpgrades.get(0) || 0;
       let parentTotal = 0;
@@ -783,7 +783,7 @@ export const UPGRADE_POOL: UpgradeDef[] = [
       for (const s of p.cls.spells) { s.dmg = (s.dmg || 0) + bonus; s.cd *= 0.7; }
     } },
 
-  { name: 'Primary Overload', desc: 'Caps total primary bonus at +10 and explodes on hit (3 AoE dmg)', isEvolution: true, evolvesFrom: 1, color: '#ffaa00',
+  { name: 'Primary Overload', desc: 'Sets primary damage bonus to +10 and adds a 3-damage explosion on hit', isEvolution: true, evolvesFrom: 1, color: '#ffaa00',
     apply: (p: Player, _s: number) => {
       const parentStacks = p.takenUpgrades.get(1) || 0;
       let parentTotal = 0;
