@@ -20,7 +20,6 @@ import {
   WIZARD_SIZE,
   DEFAULT_MOVE_SPEED,
   WALL_THICKNESS,
-  MAX_TRAILS,
 } from './constants';
 import { sfx } from './audio';
 import { SfxName } from './types';
@@ -341,14 +340,13 @@ function loop(now: number): void {
 
     // Guest: generate spell trails locally for visual parity
     for (const s of state.spells) {
-      if (state.trails.length >= MAX_TRAILS) break;
-      state.trails.push({
-        x: s.x + (Math.random() - 0.5) * 6,
-        y: s.y + (Math.random() - 0.5) * 6,
-        life: 1,
-        r: s.radius * WAVE_PHYSICS.TRAIL_PARTICLE_SCALE,
-        color: s.trail,
-      });
+      const tr = state.trails.acquire();
+      if (!tr) break;
+      tr.x = s.x + (Math.random() - 0.5) * 6;
+      tr.y = s.y + (Math.random() - 0.5) * 6;
+      tr.life = 1;
+      tr.r = s.radius * WAVE_PHYSICS.TRAIL_PARTICLE_SCALE;
+      tr.color = s.trail;
     }
   }
 

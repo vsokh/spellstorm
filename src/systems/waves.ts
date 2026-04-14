@@ -1,5 +1,5 @@
 import { GameState, dist, rand, wrapAngle, spawnParticles, spawnShockwave, spawnText, shake, flashScreen } from '../state';
-import { ENEMIES, ROOM_WIDTH, ROOM_HEIGHT, WALL_THICKNESS, WAVE_PHYSICS, TIMING, RANGES, MAX_TRAILS } from '../constants';
+import { ENEMIES, ROOM_WIDTH, ROOM_HEIGHT, WALL_THICKNESS, WAVE_PHYSICS, TIMING, RANGES } from '../constants';
 import { SfxName } from '../types';
 import { sfx } from '../audio';
 import { damageEnemy } from './combat';
@@ -71,8 +71,12 @@ export function updateSpells(state: GameState, dt: number): void {
     }
 
     // Trail particles
-    if (s.trail && Math.random() > WAVE_PHYSICS.TRAIL_CHANCE && state.trails.length < MAX_TRAILS) {
-      state.trails.push({ x: s.x + rand(-3, 3), y: s.y + rand(-3, 3), life: 1, r: s.radius * WAVE_PHYSICS.TRAIL_PARTICLE_SCALE, color: s.trail });
+    if (s.trail && Math.random() > WAVE_PHYSICS.TRAIL_CHANCE) {
+      const tr = state.trails.acquire();
+      if (tr) {
+        tr.x = s.x + rand(-3, 3); tr.y = s.y + rand(-3, 3);
+        tr.life = 1; tr.r = s.radius * WAVE_PHYSICS.TRAIL_PARTICLE_SCALE; tr.color = s.trail;
+      }
     }
 
     // Zap aura (Ball Zap)
@@ -177,12 +181,12 @@ export function updateSpells(state: GameState, dt: number): void {
           for (let ei = 0; ei < 5; ei++) {
             const a = Math.random() * Math.PI * 2;
             const spd = 30 + Math.random() * 60;
-            state.particles.push({
-              x: s.x, y: s.y,
-              vx: Math.cos(a) * spd,
-              vy: -40 - Math.random() * 80,
-              life: 1, r: 1 + Math.random() * 2, color: '#ff8833',
-            });
+            const fp = state.particles.acquire();
+            if (fp) {
+              fp.x = s.x; fp.y = s.y;
+              fp.vx = Math.cos(a) * spd; fp.vy = -40 - Math.random() * 80;
+              fp.life = 1; fp.r = 1 + Math.random() * 2; fp.color = '#ff8833';
+            }
           }
           spawnShockwave(state, s.x, s.y, s.explode * WAVE_PHYSICS.EXPLOSION_SHOCKWAVE_SCALE, '#ff8833');
         } else if (c.includes('22cc') || c.includes('88cc') || c.includes('44aa')) {
@@ -206,13 +210,13 @@ export function updateSpells(state: GameState, dt: number): void {
           for (let di = 0; di < 8; di++) {
             const a = Math.random() * Math.PI * 2;
             const d = 30 + Math.random() * 40;
-            state.particles.push({
-              x: s.x + Math.cos(a) * d,
-              y: s.y + Math.sin(a) * d,
-              vx: -Math.cos(a) * 60,
-              vy: -Math.sin(a) * 60,
-              life: 1, r: WAVE_PHYSICS.EXPLOSION_PARTICLE_SCALE + Math.random() * 2, color: s.color,
-            });
+            const dp = state.particles.acquire();
+            if (dp) {
+              dp.x = s.x + Math.cos(a) * d; dp.y = s.y + Math.sin(a) * d;
+              dp.vx = -Math.cos(a) * 60; dp.vy = -Math.sin(a) * 60;
+              dp.life = 1; dp.r = WAVE_PHYSICS.EXPLOSION_PARTICLE_SCALE + Math.random() * 2;
+              dp.color = s.color;
+            }
           }
           spawnShockwave(state, s.x, s.y, s.explode * WAVE_PHYSICS.MAGIC_EXPLOSION_SHOCKWAVE, '#6622aa');
         }

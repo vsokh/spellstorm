@@ -10,47 +10,44 @@ import { rgba } from './rgba-cache';
 
 export function updateFx(state: GameState, dt: number): void {
   // Particles
-  for (let i = state.particles.length - 1; i >= 0; i--) {
-    const p = state.particles[i];
+  for (let i = state.particles.count - 1; i >= 0; i--) {
+    const p = state.particles.get(i);
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.vx *= 0.94;
     p.vy *= 0.94;
     p.life -= dt * 2.2;
     if (p.life <= 0) {
-      state.particles[i] = state.particles[state.particles.length - 1];
-      state.particles.pop();
+      state.particles.release(i);
     }
   }
 
   // Trails
-  for (let i = state.trails.length - 1; i >= 0; i--) {
-    state.trails[i].life -= dt * 4;
-    if (state.trails[i].life <= 0) {
-      state.trails[i] = state.trails[state.trails.length - 1];
-      state.trails.pop();
+  for (let i = state.trails.count - 1; i >= 0; i--) {
+    const t = state.trails.get(i);
+    t.life -= dt * 4;
+    if (t.life <= 0) {
+      state.trails.release(i);
     }
   }
 
   // Shockwaves
-  for (let i = state.shockwaves.length - 1; i >= 0; i--) {
-    const s = state.shockwaves[i];
+  for (let i = state.shockwaves.count - 1; i >= 0; i--) {
+    const s = state.shockwaves.get(i);
     s.radius += dt * 200;
     s.life -= dt * 2.5;
     if (s.life <= 0) {
-      state.shockwaves[i] = state.shockwaves[state.shockwaves.length - 1];
-      state.shockwaves.pop();
+      state.shockwaves.release(i);
     }
   }
 
   // Floating text
-  for (let i = state.texts.length - 1; i >= 0; i--) {
-    const t = state.texts[i];
+  for (let i = state.texts.count - 1; i >= 0; i--) {
+    const t = state.texts.get(i);
     t.y += t.vy * dt;
     t.life -= dt;
     if (t.life <= 0) {
-      state.texts[i] = state.texts[state.texts.length - 1];
-      state.texts.pop();
+      state.texts.release(i);
     }
   }
 

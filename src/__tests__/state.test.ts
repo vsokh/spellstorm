@@ -172,7 +172,7 @@ describe('spawnText()', () => {
     const state = createTestState();
     spawnText(state, 100, 200, 'hello', '#fff');
     expect(state.texts).toHaveLength(1);
-    expect(state.texts[0]).toEqual({
+    expect(state.texts.get(0)).toEqual({
       x: 100,
       y: 200,
       text: 'hello',

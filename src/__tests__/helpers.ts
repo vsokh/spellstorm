@@ -1,5 +1,7 @@
 import { GameState, createPlayer } from '../state';
-import { GamePhase, NetworkMode, Player } from '../types';
+import { GamePhase, NetworkMode, Player, Particle, Trail, Shockwave, FloatingText } from '../types';
+import { Pool } from '../systems/pools';
+import { MAX_PARTICLES, MAX_TRAILS, MAX_SHOCKWAVES, MAX_FLOATING_TEXTS } from '../constants';
 
 /**
  * Create a GameState-compatible object for testing without window references.
@@ -43,10 +45,10 @@ export function createTestState(): GameState {
     players: [],
     enemies: [],
     spells: [],
-    particles: [],
-    trails: [],
-    shockwaves: [],
-    texts: [],
+    particles: new Pool<Particle>(MAX_PARTICLES, () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, r: 0, color: '' })),
+    trails: new Pool<Trail>(MAX_TRAILS, () => ({ x: 0, y: 0, life: 0, r: 0, color: '' })),
+    shockwaves: new Pool<Shockwave>(MAX_SHOCKWAVES, () => ({ x: 0, y: 0, radius: 0, maxR: 0, life: 0, color: '' })),
+    texts: new Pool<FloatingText>(MAX_FLOATING_TEXTS, () => ({ x: 0, y: 0, text: '', color: '', life: 0, vy: 0 })),
     beams: [],
     zones: [],
     aoeMarkers: [],

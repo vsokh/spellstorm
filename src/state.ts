@@ -30,7 +30,12 @@ import {
   ROOM_HEIGHT,
   DEFAULT_LIVES,
   NET_SEND_INTERVAL,
+  MAX_PARTICLES,
+  MAX_TRAILS,
+  MAX_SHOCKWAVES,
+  MAX_FLOATING_TEXTS,
 } from './constants';
+import { Pool } from './systems/pools';
 
 // ═══════════════════════════════════
 //        GAME STATE
@@ -79,10 +84,10 @@ export interface GameState {
   players: Player[];
   enemies: Enemy[];
   spells: Spell[];
-  particles: Particle[];
-  trails: Trail[];
-  shockwaves: Shockwave[];
-  texts: FloatingText[];
+  particles: Pool<Particle>;
+  trails: Pool<Trail>;
+  shockwaves: Pool<Shockwave>;
+  texts: Pool<FloatingText>;
   beams: Beam[];
   zones: Zone[];
   aoeMarkers: AoeMarker[];
@@ -179,10 +184,10 @@ export function createInitialState(): GameState {
     players: [],
     enemies: [],
     spells: [],
-    particles: [],
-    trails: [],
-    shockwaves: [],
-    texts: [],
+    particles: new Pool<Particle>(MAX_PARTICLES, () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, r: 0, color: '' })),
+    trails: new Pool<Trail>(MAX_TRAILS, () => ({ x: 0, y: 0, life: 0, r: 0, color: '' })),
+    shockwaves: new Pool<Shockwave>(MAX_SHOCKWAVES, () => ({ x: 0, y: 0, radius: 0, maxR: 0, life: 0, color: '' })),
+    texts: new Pool<FloatingText>(MAX_FLOATING_TEXTS, () => ({ x: 0, y: 0, text: '', color: '', life: 0, vy: 0 })),
     beams: [],
     zones: [],
     aoeMarkers: [],
@@ -446,22 +451,23 @@ export function toWorld(state: GameState, sx: number, sy: number): { x: number; 
 export function spawnParticles(
   state: GameState, x: number, y: number, col: string, n: number, scale: number = 1
 ): void {
-  if (state.particles.length >= 150) return;
+  if (state.particles.count >= MAX_PARTICLES) return;
   // Collect fx event for guest when hosting
   if (state.mode === NetworkMode.Host) {
     state.pendingFx.push({ t: 'p', x: ~~x, y: ~~y, c: col, n, s: scale });
   }
   for (let i = 0; i < n; i++) {
+    const p = state.particles.acquire();
+    if (!p) break;
     const a = Math.random() * Math.PI * 2;
     const s = (25 + Math.random() * 100) * scale;
-    state.particles.push({
-      x, y,
-      vx: Math.cos(a) * s,
-      vy: Math.sin(a) * s,
-      life: 1,
-      r: 1 + Math.random() * 3,
-      color: col,
-    });
+    p.x = x;
+    p.y = y;
+    p.vx = Math.cos(a) * s;
+    p.vy = Math.sin(a) * s;
+    p.life = 1;
+    p.r = 1 + Math.random() * 3;
+    p.color = col;
   }
 }
 
@@ -472,7 +478,9 @@ export function spawnText(
   if (state.mode === NetworkMode.Host) {
     state.pendingFx.push({ t: 't', x: ~~x, y: ~~y, c: color, tx: text });
   }
-  state.texts.push({ x, y, text, color, life: 1.5, vy: -35 });
+  const t = state.texts.acquire();
+  if (!t) return;
+  t.x = x; t.y = y; t.text = text; t.color = color; t.life = 1.5; t.vy = -35;
 }
 
 export function spawnShockwave(
@@ -482,7 +490,9 @@ export function spawnShockwave(
   if (state.mode === NetworkMode.Host) {
     state.pendingFx.push({ t: 'sw', x: ~~x, y: ~~y, c: color, mr: maxR });
   }
-  state.shockwaves.push({ x, y, radius: 0, maxR, life: 1, color });
+  const s = state.shockwaves.acquire();
+  if (!s) return;
+  s.x = x; s.y = y; s.radius = 0; s.maxR = maxR; s.life = 1; s.color = color;
 }
 
 export function shake(state: GameState, intensity: number): void {

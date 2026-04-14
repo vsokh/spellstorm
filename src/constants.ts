@@ -299,6 +299,9 @@ export const DUNGEON_TIMING = {
   BOSS_MINION_SPAWN_DURATION: 10,
 } as const;
 
+export const MAX_PARTICLES = 200;
+export const MAX_SHOCKWAVES = 50;
+export const MAX_FLOATING_TEXTS = 50;
 export const MAX_TRAILS = 300;
 
 export const WAVE_PHYSICS = {
