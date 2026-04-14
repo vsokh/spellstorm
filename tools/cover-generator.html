@@ -81,897 +81,638 @@
   exportCanvas.height = H;
   const exportCtx = exportCanvas.getContext("2d");
 
-  // === Seeded random for deterministic layouts ===
-  let seed = 42;
-  function srand(s) { seed = s; }
-  function rand() {
-    seed = (seed * 16807 + 0) % 2147483647;
-    return (seed - 1) / 2147483646;
-  }
-
-  // === Utility ===
-  function hexToRgb(hex) {
-    return {
-      r: parseInt(hex.slice(1, 3), 16),
-      g: parseInt(hex.slice(3, 5), 16),
-      b: parseInt(hex.slice(5, 7), 16),
+  // === Seeded random for repeatable visuals ===
+  function mulberry32(seed) {
+    return function() {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = t + Math.imul(t ^ (t >>> 7), 61 | t) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
+  const rng = mulberry32(42);
+  function rand(lo, hi) { return lo + rng() * (hi - lo); }
+  function randInt(lo, hi) { return Math.floor(rand(lo, hi + 1)); }
+  function pick(arr) { return arr[Math.floor(rng() * arr.length)]; }
 
-  function lerp(a, b, t) { return a + (b - a) * t; }
-  function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+  // === Class ability colors ===
+  const CLASS_COLORS = [
+    "#ff6633", // Fire (orange)
+    "#44bbff", // Ice (blue)
+    "#bb66ff", // Lightning (purple)
+    "#55cc55", // Nature (green)
+    "#ffcc44", // Holy/gold
+    "#ff55aa", // Arcane (pink)
+    "#8833aa", // Shadow (dark purple)
+    "#aabbcc", // Steel (silver)
+  ];
 
-  // === Pre-generate random data ===
-  srand(42);
+  // === Pre-generated random data ===
 
-  // Stone floor tiles
+  // Stone tile data for floor
   const TILE_SIZE = 35;
-  const TILES = [];
-  for (let tx = 0; tx < W; tx += TILE_SIZE) {
-    for (let ty = Math.floor(H * 0.4); ty < H; ty += TILE_SIZE) {
-      TILES.push({ x: tx, y: ty, brightness: rand() * 0.04 - 0.02 });
+  const floorTiles = [];
+  for (let ty = 0; ty < Math.ceil(H * 0.55 / TILE_SIZE) + 1; ty++) {
+    for (let tx = 0; tx < Math.ceil(W / TILE_SIZE) + 1; tx++) {
+      floorTiles.push({
+        x: tx * TILE_SIZE,
+        y: H * 0.45 + ty * TILE_SIZE,
+        shade: rand(-0.02, 0.02),
+        hasCrack: rng() < 0.25,
+        crackAngle: rand(0, Math.PI * 2),
+        crackLen: rand(8, 22),
+        crackOff: rand(-5, 5),
+      });
     }
   }
 
-  // Floor cracks
-  const CRACKS = [];
-  for (let i = 0; i < 30; i++) {
-    const sx = rand() * W;
-    const sy = H * 0.4 + rand() * H * 0.55;
-    const segs = [];
-    let cx = sx, cy = sy;
-    const segCount = 2 + Math.floor(rand() * 4);
-    for (let s = 0; s < segCount; s++) {
-      cx += (rand() - 0.5) * 28;
-      cy += (rand() - 0.5) * 18;
-      segs.push({ x: cx, y: cy });
+  // Energy rays (10 rays)
+  const NUM_RAYS = 10;
+  const rays = [];
+  for (let i = 0; i < NUM_RAYS; i++) {
+    const angle = (Math.PI * 2 * i / NUM_RAYS) + rand(-0.2, 0.2);
+    const length = rand(100, 200);
+    const colorIdx = i % CLASS_COLORS.length;
+    const particles = [];
+    for (let p = 0; p < randInt(3, 5); p++) {
+      particles.push({
+        dist: rand(0.2, 0.95),
+        lateralOff: rand(-12, 12),
+        size: rand(1.5, 4),
+        baseAlpha: rand(0.4, 0.8),
+      });
     }
-    CRACKS.push({ start: { x: sx, y: sy }, segs });
-  }
-
-  // Floating motes
-  const MOTE_COLORS = ["#9966cc", "#44bbff", "#ffcc44", "#bb66ff", "#ff6633", "#55cc55", "#ff55aa"];
-  const MOTES = [];
-  for (let i = 0; i < 40; i++) {
-    MOTES.push({
-      x: rand() * W,
-      y: rand() * H,
-      r: 0.8 + rand() * 2.2,
-      color: MOTE_COLORS[Math.floor(rand() * MOTE_COLORS.length)],
-      alpha: 0.15 + rand() * 0.35,
-      phase: rand() * Math.PI * 2,
-      speed: 0.3 + rand() * 0.7,
-      drift: (rand() - 0.5) * 0.3,
-    });
-  }
-
-  // Fireballs (left side)
-  const FIREBALLS = [];
-  for (let i = 0; i < 7; i++) {
-    const angle = Math.PI + (rand() - 0.5) * 0.9; // leftward spread
-    const dist = 50 + rand() * 130;
-    FIREBALLS.push({
+    rays.push({
       angle,
-      dist,
-      r: 6 + rand() * 10,
-      phase: rand() * Math.PI * 2,
-      brightness: 0.7 + rand() * 0.3,
+      length,
+      color: CLASS_COLORS[colorIdx],
+      baseWidth: rand(6, 10),
+      tipWidth: rand(1, 2.5),
+      particles,
     });
   }
 
-  // Fire sparks
-  const FIRE_SPARKS = [];
-  for (let i = 0; i < 25; i++) {
-    const angle = Math.PI + (rand() - 0.5) * 1.0;
-    const dist = 30 + rand() * 150;
-    FIRE_SPARKS.push({
-      angle, dist,
-      r: 0.6 + rand() * 1.8,
-      alpha: 0.3 + rand() * 0.5,
-      phase: rand() * Math.PI * 2,
+  // Shockwave rings (3)
+  const shockwaves = [];
+  const shockRadii = [100, 160, 220];
+  for (let i = 0; i < 3; i++) {
+    const segments = [];
+    const numSeg = randInt(8, 14);
+    for (let s = 0; s < numSeg; s++) {
+      segments.push({
+        angleStart: (Math.PI * 2 * s / numSeg),
+        angleEnd: (Math.PI * 2 * (s + 1) / numSeg),
+        radiusOff: rand(-6, 6),
+      });
+    }
+    shockwaves.push({
+      baseRadius: shockRadii[i],
+      segments,
+      alpha: rand(0.08, 0.18),
     });
   }
 
-  // Ice shards (right side)
-  const ICE_SHARDS = [];
-  for (let i = 0; i < 5; i++) {
-    const angle = (rand() - 0.5) * 0.9; // rightward spread
-    const dist = 50 + rand() * 120;
-    ICE_SHARDS.push({
-      angle,
-      dist,
-      length: 10 + rand() * 14,
-      width: 3 + rand() * 4,
-      rotation: angle + (rand() - 0.5) * 0.4,
-      phase: rand() * Math.PI * 2,
-      brightness: 0.7 + rand() * 0.3,
+  // Energy swirl arcs (6)
+  const swirls = [];
+  for (let i = 0; i < 6; i++) {
+    swirls.push({
+      baseAngle: rand(0, Math.PI * 2),
+      radiusStart: rand(30, 60),
+      radiusEnd: rand(130, 190),
+      sweep: rand(0.8, 1.5),
+      color: CLASS_COLORS[i % CLASS_COLORS.length],
+      alpha: rand(0.08, 0.15),
+      lineWidth: rand(1.5, 3),
     });
   }
 
-  // Ice particles
-  const ICE_PARTICLES = [];
-  for (let i = 0; i < 20; i++) {
-    const angle = (rand() - 0.5) * 1.0;
-    const dist = 30 + rand() * 140;
-    ICE_PARTICLES.push({
-      angle, dist,
-      r: 0.5 + rand() * 1.5,
-      alpha: 0.3 + rand() * 0.4,
-      phase: rand() * Math.PI * 2,
+  // Debris/sparks (60 particles)
+  const debris = [];
+  for (let i = 0; i < 60; i++) {
+    const angle = rand(0, Math.PI * 2);
+    const dist = rand(20, 240);
+    debris.push({
+      x: Math.cos(angle) * dist,
+      y: Math.sin(angle) * dist,
+      size: rand(1, 4),
+      color: pick(CLASS_COLORS),
+      alpha: rand(0.2, 0.6),
+      isLine: rng() < 0.35,
+      lineAngle: angle + rand(-0.3, 0.3),
+      lineLen: rand(3, 8),
     });
   }
 
-  // Vortex arcs
-  const VORTEX_COLORS = ["#bb66ff", "#ffcc44", "#55cc55", "#ff55aa", "#9966cc", "#44bbff"];
-  const VORTEX_ARCS = [];
-  for (let i = 0; i < 14; i++) {
-    VORTEX_ARCS.push({
-      startAngle: rand() * Math.PI * 2,
-      sweep: 0.5 + rand() * 1.5,
-      radius: 30 + rand() * 70,
-      offsetY: (rand() - 0.5) * 30,
-      color: VORTEX_COLORS[Math.floor(rand() * VORTEX_COLORS.length)],
-      alpha: 0.08 + rand() * 0.18,
-      lineWidth: 0.6 + rand() * 1.8,
-      speed: 0.15 + rand() * 0.35,
-      direction: rand() > 0.5 ? 1 : -1,
+  // Enemy silhouettes
+  const enemies = [];
+  // Left side
+  for (let i = 0; i < 4; i++) {
+    enemies.push({
+      x: rand(20, 80),
+      y: rand(H * 0.35, H * 0.75),
+      type: pick(["slime", "bat", "humanoid"]),
+      size: rand(12, 25),
+      rotation: rand(0.1, 0.4), // tilted away from center (to the left)
+      alpha: rand(0.3, 0.55),
+      glowColor: pick(CLASS_COLORS),
+      side: "left",
+    });
+  }
+  // Right side
+  for (let i = 0; i < 4; i++) {
+    enemies.push({
+      x: rand(550, 610),
+      y: rand(H * 0.35, H * 0.75),
+      type: pick(["slime", "bat", "humanoid"]),
+      size: rand(12, 25),
+      rotation: rand(-0.4, -0.1), // tilted away from center (to the right)
+      alpha: rand(0.3, 0.55),
+      glowColor: pick(CLASS_COLORS),
+      side: "right",
     });
   }
 
-  // Enemy definitions
-  // Left enemies (hit by fire)
-  const LEFT_ENEMIES = [
-    { type: "slime",    x: 55,  y: 345, size: 22 },
-    { type: "bat",      x: 95,  y: 310, size: 18 },
-    { type: "skeleton", x: 35,  y: 370, size: 28 },
-    { type: "slime",    x: 115, y: 365, size: 16 },
-  ];
-  // Right enemies (hit by ice)
-  const RIGHT_ENEMIES = [
-    { type: "skeleton", x: 575, y: 345, size: 26 },
-    { type: "bat",      x: 535, y: 308, size: 18 },
-    { type: "slime",    x: 595, y: 370, size: 20 },
-    { type: "bat",      x: 510, y: 355, size: 15 },
-  ];
-
-  // Wizard positions
-  const WIZARD_CX = W / 2;      // center X
-  const WIZARD_Y_BASE = 360;    // feet position
-  const WIZARD_HEIGHT = 80;
-  const WIZARD_SPACING = 20;    // half-gap between the two wizards
-
-  // Fire wizard (left-facing)
-  const FIRE_WIZ = {
-    x: WIZARD_CX - WIZARD_SPACING,
-    yBase: WIZARD_Y_BASE,
-    facing: -1, // left
-    bodyColor: "#662200",
-    highlightColor: "#ff6633",
-    glowColor: "rgba(255, 102, 51, 0.15)",
-  };
-  // Ice wizard (right-facing)
-  const ICE_WIZ = {
-    x: WIZARD_CX + WIZARD_SPACING,
-    yBase: WIZARD_Y_BASE,
-    facing: 1, // right
-    bodyColor: "#003366",
-    highlightColor: "#44bbff",
-    glowColor: "rgba(68, 187, 255, 0.15)",
-  };
-
-  // Hand positions for spell origins
-  function getHandPos(wiz) {
-    const armLen = 32;
-    return {
-      x: wiz.x + wiz.facing * armLen,
-      y: wiz.yBase - WIZARD_HEIGHT * 0.55,
-    };
+  // Floating motes (35 particles across full image)
+  const motes = [];
+  for (let i = 0; i < 35; i++) {
+    motes.push({
+      x: rand(10, W - 10),
+      y: rand(10, H - 10),
+      size: rand(0.8, 2.5),
+      color: pick(CLASS_COLORS),
+      baseAlpha: rand(0.2, 0.5),
+      phaseX: rand(0, Math.PI * 2),
+      phaseY: rand(0, Math.PI * 2),
+      phaseA: rand(0, Math.PI * 2),
+      freqX: rand(0.3, 0.8),
+      freqY: rand(0.3, 0.8),
+      freqA: rand(0.5, 1.5),
+      ampX: rand(2, 6),
+      ampY: rand(2, 6),
+    });
   }
 
-  // =========================================================
-  //  DRAW FUNCTIONS
-  // =========================================================
+  // === Drawing functions ===
 
   function drawBackground(ctx) {
-    // Main vertical gradient
+    // Dark dungeon gradient
     const grad = ctx.createLinearGradient(0, 0, 0, H);
     grad.addColorStop(0, "#07050e");
-    grad.addColorStop(0.4, "#0d0a16");
+    grad.addColorStop(0.45, "#0d0a16");
     grad.addColorStop(1, "#1a0f2e");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
+  }
 
-    // Stone floor tiles (color variation)
-    for (const tile of TILES) {
-      const b = tile.brightness;
-      const r = Math.max(0, Math.min(255, Math.round(13 + b * 255)));
-      const g = Math.max(0, Math.min(255, Math.round(10 + b * 255)));
-      const bv = Math.max(0, Math.min(255, Math.round(22 + b * 255)));
-      ctx.fillStyle = "rgba(" + r + "," + g + "," + bv + ",0.3)";
-      ctx.fillRect(tile.x, tile.y, TILE_SIZE, TILE_SIZE);
-    }
+  function drawStoneFloor(ctx) {
+    ctx.save();
+    // Base floor tone
+    const floorGrad = ctx.createLinearGradient(0, H * 0.45, 0, H);
+    floorGrad.addColorStop(0, "rgba(18,12,30,0)");
+    floorGrad.addColorStop(0.15, "rgba(18,12,30,0.3)");
+    floorGrad.addColorStop(1, "rgba(22,15,35,0.5)");
+    ctx.fillStyle = floorGrad;
+    ctx.fillRect(0, H * 0.45, W, H * 0.55);
 
-    // Grid lines
-    ctx.strokeStyle = "rgba(60,40,80,0.08)";
+    // Tile grid lines
+    ctx.strokeStyle = "rgba(40,30,55,0.25)";
     ctx.lineWidth = 0.5;
-    for (let x = 0; x < W; x += TILE_SIZE) {
-      ctx.beginPath();
-      ctx.moveTo(x, H * 0.4);
-      ctx.lineTo(x, H);
-      ctx.stroke();
-    }
-    for (let y = Math.floor(H * 0.4); y < H; y += TILE_SIZE) {
+    const floorTop = H * 0.45;
+    // Horizontal lines
+    for (let y = floorTop; y <= H; y += TILE_SIZE) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(W, y);
       ctx.stroke();
     }
-
-    // Cracks
-    ctx.strokeStyle = "rgba(40,25,55,0.2)";
-    ctx.lineWidth = 0.7;
-    for (const crack of CRACKS) {
+    // Vertical lines
+    for (let x = 0; x <= W; x += TILE_SIZE) {
       ctx.beginPath();
-      ctx.moveTo(crack.start.x, crack.start.y);
-      for (const seg of crack.segs) ctx.lineTo(seg.x, seg.y);
+      ctx.moveTo(x, floorTop);
+      ctx.lineTo(x, H);
       ctx.stroke();
     }
 
-    // Central purple radial glow (behind wizards)
-    const glow = ctx.createRadialGradient(W / 2, H * 0.6, 0, W / 2, H * 0.6, W * 0.45);
-    glow.addColorStop(0, "rgba(153,102,204,0.15)");
-    glow.addColorStop(0.5, "rgba(153,102,204,0.05)");
-    glow.addColorStop(1, "rgba(153,102,204,0)");
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  // --- Wizard drawing ---
-  function drawWizard(ctx, wiz) {
-    const x = wiz.x;
-    const yFeet = wiz.yBase;
-    const facing = wiz.facing;
-    const h = WIZARD_HEIGHT;
-
-    ctx.save();
-
-    // Glow around wizard
-    const glowGrad = ctx.createRadialGradient(x, yFeet - h * 0.45, 0, x, yFeet - h * 0.45, h * 0.7);
-    glowGrad.addColorStop(0, wiz.glowColor);
-    glowGrad.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = glowGrad;
-    ctx.beginPath();
-    ctx.arc(x, yFeet - h * 0.45, h * 0.7, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Robe (trapezoid)
-    const robeTopW = 12;
-    const robeBotW = 30;
-    const robeTop = yFeet - h * 0.5;
-    const robeBot = yFeet;
-    ctx.fillStyle = wiz.bodyColor;
-    ctx.beginPath();
-    ctx.moveTo(x - robeBotW / 2, robeBot);
-    ctx.lineTo(x + robeBotW / 2, robeBot);
-    ctx.lineTo(x + robeTopW / 2, robeTop);
-    ctx.lineTo(x - robeTopW / 2, robeTop);
-    ctx.closePath();
-    ctx.fill();
-
-    // Robe highlight outline
-    ctx.strokeStyle = wiz.highlightColor;
-    ctx.lineWidth = 1.2;
-    ctx.globalAlpha = 0.7;
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    // Head
-    const headY = robeTop - 8;
-    const headR = 8;
-    ctx.fillStyle = wiz.bodyColor;
-    ctx.beginPath();
-    ctx.arc(x, headY, headR, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = wiz.highlightColor;
-    ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.6;
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    // Hat (pointed triangle)
-    const hatBase = headY - headR + 2;
-    const hatTip = headY - headR - 20;
-    const hatW = 12;
-    ctx.fillStyle = wiz.bodyColor;
-    ctx.beginPath();
-    ctx.moveTo(x - hatW / 2, hatBase);
-    ctx.lineTo(x + hatW / 2, hatBase);
-    ctx.lineTo(x + facing * 4, hatTip); // tip leans in facing direction
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = wiz.highlightColor;
-    ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.6;
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    // Hat brim
-    ctx.strokeStyle = wiz.highlightColor;
-    ctx.lineWidth = 1.5;
-    ctx.globalAlpha = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(x - 11, hatBase + 1);
-    ctx.lineTo(x + 11, hatBase + 1);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    // Casting arm (extended outward)
-    const shoulderX = x + facing * 5;
-    const shoulderY = robeTop + 6;
-    const hand = getHandPos(wiz);
-    ctx.strokeStyle = wiz.highlightColor;
-    ctx.lineWidth = 2.5;
-    ctx.globalAlpha = 0.8;
-    ctx.beginPath();
-    ctx.moveTo(shoulderX, shoulderY);
-    ctx.lineTo(hand.x, hand.y);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    // Glowing orb at hand
-    const orbGrad = ctx.createRadialGradient(hand.x, hand.y, 0, hand.x, hand.y, 8);
-    const hlRgb = hexToRgb(wiz.highlightColor);
-    orbGrad.addColorStop(0, "rgba(255,255,255,0.8)");
-    orbGrad.addColorStop(0.3, wiz.highlightColor);
-    orbGrad.addColorStop(1, "rgba(" + hlRgb.r + "," + hlRgb.g + "," + hlRgb.b + ",0)");
-    ctx.fillStyle = orbGrad;
-    ctx.beginPath();
-    ctx.arc(hand.x, hand.y, 8, 0, Math.PI * 2);
-    ctx.fill();
-
+    // Per-tile shade variation and cracks
+    for (const tile of floorTiles) {
+      if (tile.shade !== 0) {
+        const alpha = Math.abs(tile.shade);
+        ctx.fillStyle = tile.shade > 0
+          ? `rgba(50,40,70,${alpha})`
+          : `rgba(5,3,10,${alpha})`;
+        ctx.fillRect(tile.x + 1, tile.y + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+      }
+      if (tile.hasCrack) {
+        ctx.save();
+        ctx.strokeStyle = "rgba(10,6,18,0.3)";
+        ctx.lineWidth = 0.7;
+        const cx = tile.x + TILE_SIZE / 2 + tile.crackOff;
+        const cy = tile.y + TILE_SIZE / 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(
+          cx + Math.cos(tile.crackAngle) * tile.crackLen,
+          cy + Math.sin(tile.crackAngle) * tile.crackLen
+        );
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
     ctx.restore();
   }
 
-  // --- Fire spell effects ---
-  function drawFireSpells(ctx, time) {
-    const hand = getHandPos(FIRE_WIZ);
-    ctx.save();
+  function drawCoreGlow(ctx, cx, cy, t) {
+    // Pulsing brightness
+    const pulse = 1 + 0.12 * Math.sin(t * 1.8);
 
-    // Flame stream from hand to nearest fireball
-    const nearest = FIREBALLS.reduce((a, b) => a.dist < b.dist ? a : b);
-    const nx = hand.x + Math.cos(nearest.angle) * nearest.dist * 0.6;
-    const ny = hand.y + Math.sin(nearest.angle) * nearest.dist * 0.6;
+    // Large warm purple glow
+    const outerGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 80);
+    outerGlow.addColorStop(0, `rgba(153,102,204,${0.2 * pulse})`);
+    outerGlow.addColorStop(0.5, `rgba(153,102,204,${0.08 * pulse})`);
+    outerGlow.addColorStop(1, "rgba(153,102,204,0)");
+    ctx.fillStyle = outerGlow;
+    ctx.fillRect(cx - 100, cy - 100, 200, 200);
 
-    // Tapered flame stream
-    const streamGrad = ctx.createLinearGradient(hand.x, hand.y, nx, ny);
-    streamGrad.addColorStop(0, "rgba(255,200,50,0.6)");
-    streamGrad.addColorStop(0.5, "rgba(255,102,51,0.35)");
-    streamGrad.addColorStop(1, "rgba(255,60,20,0)");
-    ctx.strokeStyle = streamGrad;
-    ctx.lineWidth = 6;
-    ctx.lineCap = "round";
+    // Very large diffuse glow to light the scene
+    const megaGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 250);
+    megaGlow.addColorStop(0, `rgba(200,170,100,${0.06 * pulse})`);
+    megaGlow.addColorStop(0.4, `rgba(153,102,204,${0.03 * pulse})`);
+    megaGlow.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = megaGlow;
+    ctx.fillRect(cx - 260, cy - 260, 520, 520);
+
+    // White-hot center
+    const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 15);
+    coreGrad.addColorStop(0, `rgba(255,255,240,${0.95 * pulse})`);
+    coreGrad.addColorStop(0.4, `rgba(255,230,180,${0.7 * pulse})`);
+    coreGrad.addColorStop(0.7, `rgba(204,170,68,${0.4 * pulse})`);
+    coreGrad.addColorStop(1, "rgba(204,170,68,0)");
+    ctx.fillStyle = coreGrad;
     ctx.beginPath();
-    ctx.moveTo(hand.x, hand.y);
-    ctx.quadraticCurveTo(
-      hand.x + (nx - hand.x) * 0.5,
-      hand.y - 8,
-      nx, ny
-    );
-    ctx.stroke();
-    // Inner bright line
-    ctx.strokeStyle = "rgba(255,255,150,0.3)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Fireballs
-    for (const fb of FIREBALLS) {
-      const pulse = 1 + Math.sin(time * 3 + fb.phase) * 0.15;
-      const fx = hand.x + Math.cos(fb.angle) * fb.dist;
-      const fy = hand.y + Math.sin(fb.angle) * fb.dist;
-      const r = fb.r * pulse;
-
-      // Outer glow
-      const glow = ctx.createRadialGradient(fx, fy, 0, fx, fy, r * 2.2);
-      glow.addColorStop(0, "rgba(255,150,30," + (0.3 * fb.brightness) + ")");
-      glow.addColorStop(0.5, "rgba(255,80,20," + (0.12 * fb.brightness) + ")");
-      glow.addColorStop(1, "rgba(255,40,10,0)");
-      ctx.fillStyle = glow;
-      ctx.beginPath();
-      ctx.arc(fx, fy, r * 2.2, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Core
-      const core = ctx.createRadialGradient(fx, fy, 0, fx, fy, r);
-      core.addColorStop(0, "rgba(255,255,180,0.9)");
-      core.addColorStop(0.35, "rgba(255,180,50," + (0.8 * fb.brightness) + ")");
-      core.addColorStop(0.7, "rgba(255,100,30," + (0.5 * fb.brightness) + ")");
-      core.addColorStop(1, "rgba(255,60,20,0)");
-      ctx.fillStyle = core;
-      ctx.beginPath();
-      ctx.arc(fx, fy, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Fire sparks
-    for (const sp of FIRE_SPARKS) {
-      const sx = hand.x + Math.cos(sp.angle) * sp.dist;
-      const sy = hand.y + Math.sin(sp.angle) * sp.dist;
-      const flicker = sp.alpha * (0.5 + Math.sin(time * 5 + sp.phase) * 0.5);
-      ctx.fillStyle = "rgba(255,180,50," + flicker + ")";
-      ctx.beginPath();
-      ctx.arc(sx, sy, sp.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
+    ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+    ctx.fill();
   }
 
-  // --- Ice spell effects ---
-  function drawIceSpells(ctx, time) {
-    const hand = getHandPos(ICE_WIZ);
-    ctx.save();
-
-    // Frost beam from hand
-    const nearest = ICE_SHARDS.reduce((a, b) => a.dist < b.dist ? a : b);
-    const nx = hand.x + Math.cos(nearest.angle) * nearest.dist * 0.6;
-    const ny = hand.y + Math.sin(nearest.angle) * nearest.dist * 0.6;
-
-    const beamGrad = ctx.createLinearGradient(hand.x, hand.y, nx, ny);
-    beamGrad.addColorStop(0, "rgba(170,220,255,0.5)");
-    beamGrad.addColorStop(0.5, "rgba(68,187,255,0.3)");
-    beamGrad.addColorStop(1, "rgba(68,187,255,0)");
-    ctx.strokeStyle = beamGrad;
-    ctx.lineWidth = 5;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(hand.x, hand.y);
-    ctx.quadraticCurveTo(
-      hand.x + (nx - hand.x) * 0.5,
-      hand.y - 6,
-      nx, ny
-    );
-    ctx.stroke();
-    ctx.strokeStyle = "rgba(220,240,255,0.25)";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // Ice shards (elongated diamonds)
-    for (const shard of ICE_SHARDS) {
-      const pulse = 1 + Math.sin(time * 2.5 + shard.phase) * 0.12;
-      const sx = hand.x + Math.cos(shard.angle) * shard.dist;
-      const sy = hand.y + Math.sin(shard.angle) * shard.dist;
-      const len = shard.length * pulse;
-      const w = shard.width * pulse;
-
+  function drawRays(ctx, cx, cy, t) {
+    for (const ray of rays) {
       ctx.save();
-      ctx.translate(sx, sy);
-      ctx.rotate(shard.rotation);
+      const cos = Math.cos(ray.angle);
+      const sin = Math.sin(ray.angle);
 
-      // Shard glow
-      const glowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, len * 1.5);
-      glowGrad.addColorStop(0, "rgba(68,187,255," + (0.2 * shard.brightness) + ")");
-      glowGrad.addColorStop(1, "rgba(68,187,255,0)");
-      ctx.fillStyle = glowGrad;
-      ctx.beginPath();
-      ctx.arc(0, 0, len * 1.5, 0, Math.PI * 2);
-      ctx.fill();
+      // Draw tapered beam as filled shape
+      const halfBase = ray.baseWidth / 2;
+      const halfTip = ray.tipWidth / 2;
+      const len = ray.length;
 
-      // Diamond shape
-      const shardGrad = ctx.createLinearGradient(-len, 0, len, 0);
-      shardGrad.addColorStop(0, "rgba(68,187,255," + (0.4 * shard.brightness) + ")");
-      shardGrad.addColorStop(0.4, "rgba(170,221,255," + (0.85 * shard.brightness) + ")");
-      shardGrad.addColorStop(0.5, "rgba(220,240,255," + (0.95 * shard.brightness) + ")");
-      shardGrad.addColorStop(0.6, "rgba(170,221,255," + (0.85 * shard.brightness) + ")");
-      shardGrad.addColorStop(1, "rgba(68,187,255," + (0.4 * shard.brightness) + ")");
-      ctx.fillStyle = shardGrad;
+      // Perpendicular direction
+      const px = -sin;
+      const py = cos;
+
+      const x0l = cx + px * halfBase;
+      const y0l = cy + py * halfBase;
+      const x0r = cx - px * halfBase;
+      const y0r = cy - py * halfBase;
+      const x1l = cx + cos * len + px * halfTip;
+      const y1l = cy + sin * len + py * halfTip;
+      const x1r = cx + cos * len - px * halfTip;
+      const y1r = cy + sin * len - py * halfTip;
+
+      // Glow
+      ctx.shadowColor = ray.color;
+      ctx.shadowBlur = 18;
+
+      // Gradient along beam
+      const beamGrad = ctx.createLinearGradient(cx, cy, cx + cos * len, cy + sin * len);
+      beamGrad.addColorStop(0, ray.color);
+      beamGrad.addColorStop(0.7, ray.color + "88");
+      beamGrad.addColorStop(1, ray.color + "00");
+
+      ctx.fillStyle = beamGrad;
       ctx.beginPath();
-      ctx.moveTo(-len, 0);
-      ctx.lineTo(0, -w);
-      ctx.lineTo(len, 0);
-      ctx.lineTo(0, w);
+      ctx.moveTo(x0l, y0l);
+      ctx.lineTo(x1l, y1l);
+      ctx.lineTo(x1r, y1r);
+      ctx.lineTo(x0r, y0r);
       ctx.closePath();
       ctx.fill();
 
-      // Bright edge
-      ctx.strokeStyle = "rgba(200,235,255,0.5)";
-      ctx.lineWidth = 0.5;
-      ctx.stroke();
+      ctx.shadowBlur = 0;
 
+      // Particles along ray
+      for (const p of ray.particles) {
+        const drift = p.dist + 0.02 * Math.sin(t * 0.5 + p.dist * 10);
+        const d = drift * len;
+        const lx = cx + cos * d + p.lateralOff * px;
+        const ly = cy + sin * d + p.lateralOff * py;
+        ctx.fillStyle = ray.color;
+        ctx.globalAlpha = p.baseAlpha;
+        ctx.beginPath();
+        ctx.arc(lx, ly, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
       ctx.restore();
     }
-
-    // Ice particles (small dots and tiny 6-pointed stars)
-    for (const p of ICE_PARTICLES) {
-      const px = hand.x + Math.cos(p.angle) * p.dist;
-      const py = hand.y + Math.sin(p.angle) * p.dist;
-      const flicker = p.alpha * (0.5 + Math.sin(time * 4 + p.phase) * 0.5);
-
-      if (p.r > 1.0) {
-        // Tiny 6-pointed star
-        ctx.save();
-        ctx.translate(px, py);
-        ctx.strokeStyle = "rgba(170,220,255," + flicker + ")";
-        ctx.lineWidth = 0.5;
-        for (let a = 0; a < 3; a++) {
-          const angle = a * Math.PI / 3;
-          ctx.beginPath();
-          ctx.moveTo(Math.cos(angle) * -p.r * 1.5, Math.sin(angle) * -p.r * 1.5);
-          ctx.lineTo(Math.cos(angle) * p.r * 1.5, Math.sin(angle) * p.r * 1.5);
-          ctx.stroke();
-        }
-        ctx.restore();
-      } else {
-        ctx.fillStyle = "rgba(170,220,255," + flicker + ")";
-        ctx.beginPath();
-        ctx.arc(px, py, p.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    ctx.restore();
   }
 
-  // --- Enemy drawing ---
-  function drawSlime(ctx, x, y, size, color, glowColor) {
-    // Blob shape
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.ellipse(x, y + size * 0.15, size * 0.45, size * 0.35, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Eyes (two dots)
-    ctx.fillStyle = glowColor;
-    ctx.globalAlpha = 0.6;
-    ctx.beginPath();
-    ctx.arc(x - size * 0.12, y + size * 0.05, 1.5, 0, Math.PI * 2);
-    ctx.arc(x + size * 0.12, y + size * 0.05, 1.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
-
-  function drawBat(ctx, x, y, size, color, glowColor) {
-    // Body oval
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.ellipse(x, y, size * 0.2, size * 0.25, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Left wing
-    ctx.beginPath();
-    ctx.moveTo(x - size * 0.15, y - size * 0.05);
-    ctx.lineTo(x - size * 0.55, y - size * 0.35);
-    ctx.lineTo(x - size * 0.45, y + size * 0.05);
-    ctx.lineTo(x - size * 0.15, y + size * 0.1);
-    ctx.closePath();
-    ctx.fill();
-    // Right wing
-    ctx.beginPath();
-    ctx.moveTo(x + size * 0.15, y - size * 0.05);
-    ctx.lineTo(x + size * 0.55, y - size * 0.35);
-    ctx.lineTo(x + size * 0.45, y + size * 0.05);
-    ctx.lineTo(x + size * 0.15, y + size * 0.1);
-    ctx.closePath();
-    ctx.fill();
-    // Eyes
-    ctx.fillStyle = glowColor;
-    ctx.globalAlpha = 0.7;
-    ctx.beginPath();
-    ctx.arc(x - size * 0.07, y - size * 0.05, 1, 0, Math.PI * 2);
-    ctx.arc(x + size * 0.07, y - size * 0.05, 1, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
-
-  function drawSkeleton(ctx, x, y, size, color, glowColor) {
-    // Simple humanoid: head, torso line, arms, legs
-    const headR = size * 0.12;
-    const headY = y - size * 0.35;
-    // Head
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x, headY, headR, 0, Math.PI * 2);
-    ctx.fill();
-    // Torso
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x, headY + headR);
-    ctx.lineTo(x, y + size * 0.1);
-    ctx.stroke();
-    // Arms
-    ctx.beginPath();
-    ctx.moveTo(x - size * 0.2, y - size * 0.12);
-    ctx.lineTo(x, y - size * 0.18);
-    ctx.lineTo(x + size * 0.2, y - size * 0.12);
-    ctx.stroke();
-    // Legs
-    ctx.beginPath();
-    ctx.moveTo(x, y + size * 0.1);
-    ctx.lineTo(x - size * 0.15, y + size * 0.4);
-    ctx.moveTo(x, y + size * 0.1);
-    ctx.lineTo(x + size * 0.15, y + size * 0.4);
-    ctx.stroke();
-    // Eye sockets
-    ctx.fillStyle = glowColor;
-    ctx.globalAlpha = 0.6;
-    ctx.beginPath();
-    ctx.arc(x - headR * 0.35, headY - 1, 1, 0, Math.PI * 2);
-    ctx.arc(x + headR * 0.35, headY - 1, 1, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
-
-  function drawEnemy(ctx, enemy, color, glowColor) {
-    switch (enemy.type) {
-      case "slime":    drawSlime(ctx, enemy.x, enemy.y, enemy.size, color, glowColor); break;
-      case "bat":      drawBat(ctx, enemy.x, enemy.y, enemy.size, color, glowColor); break;
-      case "skeleton": drawSkeleton(ctx, enemy.x, enemy.y, enemy.size, color, glowColor); break;
-    }
-  }
-
-  function drawEnemies(ctx, time) {
-    ctx.save();
-
-    // Left enemies (fire-side) with impact glow
-    for (let i = 0; i < LEFT_ENEMIES.length; i++) {
-      const e = LEFT_ENEMIES[i];
-      // Impact glow for closer enemies
-      const impactAlpha = clamp(0.25 - i * 0.06, 0, 0.3);
-      if (impactAlpha > 0) {
-        const impGrad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.size * 1.2);
-        impGrad.addColorStop(0, "rgba(255,120,30," + impactAlpha + ")");
-        impGrad.addColorStop(1, "rgba(255,60,20,0)");
-        ctx.fillStyle = impGrad;
-        ctx.beginPath();
-        ctx.arc(e.x, e.y, e.size * 1.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 0.55 + Math.sin(time * 2 + i) * 0.08;
-      drawEnemy(ctx, e, "#5a1a0a", "rgba(255,120,40,0.7)");
-      ctx.globalAlpha = 1;
-    }
-
-    // Right enemies (ice-side) with frost overlay
-    for (let i = 0; i < RIGHT_ENEMIES.length; i++) {
-      const e = RIGHT_ENEMIES[i];
-      // Frost glow
-      const frostAlpha = clamp(0.2 - i * 0.04, 0, 0.25);
-      if (frostAlpha > 0) {
-        const frostGrad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.size * 1.2);
-        frostGrad.addColorStop(0, "rgba(68,187,255," + frostAlpha + ")");
-        frostGrad.addColorStop(1, "rgba(68,187,255,0)");
-        ctx.fillStyle = frostGrad;
-        ctx.beginPath();
-        ctx.arc(e.x, e.y, e.size * 1.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 0.5 + Math.sin(time * 2 + i + 2) * 0.08;
-      drawEnemy(ctx, e, "#0a2a4a", "rgba(100,200,255,0.7)");
-      ctx.globalAlpha = 1;
-
-      // Crystallized frost overlay on first two enemies
-      if (i < 2) {
-        ctx.strokeStyle = "rgba(170,220,255,0.2)";
-        ctx.lineWidth = 0.5;
-        // Small ice crystal lines radiating out
-        for (let a = 0; a < 6; a++) {
-          const angle = a * Math.PI / 3;
-          const len = e.size * 0.4;
-          ctx.beginPath();
-          ctx.moveTo(e.x, e.y);
-          ctx.lineTo(e.x + Math.cos(angle) * len, e.y + Math.sin(angle) * len);
-          ctx.stroke();
-        }
-      }
-    }
-
-    ctx.restore();
-  }
-
-  // --- Spell vortex above wizards ---
-  function drawVortex(ctx, time) {
-    const cx = W / 2;
-    const cy = 200;
-    ctx.save();
-
-    // Subtle central glow for the vortex
-    const vGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 80);
-    vGlow.addColorStop(0, "rgba(153,102,204,0.08)");
-    vGlow.addColorStop(1, "rgba(153,102,204,0)");
-    ctx.fillStyle = vGlow;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 80, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Spiraling arcs
-    for (const arc of VORTEX_ARCS) {
-      const angle = arc.startAngle + time * arc.speed * arc.direction;
-      ctx.strokeStyle = arc.color;
-      ctx.globalAlpha = arc.alpha + Math.sin(time * 1.5 + arc.startAngle) * 0.04;
-      ctx.lineWidth = arc.lineWidth;
+  function drawShockwaves(ctx, cx, cy, t) {
+    for (const sw of shockwaves) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(200,180,255," + sw.alpha + ")";
+      ctx.lineWidth = 1.2;
+      const pulseDelta = 5 * Math.sin(t * 0.6 + sw.baseRadius * 0.01);
       ctx.beginPath();
-      ctx.arc(cx, cy + arc.offsetY, arc.radius, angle, angle + arc.sweep);
+      for (const seg of sw.segments) {
+        const r = sw.baseRadius + seg.radiusOff + pulseDelta;
+        ctx.arc(cx, cy, Math.max(1, r), seg.angleStart, seg.angleEnd);
+      }
       ctx.stroke();
+      ctx.restore();
     }
+  }
+
+  function drawSwirls(ctx, cx, cy, t) {
+    for (const sw of swirls) {
+      ctx.save();
+      const a = sw.baseAngle + t * 0.05;
+      ctx.strokeStyle = sw.color;
+      ctx.globalAlpha = sw.alpha;
+      ctx.lineWidth = sw.lineWidth;
+      ctx.lineCap = "round";
+
+      // Draw spiral as quadratic bezier
+      const startR = sw.radiusStart;
+      const endR = sw.radiusEnd;
+      const midR = (startR + endR) * 0.55;
+      const midAngle = a + sw.sweep * 0.5;
+
+      const x0 = cx + Math.cos(a) * startR;
+      const y0 = cy + Math.sin(a) * startR;
+      const xc = cx + Math.cos(midAngle) * midR * 1.3;
+      const yc = cy + Math.sin(midAngle) * midR * 1.3;
+      const x1 = cx + Math.cos(a + sw.sweep) * endR;
+      const y1 = cy + Math.sin(a + sw.sweep) * endR;
+
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.quadraticCurveTo(xc, yc, x1, y1);
+      ctx.stroke();
+
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+  }
+
+  function drawDebris(ctx, cx, cy) {
+    for (const d of debris) {
+      ctx.save();
+      ctx.globalAlpha = d.alpha;
+      ctx.fillStyle = d.color;
+      ctx.strokeStyle = d.color;
+      const px = cx + d.x;
+      const py = cy + d.y;
+      if (d.isLine) {
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(
+          px + Math.cos(d.lineAngle) * d.lineLen,
+          py + Math.sin(d.lineAngle) * d.lineLen
+        );
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.arc(px, py, d.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+  }
+
+  function drawEnemySilhouette(ctx, e) {
+    ctx.save();
+    ctx.translate(e.x, e.y);
+    ctx.rotate(e.rotation);
+    ctx.globalAlpha = e.alpha;
+
+    // Faint glow behind the enemy from nearest spell color
+    ctx.shadowColor = e.glowColor;
+    ctx.shadowBlur = 12;
+
+    const col = "rgba(30,20,40,0.9)";
+    ctx.fillStyle = col;
+
+    const s = e.size;
+    if (e.type === "slime") {
+      // Simple oval blob
+      ctx.beginPath();
+      ctx.ellipse(0, 0, s * 0.6, s * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (e.type === "bat") {
+      // Oval body + two triangle wings
+      ctx.beginPath();
+      ctx.ellipse(0, 0, s * 0.25, s * 0.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Left wing
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.2, -s * 0.05);
+      ctx.lineTo(-s * 0.55, -s * 0.35);
+      ctx.lineTo(-s * 0.1, s * 0.1);
+      ctx.closePath();
+      ctx.fill();
+      // Right wing
+      ctx.beginPath();
+      ctx.moveTo(s * 0.2, -s * 0.05);
+      ctx.lineTo(s * 0.55, -s * 0.35);
+      ctx.lineTo(s * 0.1, s * 0.1);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      // Humanoid: rectangle body + circle head
+      ctx.beginPath();
+      ctx.arc(0, -s * 0.35, s * 0.18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(-s * 0.15, -s * 0.2, s * 0.3, s * 0.45);
+    }
+
+    ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
-
-    // Energy tendrils from wizards up to vortex
-    // Left wizard tendril (fire-colored)
-    const fireHand = getHandPos(FIRE_WIZ);
-    ctx.strokeStyle = "rgba(255,102,51,0.06)";
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(fireHand.x, fireHand.y - 20);
-    ctx.quadraticCurveTo(cx - 40, cy + 40, cx - 10 + Math.sin(time * 0.5) * 8, cy);
-    ctx.stroke();
-
-    // Right wizard tendril (ice-colored)
-    const iceHand = getHandPos(ICE_WIZ);
-    ctx.strokeStyle = "rgba(68,187,255,0.06)";
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(iceHand.x, iceHand.y - 20);
-    ctx.quadraticCurveTo(cx + 40, cy + 40, cx + 10 + Math.sin(time * 0.6) * 8, cy);
-    ctx.stroke();
-
     ctx.restore();
   }
 
-  // --- Floating motes ---
-  function drawMotes(ctx, time) {
-    for (const mote of MOTES) {
-      const y = mote.y + Math.sin(time * mote.speed + mote.phase) * 8;
-      const x = mote.x + Math.cos(time * mote.speed * 0.7 + mote.phase) * 4 + mote.drift * time * 2;
-      const wrappedX = ((x % W) + W) % W;
-      const flickerAlpha = mote.alpha * (0.6 + Math.sin(time * mote.speed * 3 + mote.phase) * 0.4);
-      const rgb = hexToRgb(mote.color);
-
-      // Glow
-      ctx.fillStyle = "rgba(" + rgb.r + "," + rgb.g + "," + rgb.b + "," + (flickerAlpha * 0.3) + ")";
-      ctx.beginPath();
-      ctx.arc(wrappedX, y, mote.r * 2.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Core
-      ctx.fillStyle = "rgba(" + rgb.r + "," + rgb.g + "," + rgb.b + "," + flickerAlpha + ")";
-      ctx.beginPath();
-      ctx.arc(wrappedX, y, mote.r, 0, Math.PI * 2);
-      ctx.fill();
+  function drawEnemies(ctx) {
+    for (const e of enemies) {
+      drawEnemySilhouette(ctx, e);
     }
   }
 
-  // --- Vignette ---
-  function drawVignette(ctx) {
-    // Radial vignette
-    const vig = ctx.createRadialGradient(W / 2, H / 2, W * 0.25, W / 2, H / 2, W * 0.75);
-    vig.addColorStop(0, "rgba(0,0,0,0)");
-    vig.addColorStop(0.6, "rgba(0,0,0,0)");
-    vig.addColorStop(1, "rgba(0,0,0,0.65)");
-    ctx.fillStyle = vig;
-    ctx.fillRect(0, 0, W, H);
-
-    // Top edge darkening
-    const topGrad = ctx.createLinearGradient(0, 0, 0, H * 0.15);
-    topGrad.addColorStop(0, "rgba(7,5,14,0.6)");
-    topGrad.addColorStop(1, "rgba(7,5,14,0)");
-    ctx.fillStyle = topGrad;
-    ctx.fillRect(0, 0, W, H * 0.15);
-
-    // Bottom edge darkening
-    const botGrad = ctx.createLinearGradient(0, H * 0.88, 0, H);
-    botGrad.addColorStop(0, "rgba(7,5,14,0)");
-    botGrad.addColorStop(1, "rgba(7,5,14,0.5)");
-    ctx.fillStyle = botGrad;
-    ctx.fillRect(0, H * 0.88, W, H * 0.12);
-  }
-
-  // --- Title ---
   function drawTitle(ctx) {
-    const titleY = 75;
     ctx.save();
+    const titleY = 70;
 
-    // Glow pass
-    ctx.font = 'bold 56px Georgia, "Times New Roman", serif';
+    // Title text
+    ctx.font = "bold 56px Georgia, 'Times New Roman', serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+
+    // Outer glow
     ctx.shadowColor = "#9966cc";
     ctx.shadowBlur = 30;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.fillStyle = "rgba(153,102,204,0.4)";
+
+    // Gradient fill
+    const tGrad = ctx.createLinearGradient(W / 2 - 140, titleY, W / 2 + 140, titleY);
+    tGrad.addColorStop(0, "#ff6633");
+    tGrad.addColorStop(0.45, "#ccaa44");
+    tGrad.addColorStop(1, "#9966cc");
+    ctx.fillStyle = tGrad;
     ctx.fillText("SPELLSTORM", W / 2, titleY);
 
-    // Main gradient text
+    // Second pass for stronger glow
     ctx.shadowBlur = 15;
-    ctx.shadowColor = "#bb88ee";
-    const titleGrad = ctx.createLinearGradient(W / 2 - 180, titleY - 20, W / 2 + 180, titleY + 20);
-    titleGrad.addColorStop(0, "#ff6633");
-    titleGrad.addColorStop(0.45, "#ccaa44");
-    titleGrad.addColorStop(1, "#9966cc");
-    ctx.fillStyle = titleGrad;
     ctx.fillText("SPELLSTORM", W / 2, titleY);
-
-    // Subtle stroke
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
-    ctx.lineWidth = 0.5;
-    ctx.strokeText("SPELLSTORM", W / 2, titleY);
 
-    ctx.restore();
-
-    // Decorative line with diamond
+    // Decorative line below title
     const lineY = titleY + 38;
     const lineW = 200;
-    const lineGrad = ctx.createLinearGradient(W / 2 - lineW / 2, 0, W / 2 + lineW / 2, 0);
+    const lineGrad = ctx.createLinearGradient(W / 2 - lineW / 2, lineY, W / 2 + lineW / 2, lineY);
     lineGrad.addColorStop(0, "rgba(153,102,204,0)");
-    lineGrad.addColorStop(0.3, "rgba(153,102,204,0.4)");
-    lineGrad.addColorStop(0.5, "rgba(204,170,68,0.5)");
-    lineGrad.addColorStop(0.7, "rgba(153,102,204,0.4)");
+    lineGrad.addColorStop(0.25, "rgba(153,102,204,0.6)");
+    lineGrad.addColorStop(0.5, "rgba(204,170,68,0.8)");
+    lineGrad.addColorStop(0.75, "rgba(153,102,204,0.6)");
     lineGrad.addColorStop(1, "rgba(153,102,204,0)");
     ctx.strokeStyle = lineGrad;
-    ctx.lineWidth = 1.2;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(W / 2 - lineW / 2, lineY);
     ctx.lineTo(W / 2 + lineW / 2, lineY);
     ctx.stroke();
 
-    // Diamond ornament
-    ctx.fillStyle = "rgba(204,170,68,0.6)";
-    ctx.save();
-    ctx.translate(W / 2, lineY);
-    ctx.rotate(Math.PI / 4);
-    ctx.fillRect(-2.5, -2.5, 5, 5);
-    ctx.restore();
+    // Diamond ornament at center of line
+    const ds = 4;
+    ctx.fillStyle = "#ccaa44";
+    ctx.shadowColor = "#ccaa44";
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.moveTo(W / 2, lineY - ds);
+    ctx.lineTo(W / 2 + ds, lineY);
+    ctx.lineTo(W / 2, lineY + ds);
+    ctx.lineTo(W / 2 - ds, lineY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
 
     // Subtitle
-    ctx.save();
-    ctx.font = '16px Georgia, "Times New Roman", serif';
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+    ctx.font = "16px Georgia, 'Times New Roman', serif";
+    ctx.fillStyle = "#ccbbee";
     ctx.shadowColor = "#9966cc";
     ctx.shadowBlur = 8;
-    ctx.fillStyle = "#ccbbee";
-    ctx.fillText("Co-op Roguelike Wave Survival", W / 2, titleY + 56);
+    ctx.fillText("Co-op Roguelike Wave Survival", W / 2, lineY + 22);
+    ctx.shadowBlur = 0;
+
     ctx.restore();
   }
 
-  // --- Bottom text ---
+  function drawMotes(ctx, t) {
+    for (const m of motes) {
+      const dx = Math.sin(t * m.freqX + m.phaseX) * m.ampX;
+      const dy = Math.sin(t * m.freqY + m.phaseY) * m.ampY;
+      const alpha = m.baseAlpha * (0.5 + 0.5 * Math.sin(t * m.freqA + m.phaseA));
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, alpha);
+      ctx.fillStyle = m.color;
+      ctx.beginPath();
+      ctx.arc(m.x + dx, m.y + dy, m.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+  }
+
+  function drawVignette(ctx) {
+    // Radial vignette
+    const cx = W / 2;
+    const cy = H / 2;
+    const maxR = Math.sqrt(cx * cx + cy * cy);
+    const vig = ctx.createRadialGradient(cx, cy, maxR * 0.3, cx, cy, maxR);
+    vig.addColorStop(0, "rgba(0,0,0,0)");
+    vig.addColorStop(0.6, "rgba(0,0,0,0.15)");
+    vig.addColorStop(1, "rgba(0,0,0,0.65)");
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, W, H);
+
+    // Extra top darkening for title readability
+    const topGrad = ctx.createLinearGradient(0, 0, 0, 120);
+    topGrad.addColorStop(0, "rgba(0,0,0,0.4)");
+    topGrad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = topGrad;
+    ctx.fillRect(0, 0, W, 120);
+
+    // Extra bottom darkening
+    const botGrad = ctx.createLinearGradient(0, H - 60, 0, H);
+    botGrad.addColorStop(0, "rgba(0,0,0,0)");
+    botGrad.addColorStop(1, "rgba(0,0,0,0.5)");
+    ctx.fillStyle = botGrad;
+    ctx.fillRect(0, H - 60, W, 60);
+  }
+
   function drawBottomText(ctx) {
     ctx.save();
-    ctx.font = '12px Georgia, "Times New Roman", serif';
+    ctx.font = "12px Georgia, 'Times New Roman', serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#887799";
-    ctx.fillText("14 Wizard Classes  \u2022  Wave Survival  \u2022  P2P Co-op", W / 2, H - 24);
+    ctx.fillText("14 Classes  \u2022  Wave Survival  \u2022  P2P Co-op", W / 2, H - 18);
     ctx.restore();
   }
 
-  // =========================================================
-  //  MAIN DRAW
-  // =========================================================
-  function draw(ctx, time) {
-    ctx.clearRect(0, 0, W, H);
+  // === Main draw ===
 
+  function draw(ctx, t) {
+    const cx = W / 2;
+    const cy = H * 0.55;
+
+    // 1. Background
     drawBackground(ctx);
-    drawVortex(ctx, time);
-    drawEnemies(ctx, time);
-    drawFireSpells(ctx, time);
-    drawIceSpells(ctx, time);
-    drawWizard(ctx, FIRE_WIZ);
-    drawWizard(ctx, ICE_WIZ);
-    drawMotes(ctx, time);
+
+    // 2. Stone floor
+    drawStoneFloor(ctx);
+
+    // 3. Enemy silhouettes (behind explosion so they're partly occluded)
+    drawEnemies(ctx);
+
+    // 4. The Spellstorm
+    drawShockwaves(ctx, cx, cy, t);
+    drawSwirls(ctx, cx, cy, t);
+    drawDebris(ctx, cx, cy);
+    drawRays(ctx, cx, cy, t);
+    drawCoreGlow(ctx, cx, cy, t);
+
+    // 5. Floating motes
+    drawMotes(ctx, t);
+
+    // 6. Vignette
     drawVignette(ctx);
+
+    // 7. Title
     drawTitle(ctx);
+
+    // 8. Bottom text
     drawBottomText(ctx);
   }
 
   // === Animation loop (preview) ===
+
   let startTime = null;
+
   function animate(timestamp) {
     if (!startTime) startTime = timestamp;
-    const time = (timestamp - startTime) / 1000;
+    const t = (timestamp - startTime) / 1000;
 
     previewCtx.save();
     previewCtx.scale(SCALE, SCALE);
-    draw(previewCtx, time);
+    draw(previewCtx, t);
     previewCtx.restore();
 
     requestAnimationFrame(animate);
@@ -979,7 +720,8 @@
 
   requestAnimationFrame(animate);
 
-  // === Download ===
+  // === Download (static at t=2.5) ===
+
   document.getElementById("btn-download").addEventListener("click", function() {
     draw(exportCtx, 2.5);
     const link = document.createElement("a");
