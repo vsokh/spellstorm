@@ -46,6 +46,7 @@ import { updateHUD } from './rendering/draw-hud';
 import { setupLobby } from './ui/lobby';
 import { showSelect, setupClassSelect, stopCardAnimation } from './ui/class-select';
 import { setupGameOver } from './ui/game-over';
+import { initFullscreen } from './ui/fullscreen';
 
 import { SystemRunner } from './ecs';
 import { profiler } from './debug/profiler';
@@ -93,6 +94,9 @@ setupInput(state, canvas);
 // Setup performance overlay (F3 to toggle)
 initPerfOverlay(canvas);
 
+// Setup fullscreen toggle (F11 to toggle)
+initFullscreen();
+
 // Wire chest pickup handler to break circular dependency physics -> upgrades
 setChestPickupHandler((s: GameState) => showUpgradeScreen(s));
 
@@ -128,6 +132,8 @@ function beginGame(c1: string, c2: string): void {
   if (goldDisplay) goldDisplay.style.display = 'block';
   const shopBtnEl = document.getElementById('shop-btn');
   if (shopBtnEl) shopBtnEl.style.display = 'block';
+  const fullscreenBtnEl = document.getElementById('fullscreen-btn');
+  if (fullscreenBtnEl) fullscreenBtnEl.style.display = 'block';
   document.body.classList.add('in-game');
 
   state.wave = 1;

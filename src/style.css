@@ -641,6 +641,23 @@ input[type=text]:focus {
   opacity: 0.4;
 }
 
+#fullscreen-btn {
+  position: fixed; top: 30px; left: 80px;
+  font-family: 'Cinzel', serif;
+  font-size: 14px; padding: 3px 10px;
+  background: rgba(40, 20, 60, 0.85);
+  color: var(--accent-gold);
+  border: 1px solid rgba(180, 150, 50, 0.35);
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 10; display: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#fullscreen-btn:hover {
+  border-color: rgba(220, 190, 60, 0.7);
+  box-shadow: 0 0 8px rgba(220, 200, 60, 0.25);
+}
+
 #minimap-wrap { position: fixed; top: 8px; right: 8px; z-index: 10; display: none; }
 
 /* ══════════ GAME OVER ══════════ */
