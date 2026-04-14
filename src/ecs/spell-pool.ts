@@ -34,6 +34,7 @@ export interface SpellInit {
   clsKey: string;
   _reversed: boolean;
   _bounces: number;
+  _slot: number;
 }
 
 // ── Typed-array helpers ──
@@ -142,6 +143,9 @@ export class SpellView {
   get _bounces(): number { return this._pool._bounces[this._idx]; }
   set _bounces(v: number) { this._pool._bounces[this._idx] = v; }
 
+  get _slot(): number { return this._pool._slot[this._idx]; }
+  set _slot(v: number) { this._pool._slot[this._idx] = v; }
+
   // Uint8 (boolean) fields
   get _reversed(): boolean { return this._pool._reversed[this._idx] === 1; }
   set _reversed(v: boolean) { this._pool._reversed[this._idx] = v ? 1 : 0; }
@@ -179,6 +183,7 @@ export class SpellPool {
   // Int32 fields
   owner: Int32Array;
   _bounces: Int32Array;
+  _slot: Int32Array;
 
   // Uint8 (boolean) fields
   _reversed: Uint8Array;
@@ -220,6 +225,7 @@ export class SpellPool {
     // Int32
     this.owner = new Int32Array(c);
     this._bounces = new Int32Array(c);
+    this._slot = new Int32Array(c);
 
     // Uint8
     this._reversed = new Uint8Array(c);
@@ -276,6 +282,7 @@ export class SpellPool {
       // Int32
       this.owner[idx] = this.owner[last];
       this._bounces[idx] = this._bounces[last];
+      this._slot[idx] = this._slot[last];
       // Uint8
       this._reversed[idx] = this._reversed[last];
       // Strings
@@ -367,6 +374,7 @@ export class SpellPool {
     // Int32 fields
     this.owner[idx] = s.owner ?? 0;
     this._bounces[idx] = s._bounces ?? 0;
+    this._slot[idx] = s._slot ?? 0;
     // Uint8 (boolean) fields
     this._reversed[idx] = s._reversed ? 1 : 0;
   }
@@ -399,6 +407,7 @@ export class SpellPool {
     // Int32
     this.owner = growInt32(this.owner, newCap);
     this._bounces = growInt32(this._bounces, newCap);
+    this._slot = growInt32(this._slot, newCap);
 
     // Uint8
     this._reversed = growUint8(this._reversed, newCap);

@@ -12,6 +12,9 @@ export function enemyTimers(state: GameState, dt: number): void {
     if (e._hitFlash > 0) e._hitFlash -= dt;
     if (e._atkAnim > 0) e._atkAnim -= dt;
 
+    // Cross-spell synergy: decay LMB hit timer for Combo augment
+    if (e._lmbHitTimer > 0) e._lmbHitTimer -= dt;
+
     // Boss damage reduction phase timer
     if (e._dmgReductionTimer > 0) {
       e._dmgReductionTimer -= dt;

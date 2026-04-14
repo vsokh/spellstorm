@@ -128,6 +128,19 @@ export function updatePlayers(state: GameState, dt: number): void {
     if (p._animHitFlash > 0) p._animHitFlash -= dt;
     if (p._animUltTimer > 0) p._animUltTimer -= dt;
 
+    // Full Rotation timers
+    if (p.fullRotation) {
+      if (p.fullRotationTimer > 0) {
+        p.fullRotationTimer -= dt;
+        if (p.fullRotationTimer <= 0) {
+          p.fullRotationSpells = 0;
+        }
+      }
+      if (p.fullRotationBuff > 0) {
+        p.fullRotationBuff -= dt;
+      }
+    }
+
     // Storm Shield: lightning strikes random nearby enemy every 1s
     if (p.stormShield) {
       p._stormTimer = (p._stormTimer || 0) + dt;

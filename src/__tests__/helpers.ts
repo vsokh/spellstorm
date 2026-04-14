@@ -118,6 +118,7 @@ export function createTestEnemy(overrides: Partial<import('../types').Enemy> = {
     _spdMul: 1,
     _dmgMul: 1,
     _teleportTimer: 0,
+    _lmbHitTimer: 0,
     _hitFlash: 0,
     _deathTimer: -1,
     _atkAnim: 0,

@@ -170,6 +170,20 @@ export function updateSpells(state: GameState, dt: number): void {
           spawnText(state, e.x, e.y - 25, 'CRIT!', '#ffcc44');
         }
         damageEnemy(state, e, hitDmg, s.owner);
+
+        // Cross-spell synergy: track LMB hits for Combo
+        if (s._slot === 0) {
+          e._lmbHitTimer = 1.5;
+        }
+        // Combo: RMB deals +50% dmg if target was hit by LMB recently
+        if (s._slot === 1 && e._lmbHitTimer > 0) {
+          const comboOwner = state.players[s.owner];
+          if (comboOwner?.comboBonus) {
+            damageEnemy(state, e, Math.ceil(hitDmg * 0.5), s.owner);
+            spawnText(state, e.x, e.y - 25, 'COMBO!', '#ffcc44');
+          }
+        }
+
         if (s.slow) e.slowTimer = (e.slowTimer || 0) + s.slow;
         if (s.stun) e.stunTimer = (e.stunTimer || 0) + s.stun;
         if (s.burn) { e._burnTimer = (e._burnTimer || 0) + s.burn; e._burnOwner = s.owner; }
@@ -225,8 +239,11 @@ export function updateSpells(state: GameState, dt: number): void {
 
     if (hitP || hitE || s.age > s.life || s.x < -30 || s.x > ROOM_WIDTH + 30 || s.y < -30 || s.y > ROOM_HEIGHT + 30) {
       if ((hitP || hitE) && s.explode) {
+        // Pyroclasm: 2x bigger visual explosion
+        const pyroOwner = state.players[s.owner];
+        const pyroMul = pyroOwner?.fireZoneOnExplode ? 2 : 1;
         spawnParticles(state, s.x, s.y, s.color, 15, TIMING.PARTICLE_LIFE_LONG);
-        spawnShockwave(state, s.x, s.y, s.explode, s.color);
+        spawnShockwave(state, s.x, s.y, s.explode * pyroMul, s.color);
         netSfx(state, SfxName.Boom);
         shake(state, 3);
 
@@ -278,24 +295,37 @@ export function updateSpells(state: GameState, dt: number): void {
           spawnShockwave(state, s.x, s.y, s.explode * WAVE_PHYSICS.MAGIC_EXPLOSION_SHOCKWAVE, '#6622aa');
         }
 
-        const explodeCandidates = state.enemyGrid.queryArea(s.x, s.y, s.explode);
+        // Pyroclasm: double explosion radius and leave fire zone
+        const explOwner = state.players[s.owner];
+        const explodeR = (explOwner?.fireZoneOnExplode) ? s.explode * 2 : s.explode;
+        const explodeCandidates = state.enemyGrid.queryArea(s.x, s.y, explodeR);
         for (const idx of explodeCandidates) {
           const e = state.enemies.at(idx);
           if (!e.alive) continue;
-          if (dist(s.x, s.y, e.x, e.y) < s.explode) {
+          if (dist(s.x, s.y, e.x, e.y) < explodeR) {
             damageEnemy(state, e, 1, s.owner);
           }
         }
-
-        // Pyroclasm: explosions leave fire zones
-        const fireZoneOwner = state.players[s.owner];
-        if (fireZoneOwner && fireZoneOwner.fireZoneOnExplode) {
-          const fireZone = state.zones.acquire();
-          if (fireZone) {
-            fireZone.x = s.x; fireZone.y = s.y; fireZone.radius = 35; fireZone.duration = 2;
-            fireZone.dmg = 1; fireZone.color = '#ff4400'; fireZone.owner = s.owner;
-            fireZone.slow = 0; fireZone.stun = 0; fireZone.tickRate = TIMING.ZONE_TICK; fireZone.tickTimer = 0; fireZone.age = 0;
-            fireZone.drain = 0; fireZone.heal = 0; fireZone.pull = 0; fireZone.freezeAfter = 0;
+        // Pyroclasm: leave fire zone on explosion
+        if (explOwner?.fireZoneOnExplode) {
+          const fireZ = state.zones.acquire();
+          if (fireZ) {
+            fireZ.x = s.x; fireZ.y = s.y; fireZ.radius = s.explode * 0.6;
+            fireZ.duration = 3; fireZ.dmg = 1; fireZ.color = '#ff4400';
+            fireZ.owner = s.owner; fireZ.slow = 0; fireZ.stun = 0;
+            fireZ.tickRate = 0.5; fireZ.tickTimer = 0; fireZ.age = 0;
+            fireZ.drain = 0; fireZ.heal = 0; fireZ.pull = 0; fireZ.freezeAfter = 0;
+          }
+        }
+        // Aftershock: AoE explosions leave a damage zone for 2s
+        if (explOwner?.aftershock) {
+          const ashockZone = state.zones.acquire();
+          if (ashockZone) {
+            ashockZone.x = s.x; ashockZone.y = s.y; ashockZone.radius = s.explode * 0.6;
+            ashockZone.duration = 2; ashockZone.dmg = 1; ashockZone.color = s.color;
+            ashockZone.owner = s.owner; ashockZone.slow = 0; ashockZone.stun = 0;
+            ashockZone.tickRate = 0.5; ashockZone.tickTimer = 0; ashockZone.age = 0;
+            ashockZone.drain = 0; ashockZone.heal = 0; ashockZone.pull = 0; ashockZone.freezeAfter = 0;
           }
         }
       } else if (hitP || hitE) {
@@ -340,6 +370,18 @@ export function updateAoe(state: GameState, dt: number): void {
         if (dist(m.x, m.y, e.x, e.y) < m.radius + ENEMIES[e.type].size) {
           damageEnemy(state, e, m.dmg, m.owner);
           if (m.stun) e.stunTimer = (e.stunTimer || 0) + m.stun;
+        }
+      }
+      // Aftershock: AoE detonation leaves a damage zone for 2s
+      const aoeOwner = state.players[m.owner];
+      if (aoeOwner?.aftershock) {
+        const ashockZone = state.zones.acquire();
+        if (ashockZone) {
+          ashockZone.x = m.x; ashockZone.y = m.y; ashockZone.radius = m.radius * 0.6;
+          ashockZone.duration = 2; ashockZone.dmg = 1; ashockZone.color = m.color;
+          ashockZone.owner = m.owner; ashockZone.slow = 0; ashockZone.stun = 0;
+          ashockZone.tickRate = 0.5; ashockZone.tickTimer = 0; ashockZone.age = 0;
+          ashockZone.drain = 0; ashockZone.heal = 0; ashockZone.pull = 0; ashockZone.freezeAfter = 0;
         }
       }
       state.aoeMarkers.release(i);

@@ -275,6 +275,11 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
       // Kill resets primary CD
       if (p.killResetCD) p.cd[0] = 0;
 
+      // Cooldown Cascade: kills reduce RMB cooldown by 1s
+      if (p.cdCascade) {
+        p.cd[1] = Math.max(0, p.cd[1] - 1);
+      }
+
       // Fork: spawn 2 projectiles from corpse
       if (p.forkOnKill) {
         const baseAngle = Math.random() * Math.PI * 2;
@@ -607,6 +612,7 @@ export function castSpellSilent(state: GameState, p: Player, idx: number, angle:
       owner: p.idx, age: 0, zapTimer: 0, pierceLeft: (p.pierce || 0) + (def.pierce || 0),
       clsKey: p.clsKey,
       _reversed: false,
+      _slot: 0,
     });
   }
 }
@@ -633,6 +639,7 @@ function spellToRuntime(def: SpellDef): Spell {
     clsKey: '',
     _reversed: false,
     _bounces: 0,
+    _slot: 0,
   };
 }
 
@@ -665,6 +672,10 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     const speedBonus = Math.min(p._bloodlustStacks * 0.05, COMBAT.BLOODLUST_SPEED_CAP);
     cd = cd / (1 + speedBonus);
   }
+  // Full Rotation buff: 3x attack speed = cooldown / 3
+  if (p.fullRotationBuff > 0) {
+    cd = cd / 3;
+  }
   p.cd[idx] = Math.max(CD_FLOORS[idx] ?? 0, cd);
 
   // Cursed: self-damage chance
@@ -678,6 +689,39 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     echoDmgMul = 2;
     p.ultEchoLeft--;
     spawnText(state, p.x, p.y - 15, 'ECHO!', '#ffaa44');
+  }
+
+  // Spell Weaving: alternating LMB/RMB gives +25% dmg per swap (max 3 stacks)
+  if (p.spellWeaving && (idx === 0 || idx === 1)) {
+    if (p.lastSpellSlot !== -1 && p.lastSpellSlot !== idx && (p.lastSpellSlot === 0 || p.lastSpellSlot === 1)) {
+      p.spellWeaveStack = Math.min(3, p.spellWeaveStack + 1);
+    } else if (p.lastSpellSlot === idx) {
+      p.spellWeaveStack = 0;
+    }
+    p.lastSpellSlot = idx;
+  }
+  let spellWeaveMul = 1;
+  if (p.spellWeaving && p.spellWeaveStack > 0 && (idx === 0 || idx === 1)) {
+    spellWeaveMul = 1 + p.spellWeaveStack * 0.25;
+    spawnText(state, p.x, p.y - 15, `WEAVE x${p.spellWeaveStack}!`, '#cc88ff');
+  }
+
+  // Full Rotation: use all 3 spells in 5s for 3x attack speed buff
+  if (p.fullRotation) {
+    p.fullRotationSpells |= (1 << idx);
+    p.fullRotationTimer = 5;
+    if (p.fullRotationSpells === 7) {
+      p.fullRotationBuff = 3;
+      p.fullRotationSpells = 0;
+      p.fullRotationTimer = 0;
+      spawnText(state, p.x, p.y - 25, 'FULL ROTATION!', '#ffaa00');
+    }
+  }
+
+  // Temporarily boost def.dmg for spell weaving and echo multipliers
+  const origDmg = def.dmg;
+  if (spellWeaveMul > 1) {
+    def.dmg = Math.ceil(def.dmg * spellWeaveMul);
   }
 
   // ── CLASS-SPECIFIC Q ABILITIES ──
@@ -790,6 +834,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
             owner: p.idx, age: 0, zapTimer: 0, pierceLeft: 0,
             zap: 0, zapRate: 0, slow: 0, drain: 0, explode: 0, burn: 0,
             stun: 0, clsKey: p.clsKey, _reversed: false, _bounces: 0,
+            _slot: idx,
           });
           netSfx(state, SfxName.Arcane);
         }, i * 80);
@@ -854,6 +899,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       vx: cos * def.speed, vy: sin * def.speed,
       owner: p.idx, age: 0, zapTimer: 0, pierceLeft: (p.pierce || 0) + (def.pierce || 0),
       clsKey: p.clsKey,
+      _slot: idx,
     };
     spell.dmg = Math.round(getEffectiveSpellDmg(p, idx) * echoDmgMul);
     // Ranger Eagle Eye: +30% primary range
@@ -880,6 +926,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
           pierceLeft: (p.pierce || 0) + (def.pierce || 0),
           clsKey: p.clsKey,
           _reversed: false,
+          _slot: idx,
         });
       }
     }
@@ -978,6 +1025,17 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       p.hp = Math.min(p.maxHp, p.hp + novaHealed);
       spawnText(state, p.x, p.y - 20, `+${novaHealed} HP`, '#44ff88');
     }
+    // Aftershock: Nova leaves a damage zone for 2s
+    if (p.aftershock) {
+      const ashockZone = state.zones.acquire();
+      if (ashockZone) {
+        ashockZone.x = p.x; ashockZone.y = p.y; ashockZone.radius = def.range || 60;
+        ashockZone.duration = 2; ashockZone.dmg = 1; ashockZone.color = def.color;
+        ashockZone.owner = p.idx; ashockZone.slow = 0; ashockZone.stun = 0;
+        ashockZone.tickRate = 0.5; ashockZone.tickTimer = 0; ashockZone.age = 0;
+        ashockZone.drain = 0; ashockZone.heal = 0; ashockZone.pull = 0; ashockZone.freezeAfter = 0;
+      }
+    }
     netSfx(state, SfxName.Ice);
     shake(state, 5);
   } else if (def.type === SpellType.AoeDelayed) {
@@ -1015,6 +1073,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
           vy: Math.sin(sa) * def.speed,
           owner: p.idx, age: 0, pierceLeft: (p.pierce || 0) + (def.pierce || 0), zapTimer: 0,
           clsKey: p.clsKey,
+          _slot: idx,
         });
         netSfx(state, SfxName.Arcane);
       }, i * 60);
@@ -1093,6 +1152,17 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       if (dist(p.x, p.y, e.x, e.y) < def.aoeR + ENEMIES[e.type].size) {
         damageEnemy(state, e, getEffectiveSpellDmg(p, idx), p.idx);
         if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
+      }
+    }
+    // Aftershock: Leap slam leaves a damage zone for 2s
+    if (p.aftershock) {
+      const ashockZone = state.zones.acquire();
+      if (ashockZone) {
+        ashockZone.x = p.x; ashockZone.y = p.y; ashockZone.radius = def.aoeR || 60;
+        ashockZone.duration = 2; ashockZone.dmg = 1; ashockZone.color = def.color;
+        ashockZone.owner = p.idx; ashockZone.slow = 0; ashockZone.stun = 0;
+        ashockZone.tickRate = 0.5; ashockZone.tickTimer = 0; ashockZone.age = 0;
+        ashockZone.drain = 0; ashockZone.heal = 0; ashockZone.pull = 0; ashockZone.freezeAfter = 0;
       }
     }
   } else if (def.type === SpellType.AllyShield) {
@@ -1193,6 +1263,9 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       spawnParticles(state, p.x + echoCos * 15, p.y + echoSin * 15, '#ffcc44', 2, 0.2);
     }, 500);
   }
+
+  // Restore def.dmg after temporary spell weaving boost
+  def.dmg = origDmg;
 }
 
 // ═══════════════════════════════════

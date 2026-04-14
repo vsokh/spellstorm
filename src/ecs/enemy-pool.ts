@@ -30,6 +30,7 @@ export interface EnemyInit {
   _spdMul: number;
   _dmgMul: number;
   _teleportTimer: number;
+  _lmbHitTimer: number;
   _hitFlash: number;
   _deathTimer: number;
   _atkAnim: number;
@@ -133,6 +134,9 @@ export class EnemyView {
   get _teleportTimer() { return this._pool._teleportTimer[this._idx]; }
   set _teleportTimer(v: number) { this._pool._teleportTimer[this._idx] = v; }
 
+  get _lmbHitTimer() { return this._pool._lmbHitTimer[this._idx]; }
+  set _lmbHitTimer(v: number) { this._pool._lmbHitTimer[this._idx] = v; }
+
   get _hitFlash() { return this._pool._hitFlash[this._idx]; }
   set _hitFlash(v: number) { this._pool._hitFlash[this._idx] = v; }
 
@@ -212,6 +216,7 @@ export class EnemyPool {
   _spdMul: Float32Array;
   _dmgMul: Float32Array;
   _teleportTimer: Float32Array;
+  _lmbHitTimer: Float32Array;
   _hitFlash: Float32Array;
   _deathTimer: Float32Array;
   _atkAnim: Float32Array;
@@ -263,6 +268,7 @@ export class EnemyPool {
     this._spdMul = new Float32Array(c);
     this._dmgMul = new Float32Array(c);
     this._teleportTimer = new Float32Array(c);
+    this._lmbHitTimer = new Float32Array(c);
     this._hitFlash = new Float32Array(c);
     this._deathTimer = new Float32Array(c);
     this._atkAnim = new Float32Array(c);
@@ -404,6 +410,7 @@ export class EnemyPool {
     this._spdMul[idx] = e._spdMul ?? 1;
     this._dmgMul[idx] = e._dmgMul ?? 1;
     this._teleportTimer[idx] = e._teleportTimer ?? 0;
+    this._lmbHitTimer[idx] = e._lmbHitTimer ?? 0;
     this._hitFlash[idx] = e._hitFlash ?? 0;
     this._deathTimer[idx] = e._deathTimer ?? -1;
     this._atkAnim[idx] = e._atkAnim ?? 0;
@@ -446,6 +453,7 @@ export class EnemyPool {
     this._spdMul = growFloat32(this._spdMul, newCap);
     this._dmgMul = growFloat32(this._dmgMul, newCap);
     this._teleportTimer = growFloat32(this._teleportTimer, newCap);
+    this._lmbHitTimer = growFloat32(this._lmbHitTimer, newCap);
     this._hitFlash = growFloat32(this._hitFlash, newCap);
     const newDt = growFloat32(this._deathTimer, newCap);
     // Fill new slots with -1 default

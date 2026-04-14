@@ -347,6 +347,9 @@ export interface Enemy {
   _burnTick: number;
   _burnOwner: number;
 
+  // Cross-spell synergy: LMB hit timer for Combo augment
+  _lmbHitTimer: number;
+
   // Friendly summon fields (necromancer ult)
   _friendly: boolean;
   _owner: number;
@@ -409,6 +412,7 @@ export interface Spell {
   clsKey: string;
   _reversed: boolean;
   _bounces: number;
+  _slot: number;
 }
 
 export interface Particle {
