@@ -1,4 +1,4 @@
-import { GameState, dist } from '../state';
+import { GameState, dist, spawnText } from '../state';
 import { EnemyAI } from '../types';
 import { ENEMIES, TIMING } from '../constants';
 import { damagePlayer } from './combat';
@@ -34,6 +34,11 @@ export function enemyAttack(state: GameState, dt: number): void {
       e._atkAnim = TIMING.ANIM_ATTACK_WIND;
       if (et.ai === EnemyAI.Chase) {
         if (target.iframes <= 0) damagePlayer(state, target, Math.ceil(et.dmg * (e._dmgMul || 1)), e);
+        // Ice Armor: melee attackers get frozen
+        if (target.iceArmor) {
+          e.stunTimer = (e.stunTimer || 0) + 1;
+          spawnText(state, e.x, e.y - 15, 'FROZEN', '#88ddff');
+        }
       } else if (et.projSpd) {
         const a = Math.atan2(dy, dx);
         state.eProj.push({

@@ -305,6 +305,21 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
         }
         spawnParticles(state, e.x, e.y, '#ff8844', 5, TIMING.PARTICLE_LIFE_SHORT);
       }
+
+      // Shatter: frozen/slowed enemies explode on death
+      if (p.shatter && (e.stunTimer > 0 || e.slowTimer > 0)) {
+        const SHATTER_RADIUS = 80;
+        const SHATTER_DMG = 3;
+        for (const other of state.enemies) {
+          if (!other.alive || other === e || other._deathTimer >= 0) continue;
+          if (dist(e.x, e.y, other.x, other.y) < SHATTER_RADIUS + ENEMIES[other.type].size) {
+            damageEnemy(state, other, SHATTER_DMG, p.idx);
+          }
+        }
+        spawnParticles(state, e.x, e.y, '#88ddff', 20, TIMING.PARTICLE_LIFE_LONG);
+        spawnShockwave(state, e.x, e.y, SHATTER_RADIUS, '#44bbff');
+        shake(state, 3);
+      }
     }
 
     // Explode on death — damage nearby players

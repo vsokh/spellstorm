@@ -43,7 +43,10 @@ export function enemyStatus(state: GameState, dt: number): void {
     }
 
     if (e.iframes > 0) e.iframes -= dt;
-    if (e.slowTimer > 0) e.slowTimer -= dt;
+    if (e.slowTimer > 0) {
+      const hasPerm = state.players.some(p => p.alive && p.permafrost);
+      if (!hasPerm) e.slowTimer -= dt;
+    }
     if (e.stunTimer > 0) { e.stunTimer -= dt; continue; }
 
     // Burn DOT
