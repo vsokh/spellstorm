@@ -1,6 +1,6 @@
 {
   "mode": "playtest",
-  "timestamp": "2026-04-14T11:42:33.538Z",
+  "timestamp": "2026-04-14T12:06:55.797Z",
   "config": {
     "runs": 20,
     "maxWave": 25
@@ -8,22 +8,23 @@
   "builds": [
     "Pyromancer (damage-focused)",
     "Pyromancer (balanced)",
+    "Berserker (damage-focused)",
     "Berserker (balanced)",
     "Monk (balanced)"
   ],
   "validation": {
     "bossKillTime10": {
-      "value": 6.7,
+      "value": 7.5,
       "target": "5-8s",
       "pass": true
     },
     "bossKillTime20": {
-      "value": 17.7,
+      "value": 0,
       "target": "15-25s",
-      "pass": true
+      "pass": false
     },
     "dpsHpRatio": {
-      "value": 2.89,
+      "value": 3.17,
       "target": "2.7-4.3",
       "pass": true
     },
@@ -31,14 +32,31 @@
       "pass": true,
       "outlierHigh": [],
       "outlierLow": []
+    },
+    "upgradeCountW20": {
+      "value": 19,
+      "target": "20-22",
+      "pass": false
     }
   },
   "upgradePickRates": [
     {
-      "name": "Undying Rage",
+      "name": "Way of the Fist",
       "pickRate": 80,
       "offered": 5,
       "picked": 4
+    },
+    {
+      "name": "Cleave",
+      "pickRate": 76.5,
+      "offered": 17,
+      "picked": 13
+    },
+    {
+      "name": "Piercing",
+      "pickRate": 69,
+      "offered": 42,
+      "picked": 29
     },
     {
       "name": "Friendly Fire",
@@ -48,308 +66,344 @@
     },
     {
       "name": "Primary Boost",
-      "pickRate": 60.7,
-      "offered": 61,
-      "picked": 37
+      "pickRate": 65.9,
+      "offered": 44,
+      "picked": 29
     },
     {
-      "name": "Wildfire",
-      "pickRate": 57.7,
-      "offered": 26,
-      "picked": 15
-    },
-    {
-      "name": "Piercing",
-      "pickRate": 57.1,
-      "offered": 49,
-      "picked": 28
-    },
-    {
-      "name": "Spell Power",
-      "pickRate": 52.8,
-      "offered": 53,
-      "picked": 28
-    },
-    {
-      "name": "Spell Thief",
-      "pickRate": 52.4,
-      "offered": 42,
-      "picked": 22
-    },
-    {
-      "name": "Trigger Happy",
-      "pickRate": 50,
-      "offered": 38,
-      "picked": 19
-    },
-    {
-      "name": "Overkill",
-      "pickRate": 49,
-      "offered": 49,
-      "picked": 24
-    },
-    {
-      "name": "Glass Cannon",
-      "pickRate": 48.6,
-      "offered": 35,
-      "picked": 17
-    },
-    {
-      "name": "Dash",
-      "pickRate": 47.8,
+      "name": "Critical Strike",
+      "pickRate": 65.2,
       "offered": 46,
-      "picked": 22
+      "picked": 30
     },
     {
-      "name": "Free Cast",
-      "pickRate": 47.5,
-      "offered": 40,
-      "picked": 19
-    },
-    {
-      "name": "Dodge",
-      "pickRate": 46.5,
-      "offered": 43,
-      "picked": 20
-    },
-    {
-      "name": "Area Secondary",
-      "pickRate": 46.2,
-      "offered": 39,
-      "picked": 18
-    },
-    {
-      "name": "Rapid Fire",
-      "pickRate": 45,
-      "offered": 40,
-      "picked": 18
-    },
-    {
-      "name": "Spell Weaving",
-      "pickRate": 42.9,
-      "offered": 42,
-      "picked": 18
-    },
-    {
-      "name": "Cleave",
-      "pickRate": 42.9,
-      "offered": 7,
-      "picked": 3
+      "name": "Bloodlust",
+      "pickRate": 63.6,
+      "offered": 11,
+      "picked": 7
     },
     {
       "name": "Split Shot",
-      "pickRate": 42,
-      "offered": 50,
-      "picked": 21
+      "pickRate": 58.9,
+      "offered": 56,
+      "picked": 33
     },
     {
       "name": "Second Wind",
+      "pickRate": 57.1,
+      "offered": 35,
+      "picked": 20
+    },
+    {
+      "name": "Overkill",
+      "pickRate": 55.1,
+      "offered": 49,
+      "picked": 27
+    },
+    {
+      "name": "Spell Power",
+      "pickRate": 52.6,
+      "offered": 57,
+      "picked": 30
+    },
+    {
+      "name": "Mana Flow",
+      "pickRate": 48.6,
+      "offered": 37,
+      "picked": 18
+    },
+    {
+      "name": "Glass Cannon",
+      "pickRate": 48,
+      "offered": 50,
+      "picked": 24
+    },
+    {
+      "name": "Secondary Mastery",
+      "pickRate": 47.7,
+      "offered": 44,
+      "picked": 21
+    },
+    {
+      "name": "Rapid Fire",
+      "pickRate": 47.6,
+      "offered": 42,
+      "picked": 20
+    },
+    {
+      "name": "Secondary Power",
+      "pickRate": 44.4,
+      "offered": 45,
+      "picked": 20
+    },
+    {
+      "name": "Ult Mastery",
+      "pickRate": 43.8,
+      "offered": 48,
+      "picked": 21
+    },
+    {
+      "name": "Spectral",
+      "pickRate": 41.7,
+      "offered": 48,
+      "picked": 20
+    },
+    {
+      "name": "Dash",
       "pickRate": 41.2,
       "offered": 51,
       "picked": 21
     },
     {
-      "name": "Critical Strike",
+      "name": "Spell Thief",
       "pickRate": 40.4,
       "offered": 47,
       "picked": 19
     },
     {
-      "name": "Way of the Fist",
-      "pickRate": 40,
-      "offered": 10,
-      "picked": 4
-    },
-    {
       "name": "Vitality",
-      "pickRate": 39.2,
-      "offered": 51,
-      "picked": 20
+      "pickRate": 40,
+      "offered": 55,
+      "picked": 22
     },
     {
-      "name": "Armor",
-      "pickRate": 37.3,
-      "offered": 51,
-      "picked": 19
-    },
-    {
-      "name": "Secondary Mastery",
-      "pickRate": 36.4,
+      "name": "Ult Regen",
+      "pickRate": 38.6,
       "offered": 44,
-      "picked": 16
+      "picked": 17
     },
     {
-      "name": "XP Boost",
-      "pickRate": 36.4,
-      "offered": 44,
-      "picked": 16
-    },
-    {
-      "name": "Efficiency",
-      "pickRate": 35.1,
-      "offered": 37,
-      "picked": 13
-    },
-    {
-      "name": "Max Mana +30",
+      "name": "Homing Bolts",
       "pickRate": 34.9,
       "offered": 43,
       "picked": 15
     },
     {
-      "name": "Momentum",
-      "pickRate": 34.8,
-      "offered": 46,
-      "picked": 16
-    },
-    {
-      "name": "Ricochet",
-      "pickRate": 33.3,
-      "offered": 36,
-      "picked": 12
-    },
-    {
-      "name": "Thorns",
-      "pickRate": 33.3,
-      "offered": 36,
-      "picked": 12
-    },
-    {
-      "name": "Ultimate Power",
-      "pickRate": 32.6,
-      "offered": 43,
-      "picked": 14
-    },
-    {
       "name": "Blast Radius",
-      "pickRate": 32.6,
-      "offered": 46,
-      "picked": 15
-    },
-    {
-      "name": "Secondary Power",
-      "pickRate": 31.3,
-      "offered": 48,
-      "picked": 15
+      "pickRate": 34.6,
+      "offered": 52,
+      "picked": 18
     },
     {
       "name": "Double Tap",
-      "pickRate": 31,
-      "offered": 42,
-      "picked": 13
-    },
-    {
-      "name": "Ult Regen",
-      "pickRate": 30.4,
-      "offered": 46,
+      "pickRate": 34.1,
+      "offered": 41,
       "picked": 14
     },
     {
-      "name": "Iron Skin",
-      "pickRate": 30,
-      "offered": 10,
-      "picked": 3
+      "name": "Aftershock",
+      "pickRate": 33.3,
+      "offered": 42,
+      "picked": 14
     },
     {
-      "name": "Mana Flow",
-      "pickRate": 28.9,
-      "offered": 38,
-      "picked": 11
-    },
-    {
-      "name": "Big Spells",
-      "pickRate": 28.8,
-      "offered": 52,
+      "name": "Trigger Happy",
+      "pickRate": 32.6,
+      "offered": 46,
       "picked": 15
     },
     {
-      "name": "Homing Bolts",
-      "pickRate": 27.3,
-      "offered": 44,
-      "picked": 12
+      "name": "Quick Step",
+      "pickRate": 32.5,
+      "offered": 40,
+      "picked": 13
     },
     {
-      "name": "Spectral",
+      "name": "Ricochet",
+      "pickRate": 31.9,
+      "offered": 47,
+      "picked": 15
+    },
+    {
+      "name": "Pyroclasm",
+      "pickRate": 30,
+      "offered": 20,
+      "picked": 6
+    },
+    {
+      "name": "Magnet",
+      "pickRate": 29.8,
+      "offered": 47,
+      "picked": 14
+    },
+    {
+      "name": "Ultimate Power",
+      "pickRate": 29.5,
+      "offered": 44,
+      "picked": 13
+    },
+    {
+      "name": "Vampirism",
+      "pickRate": 29.5,
+      "offered": 44,
+      "picked": 13
+    },
+    {
+      "name": "Full Rotation",
+      "pickRate": 29.5,
+      "offered": 44,
+      "picked": 13
+    },
+    {
+      "name": "Mana on Kill",
+      "pickRate": 29.4,
+      "offered": 34,
+      "picked": 10
+    },
+    {
+      "name": "Fork",
+      "pickRate": 27.5,
+      "offered": 51,
+      "picked": 14
+    },
+    {
+      "name": "Cooldown Cascade",
+      "pickRate": 26.8,
+      "offered": 56,
+      "picked": 15
+    },
+    {
+      "name": "Dodge",
       "pickRate": 26.1,
       "offered": 46,
       "picked": 12
     },
     {
-      "name": "Frozen Touch",
-      "pickRate": 25.6,
-      "offered": 43,
-      "picked": 11
+      "name": "Skill Reset",
+      "pickRate": 26.1,
+      "offered": 46,
+      "picked": 12
     },
     {
-      "name": "Quick Charge",
+      "name": "Overflow",
+      "pickRate": 25.5,
+      "offered": 51,
+      "picked": 13
+    },
+    {
+      "name": "Armor",
+      "pickRate": 25.4,
+      "offered": 59,
+      "picked": 15
+    },
+    {
+      "name": "Undying Rage",
       "pickRate": 25,
-      "offered": 56,
-      "picked": 14
+      "offered": 16,
+      "picked": 4
     },
     {
-      "name": "Combo",
+      "name": "Iron Skin",
+      "pickRate": 25,
+      "offered": 8,
+      "picked": 2
+    },
+    {
+      "name": "Zen Master",
+      "pickRate": 25,
+      "offered": 8,
+      "picked": 2
+    },
+    {
+      "name": "Velocity",
       "pickRate": 24.5,
       "offered": 49,
       "picked": 12
     },
     {
-      "name": "Seeker Mines",
-      "pickRate": 24.4,
-      "offered": 41,
-      "picked": 10
+      "name": "Life Steal",
+      "pickRate": 23.9,
+      "offered": 46,
+      "picked": 11
     },
     {
-      "name": "Fork",
-      "pickRate": 24.2,
-      "offered": 33,
-      "picked": 8
-    },
-    {
-      "name": "Vampirism",
-      "pickRate": 24,
-      "offered": 50,
-      "picked": 12
-    },
-    {
-      "name": "Chain Hit",
+      "name": "Area Secondary",
       "pickRate": 23.6,
       "offered": 55,
       "picked": 13
     },
     {
-      "name": "Aftershock",
-      "pickRate": 23.1,
-      "offered": 52,
+      "name": "Big Spells",
+      "pickRate": 23.5,
+      "offered": 51,
       "picked": 12
     },
     {
-      "name": "Deep Freeze",
-      "pickRate": 22.5,
-      "offered": 40,
+      "name": "Lingering",
+      "pickRate": 23.4,
+      "offered": 47,
+      "picked": 11
+    },
+    {
+      "name": "Quick Charge",
+      "pickRate": 23.4,
+      "offered": 47,
+      "picked": 11
+    },
+    {
+      "name": "Gravity Pull",
+      "pickRate": 23.4,
+      "offered": 47,
+      "picked": 11
+    },
+    {
+      "name": "Max Mana +30",
+      "pickRate": 23.3,
+      "offered": 43,
+      "picked": 10
+    },
+    {
+      "name": "Ult Echo",
+      "pickRate": 23.1,
+      "offered": 39,
       "picked": 9
     },
     {
-      "name": "Gold Rush",
-      "pickRate": 21.4,
-      "offered": 42,
-      "picked": 9
+      "name": "Double Secondary",
+      "pickRate": 22.7,
+      "offered": 44,
+      "picked": 10
     },
     {
-      "name": "Full Rotation",
+      "name": "Wildfire",
+      "pickRate": 22.6,
+      "offered": 31,
+      "picked": 7
+    },
+    {
+      "name": "Frozen Touch",
+      "pickRate": 22.2,
+      "offered": 54,
+      "picked": 12
+    },
+    {
+      "name": "Spell Weaving",
+      "pickRate": 22,
+      "offered": 50,
+      "picked": 11
+    },
+    {
+      "name": "Combo",
+      "pickRate": 21.8,
+      "offered": 55,
+      "picked": 12
+    },
+    {
+      "name": "Q Mastery",
       "pickRate": 21.3,
       "offered": 47,
       "picked": 10
     },
     {
-      "name": "Skill Reset",
-      "pickRate": 20.4,
-      "offered": 54,
-      "picked": 11
+      "name": "Barrage Mode",
+      "pickRate": 21.1,
+      "offered": 38,
+      "picked": 8
     },
     {
-      "name": "Velocity",
-      "pickRate": 20.3,
-      "offered": 59,
+      "name": "Chain Hit",
+      "pickRate": 20.7,
+      "offered": 58,
       "picked": 12
     },
     {
@@ -359,127 +413,79 @@
       "picked": 9
     },
     {
-      "name": "Q Mastery",
-      "pickRate": 20,
-      "offered": 50,
-      "picked": 10
-    },
-    {
-      "name": "Magnet",
-      "pickRate": 20,
-      "offered": 45,
-      "picked": 9
-    },
-    {
-      "name": "Chaos Bolts",
-      "pickRate": 19.4,
-      "offered": 36,
+      "name": "XP Boost",
+      "pickRate": 18.4,
+      "offered": 38,
       "picked": 7
     },
     {
-      "name": "Double Secondary",
-      "pickRate": 18.9,
-      "offered": 53,
-      "picked": 10
-    },
-    {
-      "name": "Gravity Pull",
-      "pickRate": 18.6,
-      "offered": 43,
-      "picked": 8
-    },
-    {
-      "name": "Quick Step",
+      "name": "Efficiency",
       "pickRate": 18.2,
       "offered": 44,
       "picked": 8
     },
     {
-      "name": "Magma Armor",
+      "name": "Free Cast",
       "pickRate": 18.2,
-      "offered": 33,
-      "picked": 6
-    },
-    {
-      "name": "Cooldown Cascade",
-      "pickRate": 17.9,
-      "offered": 39,
-      "picked": 7
-    },
-    {
-      "name": "Ult Mastery",
-      "pickRate": 17.6,
-      "offered": 51,
-      "picked": 9
-    },
-    {
-      "name": "Overflow",
-      "pickRate": 17.3,
-      "offered": 52,
-      "picked": 9
-    },
-    {
-      "name": "Barrage Mode",
-      "pickRate": 16.7,
-      "offered": 48,
+      "offered": 44,
       "picked": 8
     },
     {
-      "name": "Pyroclasm",
-      "pickRate": 15.4,
-      "offered": 39,
-      "picked": 6
-    },
-    {
-      "name": "Ult Echo",
-      "pickRate": 15.2,
-      "offered": 33,
-      "picked": 5
+      "name": "Thorns",
+      "pickRate": 18,
+      "offered": 50,
+      "picked": 9
     },
     {
       "name": "Volatile",
-      "pickRate": 14,
-      "offered": 57,
-      "picked": 8
+      "pickRate": 17.6,
+      "offered": 34,
+      "picked": 6
     },
     {
-      "name": "Mana on Kill",
-      "pickRate": 13.9,
-      "offered": 36,
-      "picked": 5
+      "name": "Seeker Mines",
+      "pickRate": 16.7,
+      "offered": 54,
+      "picked": 9
     },
     {
-      "name": "Zen Master",
-      "pickRate": 13.3,
-      "offered": 15,
-      "picked": 2
+      "name": "Chaos Bolts",
+      "pickRate": 15.9,
+      "offered": 44,
+      "picked": 7
     },
     {
       "name": "Boomerang",
+      "pickRate": 15.7,
+      "offered": 51,
+      "picked": 8
+    },
+    {
+      "name": "Magma Armor",
+      "pickRate": 14.3,
+      "offered": 35,
+      "picked": 5
+    },
+    {
+      "name": "Momentum",
       "pickRate": 13,
       "offered": 46,
       "picked": 6
     },
     {
-      "name": "Life Steal",
-      "pickRate": 12.2,
-      "offered": 49,
+      "name": "Deep Freeze",
+      "pickRate": 11.3,
+      "offered": 53,
       "picked": 6
     },
     {
-      "name": "Lingering",
-      "pickRate": 12.1,
-      "offered": 33,
-      "picked": 4
-    },
-    {
-      "name": "Bloodlust",
-      "pickRate": 11.1,
-      "offered": 9,
-      "picked": 1
+      "name": "Gold Rush",
+      "pickRate": 10.6,
+      "offered": 47,
+      "picked": 5
     }
   ],
   "meta": {
-    "elapsedMs": 2261
+    "elapsedMs": 2665
   }
 }

@@ -156,6 +156,8 @@ interface SimPlayer {
   overkill: boolean;
   furyActive: boolean;
   rageDmgMul: number;
+  bloodlust: boolean;
+  _bloodlustStacks: number;
 }
 
 interface SimSpell {
@@ -363,6 +365,14 @@ function damageSimEnemy(state: SimState, e: SimEnemy, rawDmg: number): void {
       p.hp = Math.min(p.maxHp, p.hp + 1);
     }
 
+    // Bloodlust: +5% speed per kill (cap +100%), overflow to +1% crit (cap +15%)
+    if (p.bloodlust) {
+      p._bloodlustStacks++;
+      if (p._bloodlustStacks > 20 && (p._bloodlustStacks - 20) * 0.01 <= 0.15) {
+        p.critChance += 0.01;
+      }
+    }
+
     // Mana on kill
     if (p.manaOnKill) {
       p.mana = Math.min(p.maxMana, p.mana + p.manaOnKill);
@@ -551,6 +561,12 @@ function castSimSpell(state: SimState, idx: number, angle: number): void {
   }
 
   p.cd[idx] = def.cd;
+
+  // Bloodlust: reduce cooldown based on kill stacks (max +100% speed = halve cooldown)
+  if (p.bloodlust && p._bloodlustStacks > 0) {
+    const speedBonus = Math.min(p._bloodlustStacks * 0.05, 1.0);
+    p.cd[idx] = def.cd / (1 + speedBonus);
+  }
 
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
@@ -1146,6 +1162,8 @@ function createSimPlayer(clsKey: string): SimPlayer {
     overkill: false,
     furyActive: false,
     rageDmgMul: 1,
+    bloodlust: false,
+    _bloodlustStacks: 0,
   };
 }
 
@@ -1485,6 +1503,7 @@ function applyUpgradeToSimPlayer(sp: SimPlayer, apply: (p: any, stacks: number) 
     critChance: sp.critChance,
     overkill: sp.overkill,
     pierce: sp.pierce,
+    bloodlust: sp.bloodlust,
     splitShot: 0,
     ricochet: 0,
     chainHit: 0,
@@ -1530,6 +1549,7 @@ function applyUpgradeToSimPlayer(sp: SimPlayer, apply: (p: any, stacks: number) 
   sp.dodgeChance = proxy.dodgeChance;
   sp.vampirism = proxy.vampirism;
   sp.vampKillReq = proxy.vampKillReq;
+  sp.bloodlust = proxy.bloodlust;
   sp.spells = proxy.cls.spells;
 }
 
@@ -1681,6 +1701,7 @@ function runPlaytestMode(): void {
   const builds: { label: string; clsKey: string; strategy: UpgradeStrategy }[] = [
     { label: 'Pyromancer (damage-focused)', clsKey: 'pyromancer', strategy: 'damage-focused' },
     { label: 'Pyromancer (balanced)', clsKey: 'pyromancer', strategy: 'balanced' },
+    { label: 'Berserker (damage-focused)', clsKey: 'berserker', strategy: 'damage-focused' },
     { label: 'Berserker (balanced)', clsKey: 'berserker', strategy: 'balanced' },
     { label: 'Monk (balanced)', clsKey: 'monk', strategy: 'balanced' },
   ];
@@ -1778,7 +1799,7 @@ function runPlaytestMode(): void {
   // Validation targets
   console.log('');
   console.log('='.repeat(60));
-  console.log('  P1 VALIDATION TARGETS');
+  console.log('  P2 VALIDATION TARGETS');
   console.log('='.repeat(60));
 
   // Collect all boss kill times and DPS/HP ratios
@@ -1791,6 +1812,13 @@ function runPlaytestMode(): void {
     if (r.bossKillTimes[20] !== undefined) allBKT20.push(r.bossKillTimes[20]);
     for (const v of Object.values(r.dpsHpRatios)) allDpsHp.push(v);
   }
+
+  // Upgrade count validation (P2 target: 20-22 upgrades by wave 20)
+  const upgradeCountsW20 = allRuns.filter(r => r.waveSurvived >= 20).map(r => r.upgradesPicked.length);
+  const avgUpgradeCount = upgradeCountsW20.length > 0
+    ? Math.round(upgradeCountsW20.reduce((s, v) => s + v, 0) / upgradeCountsW20.length * 10) / 10
+    : 0;
+  const upgradeCountPass = avgUpgradeCount >= 20 && avgUpgradeCount <= 22;
 
   const avgBKT10 = allBKT10.length > 0 ? Math.round(allBKT10.reduce((s, v) => s + v, 0) / allBKT10.length * 10) / 10 : 0;
   const avgBKT20 = allBKT20.length > 0 ? Math.round(allBKT20.reduce((s, v) => s + v, 0) / allBKT20.length * 10) / 10 : 0;
@@ -1805,6 +1833,17 @@ function runPlaytestMode(): void {
   console.log(`  Boss kill time W20:  ${avgBKT20}s  (target: 15-25s) ${bkt20Pass ? 'PASS' : 'FAIL'}`);
   console.log(`  Avg DPS/HP ratio:    ${avgDpsHp}    (target: 2.7-4.3) ${dpsHpPass ? 'PASS' : 'FAIL'}`);
   console.log(`  Upgrade pick rates:  ${pickRatePass ? 'PASS' : 'FAIL (outliers detected)'}`);
+  console.log(`  Upgrades by W20:     ${avgUpgradeCount}    (target: 20-22)  ${upgradeCountPass ? 'PASS' : 'FAIL'}`);
+
+  // Berserker Bloodlust saturation
+  const berserkerRuns = allRuns.filter(r => r.waveSurvived >= 10);
+  // We can't directly access _bloodlustStacks from RunResult, so we'll report the berserker
+  // kill counts as a proxy for stacks
+  const berserkerKillRuns = allRuns.filter(r => r.kills > 0);
+  const avgKills = berserkerKillRuns.length > 0
+    ? Math.round(berserkerKillRuns.reduce((s, r) => s + r.kills, 0) / berserkerKillRuns.length)
+    : 0;
+  console.log(`  Avg kills per run:   ${avgKills}    (Bloodlust caps at 20 kills = speed, 35 = full)`);
 
   const elapsed = Date.now() - startTime;
   console.log('');
@@ -1822,6 +1861,7 @@ function runPlaytestMode(): void {
       bossKillTime20: { value: avgBKT20, target: '15-25s', pass: bkt20Pass },
       dpsHpRatio: { value: avgDpsHp, target: '2.7-4.3', pass: dpsHpPass },
       upgradePickRates: { pass: pickRatePass, outlierHigh: outlierHigh.map(u => u.name), outlierLow: outlierLow.map(u => u.name) },
+      upgradeCountW20: { value: avgUpgradeCount, target: '20-22', pass: upgradeCountPass },
     },
     upgradePickRates: pickRates,
     meta: { elapsedMs: elapsed },
