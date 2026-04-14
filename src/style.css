@@ -31,6 +31,7 @@ canvas { display: block; }
   background: var(--bg-deep);
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
+  overflow-y: auto;
   animation: fadeIn 0.6s ease-out;
 }
 
@@ -519,7 +520,7 @@ input[type=text]:focus {
   text-shadow: 0 0 15px rgba(200, 160, 60, 0.15);
 }
 
-.upgrade-grid { display: flex; gap: 14px; }
+.upgrade-grid { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
 
 .upgrade-card {
   width: 190px; padding: 18px 14px;
@@ -803,4 +804,39 @@ input[type=text]:focus {
   font-family: 'Courier New', monospace;
   font-size: 11px;
   margin-top: 4px;
+}
+
+/* ══════════ RESPONSIVE: narrow viewports (800px–860px width) ══════════ */
+@media (max-width: 860px) {
+  /* Issue 4: reduce large heading fonts */
+  #lobby h1 { font-size: 36px; }
+  #gameover h2 { font-size: 32px; }
+  #victory-screen h2 { font-size: 36px; }
+  #shop-screen h2 { font-size: 22px; }
+
+  /* Issue 2: hide class detail panel, narrow class cards */
+  #class-detail { display: none; }
+  .class-card { width: 110px; }
+
+  /* Issue 3: reduce upgrade card size to prevent overflow */
+  .upgrade-card { width: 160px; padding: 14px 10px; }
+
+  /* Issue 6: shrink skill bar icons to avoid overlap with floor display */
+  .sp-icon { width: 40px; height: 40px; font-size: 12px; }
+}
+
+/* ══════════ RESPONSIVE: short viewports (540px–620px height) ══════════ */
+@media (max-height: 620px) {
+  /* Issue 1: compact lobby to fit 540px height */
+  #lobby h1 { font-size: 32px; }
+  #lobby .sub { margin-bottom: 16px; }
+  .lobby-box { padding: 14px; margin-bottom: 8px; }
+
+  /* Issue 3: compact upgrade screen headings and cards */
+  #upgrade-screen h2 { font-size: 18px; margin-bottom: 10px; }
+  .upgrade-card { padding: 12px 8px; }
+
+  /* Issue 4: further reduce heading sizes at short heights */
+  #gameover h2 { font-size: 28px; }
+  #victory-screen h2 { font-size: 32px; }
 }
