@@ -71,7 +71,7 @@ export const GAME_OVER_DELAY_MS = 1500;
 export const DEFAULT_LIVES = 3;
 
 /** Minimum cooldown floors — prevent stacking from reaching absurd fire rates */
-export const CD_FLOOR_PRIMARY = 0.15;
+export const CD_FLOOR_PRIMARY = 0.12;
 export const CD_FLOOR_SECONDARY = 1.0;
 export const CD_FLOOR_Q = 2.0;
 export const CD_FLOORS = [CD_FLOOR_PRIMARY, CD_FLOOR_SECONDARY, CD_FLOOR_Q, 0];
@@ -187,7 +187,7 @@ export const COMBAT = {
   BOSS_DMG_REDUCTION_DURATION: 3,     // 3 seconds
   BOSS_DMG_REDUCTION_HP_THRESHOLD: 0.5, // triggers at 50% HP
   BOSS_DMG_REDUCTION_MIN_WAVE: 15,    // only wave 15+ bosses
-  BONUS_DMG_SOFT_CAP_THRESHOLD: 6,
+  BONUS_DMG_SOFT_CAP_THRESHOLD: 8,
   BONUS_DMG_SOFT_CAP_KNEE: 6,
   BLOODLUST_SPEED_CAP: 1.0,    // max +100% attack speed (20 kills × 5%)
   BLOODLUST_CRIT_CAP: 0.15,    // max +15% crit chance overflow
@@ -492,10 +492,10 @@ export const CLASS_ORDER: string[] = [
   'druid', 'warlock', 'monk', 'engineer',
 ];
 
-export const BOSS_HP_EXPONENT = 1.4;
+export const BOSS_HP_EXPONENT = 1.6;
 export const BOSS_HP_EXPONENT_DIVISOR = 5;
 export const TIME_SCALING_FACTOR = 0.12;
-export const ENEMY_HP_WAVE_MULT = 0.04;
+export const ENEMY_HP_WAVE_MULT = 0.03;
 export const CO_OP_HP_MULTIPLIER = 1.5;
 export const BOSS_WAVE_XP: Record<number, number> = { 5: 60, 10: 80, 15: 100, 20: 150 };
 
@@ -516,7 +516,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
   shieldbearer: { name: 'Shield Bearer', hp: 8, speed: 40, size: 14, color: '#7788aa', dmg: 2, xp: 10, gold: 4, ai: EnemyAI.Chase, atkR: 24, atkCd: 1.5 },
   assassin: { name: 'Assassin', hp: 2, speed: 160, size: 8, color: '#334455', dmg: 3, xp: 8, gold: 3, ai: EnemyAI.Chase, atkR: 16, atkCd: 1.2 },
   swarm_bat: { name: 'Swarm Bat', hp: 1, speed: 140, size: 6, color: '#9977bb', dmg: 1, xp: 2, gold: 0, ai: EnemyAI.Chase, atkR: 14, atkCd: 0.6 },
-  archlord: { name: 'Archlord', hp: 60, speed: 45, size: 28, color: '#ffaa00', dmg: 4, xp: 50, gold: 25, ai: EnemyAI.Ranged, atkR: 280, atkCd: 1.0, projSpd: 400, projCol: '#ffcc44', boss: true },
+  archlord: { name: 'Archlord', hp: 125, speed: 45, size: 28, color: '#ffaa00', dmg: 3, xp: 50, gold: 25, ai: EnemyAI.Ranged, atkR: 280, atkCd: 1.5, projSpd: 350, projCol: '#ffcc44', boss: true },
   _ally: { name: 'Skeleton', hp: 4, speed: 80, size: 9, color: '#55cc55', dmg: 2, xp: 0, gold: 0, ai: EnemyAI.Chase, atkR: 20, atkCd: 0.8 },
   _wolf: { name: 'Wolf', hp: 8, speed: 120, size: 10, color: '#88aa66', dmg: 2, xp: 0, gold: 0, ai: EnemyAI.Chase, atkR: 20, atkCd: 0.6 },
   _imp: { name: 'Imp', hp: 5, speed: 90, size: 8, color: '#cc4466', dmg: 1, xp: 0, gold: 0, ai: EnemyAI.Ranged, atkR: 150, atkCd: 1.0, projSpd: 300, projCol: '#ff5577' },

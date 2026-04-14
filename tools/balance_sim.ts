@@ -6,7 +6,7 @@
  * and upgrade impact. Outputs a human-readable console report and
  * a machine-readable JSON file.
  *
- * Usage: npx tsx tools/balance_sim.ts [--runs=50] [--maxWave=25]
+ * Usage: npx tsx tools/balance_sim.ts [--runs=50] [--maxWave=25] [--playtest]
  */
 
 import {
@@ -24,6 +24,8 @@ import {
   HEALTH_DROP_CHANCE,
   BOSS_HP_EXPONENT,
   BOSS_HP_EXPONENT_DIVISOR,
+  TIME_SCALING_FACTOR,
+  upgradeChoiceCount,
 } from '../src/constants';
 import {
   SpellType,
@@ -45,10 +47,19 @@ function getArg(name: string, fallback: number): number {
   return found ? parseInt(found.split('=')[1], 10) : fallback;
 }
 
-const NUM_RUNS = getArg('runs', 50);
+const PLAYTEST = args.includes('--playtest');
+const NUM_RUNS = PLAYTEST ? 20 : getArg('runs', 50);
 const MAX_WAVE = getArg('maxWave', 25);
 const SIM_DT = 1 / 60; // 60fps simulation tick
 const MAX_WAVE_TIME = 120; // seconds before force-ending a wave (safety)
+
+// Damage-focused upgrade names (for AI strategy)
+const DAMAGE_UPGRADE_NAMES = new Set([
+  'Primary Boost', 'Rapid Fire', 'Critical Strike', 'Piercing', 'Split Shot',
+  'Glass Cannon', 'Overkill', 'Spell Power', 'Friendly Fire',
+]);
+
+type UpgradeStrategy = 'damage-focused' | 'balanced';
 
 // ═══════════════════════════════════
 //       SPELL NORMALIZER
@@ -252,11 +263,13 @@ function generateWave(state: SimState): void {
   const isBoss = wave % 5 === 0;
   const hpScale = 1 + Math.floor(wave / 4);
   const spdScale = 1 + wave * 0.02;
+  // Time scaling: boss HP scales with elapsed game time (matches real game)
+  const timeMul = 1 + (state.time / 60) * TIME_SCALING_FACTOR;
 
   if (isBoss) {
-    const bossType = wave % 10 === 0 ? 'demon' : 'golem';
+    const bossType = getBossType(wave);
     const et = ENEMIES[bossType];
-    const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR));
+    const bossHp = Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR) * timeMul);
     state.enemies.push({
       type: bossType,
       x: ROOM_WIDTH / 2, y: 60,
@@ -268,7 +281,7 @@ function generateWave(state: SimState): void {
       burnTimer: 0, burnTick: 0,
       friendly: false, lifespan: 0, spdMul: 1,
     });
-    const minionCount = 2 + Math.floor(wave / 3);
+    const minionCount = 4 + wave;
     for (let i = 0; i < minionCount; i++) {
       state.enemies.push(spawnSimEnemy(pickWaveEnemy(wave), hpScale, spdScale));
     }
@@ -1076,6 +1089,16 @@ function simZoneTick(state: SimState, dt: number): void {
 //       SINGLE RUN SIMULATION
 // ═══════════════════════════════════
 
+interface WaveDetail {
+  wave: number;
+  clearTime: number;
+  kills: number;
+  hpRemaining: number;
+  bossKillTime?: number;
+  dpsHpRatio?: number;
+  bossHp?: number;
+}
+
 interface RunResult {
   waveSurvived: number;
   kills: number;
@@ -1083,6 +1106,11 @@ interface RunResult {
   totalTime: number;
   hpAtDeath: number;
   wavesSurvived: boolean[]; // index = wave-1, did player survive past it?
+  bossKillTimes: Record<number, number>;
+  dpsHpRatios: Record<number, number>;
+  upgradesPicked: string[];
+  upgradesOffered: string[];
+  waveDetails: WaveDetail[];
 }
 
 function createSimPlayer(clsKey: string): SimPlayer {
@@ -1121,7 +1149,93 @@ function createSimPlayer(clsKey: string): SimPlayer {
   };
 }
 
-function simulateRun(clsKey: string): RunResult {
+interface UpgradePickResult {
+  pick: { idx: number; upgrade: (typeof UPGRADE_POOL)[number] } | null;
+  offered: string[];
+}
+
+function pickUpgrade(
+  clsKey: string,
+  strategy: UpgradeStrategy,
+  wave: number,
+  alreadyPicked: Map<number, number>,
+  upgradeImpacts: UpgradeImpact[],
+): UpgradePickResult {
+  // Build candidate pool
+  const numChoices = upgradeChoiceCount(wave);
+  const candidates: { idx: number; upgrade: (typeof UPGRADE_POOL)[number] }[] = [];
+
+  const poolIndices = Array.from({ length: UPGRADE_POOL.length }, (_, i) => i);
+  // Shuffle
+  for (let i = poolIndices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [poolIndices[i], poolIndices[j]] = [poolIndices[j], poolIndices[i]];
+  }
+
+  for (const idx of poolIndices) {
+    if (candidates.length >= numChoices) break;
+    const u = UPGRADE_POOL[idx];
+    // Skip evolutions and cursed upgrades
+    if (u.isEvolution || u.isCursed) continue;
+    // Skip class-specific upgrades for other classes
+    if (u.forClass && u.forClass !== clsKey) continue;
+    // Skip maxed-out stackable upgrades
+    const stacks = alreadyPicked.get(idx) || 0;
+    if (u.maxStacks && stacks >= u.maxStacks) continue;
+    // Skip non-stackable already-picked upgrades
+    if (!u.stackable && stacks > 0) continue;
+    candidates.push({ idx, upgrade: u });
+  }
+
+  const offered = candidates.map(c => c.upgrade.name);
+
+  if (candidates.length === 0) return { pick: null, offered };
+
+  if (strategy === 'damage-focused') {
+    // Prefer damage upgrades
+    const damageOnes = candidates.filter(c => DAMAGE_UPGRADE_NAMES.has(c.upgrade.name));
+    if (damageOnes.length > 0) {
+      // Pick the one with highest avgWaveDelta if we have impact data
+      let best = damageOnes[0];
+      let bestDelta = -Infinity;
+      for (const c of damageOnes) {
+        const impact = upgradeImpacts.find(u => u.name === c.upgrade.name);
+        const delta = impact ? impact.avgWaveDelta : 0;
+        if (delta > bestDelta) { bestDelta = delta; best = c; }
+      }
+      return { pick: best, offered };
+    }
+    // Fallback: pick highest impact from any candidate
+    let best = candidates[0];
+    let bestDelta = -Infinity;
+    for (const c of candidates) {
+      const impact = upgradeImpacts.find(u => u.name === c.upgrade.name);
+      const delta = impact ? impact.avgWaveDelta : 0;
+      if (delta > bestDelta) { bestDelta = delta; best = c; }
+    }
+    return { pick: best, offered };
+  }
+
+  // Balanced: random pick
+  return { pick: candidates[Math.floor(Math.random() * candidates.length)], offered };
+}
+
+function getBossType(wave: number): string {
+  if (wave === 20) return 'archlord';
+  return wave % 10 === 0 ? 'demon' : 'golem';
+}
+
+function getBossHp(wave: number, elapsedTime: number = 0): number {
+  const et = ENEMIES[getBossType(wave)];
+  const timeMul = 1 + (elapsedTime / 60) * TIME_SCALING_FACTOR;
+  return Math.ceil(et.hp * Math.pow(BOSS_HP_EXPONENT, wave / BOSS_HP_EXPONENT_DIVISOR) * timeMul);
+}
+
+function simulateRun(
+  clsKey: string,
+  strategy: UpgradeStrategy = 'balanced',
+  upgradeImpacts: UpgradeImpact[] = [],
+): RunResult {
   const state: SimState = {
     player: createSimPlayer(clsKey),
     enemies: [],
@@ -1134,12 +1248,20 @@ function simulateRun(clsKey: string): RunResult {
   };
 
   const wavesSurvived: boolean[] = [];
+  const bossKillTimes: Record<number, number> = {};
+  const dpsHpRatios: Record<number, number> = {};
+  const upgradesPicked: string[] = [];
+  const upgradesOffered: string[] = [];
+  const pickedMap = new Map<number, number>();
+  const waveDetails: WaveDetail[] = [];
 
   for (let w = 1; w <= MAX_WAVE; w++) {
     state.wave = w;
     state.enemies = state.enemies.filter(e => e.alive && e.friendly); // keep summons
     state.spells = [];
     // Keep ongoing zones
+    const dmgBefore = state.totalDamageDealt;
+    const killsBefore = state.totalKills;
     generateWave(state);
 
     // Simulate the wave
@@ -1165,6 +1287,33 @@ function simulateRun(clsKey: string): RunResult {
       if (aliveEnemies.length === 0) break;
     }
 
+    const isBossWave = w % 5 === 0;
+    const waveDmg = state.totalDamageDealt - dmgBefore;
+    const waveKills = state.totalKills - killsBefore;
+
+    // Build wave detail
+    const detail: WaveDetail = {
+      wave: w,
+      clearTime: Math.round(waveTime * 100) / 100,
+      kills: waveKills,
+      hpRemaining: state.player.alive ? state.player.hp : 0,
+    };
+
+    if (isBossWave && state.player.alive) {
+      bossKillTimes[w] = Math.round(waveTime * 100) / 100;
+      detail.bossKillTime = bossKillTimes[w];
+
+      const bossHp = getBossHp(w, state.time - waveTime); // time at wave start
+      // DPS/HP ratio: total wave damage output relative to boss HP pool
+      // Measures how many "boss HP bars" of damage the player dealt during the wave
+      const ratio = bossHp > 0 ? Math.round((waveDmg / bossHp) * 100) / 100 : 0;
+      dpsHpRatios[w] = ratio;
+      detail.dpsHpRatio = ratio;
+      detail.bossHp = bossHp;
+    }
+
+    waveDetails.push(detail);
+
     if (!state.player.alive) {
       // Died this wave
       wavesSurvived.push(false);
@@ -1175,6 +1324,11 @@ function simulateRun(clsKey: string): RunResult {
         totalTime: state.time,
         hpAtDeath: 0,
         wavesSurvived,
+        bossKillTimes,
+        dpsHpRatios,
+        upgradesPicked,
+        upgradesOffered,
+        waveDetails,
       };
     }
 
@@ -1182,10 +1336,24 @@ function simulateRun(clsKey: string): RunResult {
 
     // Between waves: heal a bit (health pickups from wave clear)
     if (w % 5 === 0) {
-      // Boss cleared: extra health
-      state.player.hp = Math.min(state.player.maxHp, state.player.hp + 4);
-    } else if (Math.random() < 0.4) {
+      // Boss cleared: extra health + full heal from shop
+      state.player.hp = Math.min(state.player.maxHp, state.player.hp + 6);
+    } else if (Math.random() < 0.5) {
       state.player.hp = Math.min(state.player.maxHp, state.player.hp + 2);
+    }
+
+    // Upgrade selection between waves
+    const { pick, offered } = pickUpgrade(clsKey, strategy, w, pickedMap, upgradeImpacts);
+    upgradesOffered.push(...offered);
+    if (pick) {
+      const stacks = (pickedMap.get(pick.idx) || 0) + 1;
+      pickedMap.set(pick.idx, stacks);
+      upgradesPicked.push(pick.upgrade.name);
+      try {
+        applyUpgradeToSimPlayer(state.player, pick.upgrade.apply);
+      } catch {
+        // Some upgrades may reference DOM or unsupported properties
+      }
     }
   }
 
@@ -1197,6 +1365,11 @@ function simulateRun(clsKey: string): RunResult {
     totalTime: state.time,
     hpAtDeath: state.player.hp,
     wavesSurvived,
+    bossKillTimes,
+    dpsHpRatios,
+    upgradesPicked,
+    upgradesOffered,
+    waveDetails,
   };
 }
 
@@ -1376,9 +1549,295 @@ interface ClassReport {
   wave15WinRate: number;
   wave20WinRate: number;
   runs: number;
+  avgBossKillTime10: number;
+  avgBossKillTime20: number;
+  avgDpsHpRatio: number;
+  topUpgrades: string[];
+}
+
+function computeClassReport(
+  clsKey: string,
+  className: string,
+  runs: RunResult[],
+  numRuns: number,
+): ClassReport {
+  const avgWave = runs.reduce((s, r) => s + r.waveSurvived, 0) / numRuns;
+  const avgKills = runs.reduce((s, r) => s + r.kills, 0) / numRuns;
+  const avgTime = runs.reduce((s, r) => s + r.totalTime, 0) / numRuns;
+  const avgDmg = runs.reduce((s, r) => s + r.totalDamage, 0) / numRuns;
+  const dps = avgTime > 0 ? avgDmg / avgTime : 0;
+  const avgHpDeath = runs.reduce((s, r) => s + r.hpAtDeath, 0) / numRuns;
+
+  const wave5WR = runs.filter(r => r.wavesSurvived.length >= 5 && r.wavesSurvived[4]).length / numRuns;
+  const wave10WR = runs.filter(r => r.wavesSurvived.length >= 10 && r.wavesSurvived[9]).length / numRuns;
+  const wave15WR = runs.filter(r => r.wavesSurvived.length >= 15 && r.wavesSurvived[14]).length / numRuns;
+  const wave20WR = runs.filter(r => r.wavesSurvived.length >= 20 && r.wavesSurvived[19]).length / numRuns;
+
+  // Boss kill times
+  const bkt10runs = runs.filter(r => r.bossKillTimes[10] !== undefined);
+  const avgBKT10 = bkt10runs.length > 0
+    ? Math.round(bkt10runs.reduce((s, r) => s + r.bossKillTimes[10], 0) / bkt10runs.length * 10) / 10
+    : 0;
+  const bkt20runs = runs.filter(r => r.bossKillTimes[20] !== undefined);
+  const avgBKT20 = bkt20runs.length > 0
+    ? Math.round(bkt20runs.reduce((s, r) => s + r.bossKillTimes[20], 0) / bkt20runs.length * 10) / 10
+    : 0;
+
+  // DPS/HP ratios across all boss waves
+  const allRatios: number[] = [];
+  for (const r of runs) {
+    for (const v of Object.values(r.dpsHpRatios)) {
+      allRatios.push(v);
+    }
+  }
+  const avgDpsHpRatio = allRatios.length > 0
+    ? Math.round(allRatios.reduce((s, v) => s + v, 0) / allRatios.length * 100) / 100
+    : 0;
+
+  // Top upgrades
+  const upgradeCounts = new Map<string, number>();
+  for (const r of runs) {
+    for (const u of r.upgradesPicked) {
+      upgradeCounts.set(u, (upgradeCounts.get(u) || 0) + 1);
+    }
+  }
+  const topUpgrades = [...upgradeCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name]) => name);
+
+  return {
+    className,
+    classKey: clsKey,
+    avgWaveSurvived: Math.round(avgWave * 10) / 10,
+    avgKills: Math.round(avgKills * 10) / 10,
+    dps: Math.round(dps * 10) / 10,
+    avgHpAtDeath: Math.round(avgHpDeath * 10) / 10,
+    wave5WinRate: Math.round(wave5WR * 1000) / 10,
+    wave10WinRate: Math.round(wave10WR * 1000) / 10,
+    wave15WinRate: Math.round(wave15WR * 1000) / 10,
+    wave20WinRate: Math.round(wave20WR * 1000) / 10,
+    runs: numRuns,
+    avgBossKillTime10: avgBKT10,
+    avgBossKillTime20: avgBKT20,
+    avgDpsHpRatio,
+    topUpgrades,
+  };
+}
+
+function computeUpgradePickRates(
+  allRuns: RunResult[],
+): { name: string; pickRate: number; offered: number; picked: number }[] {
+  // Track how often each upgrade was picked when it was offered
+  const pickCounts = new Map<string, number>();
+  const offerCounts = new Map<string, number>();
+
+  for (const r of allRuns) {
+    for (const name of r.upgradesPicked) {
+      pickCounts.set(name, (pickCounts.get(name) || 0) + 1);
+    }
+    for (const name of r.upgradesOffered) {
+      offerCounts.set(name, (offerCounts.get(name) || 0) + 1);
+    }
+  }
+
+  // Get all non-evolution, non-cursed upgrade names (only include those that could have been offered)
+  const allNames = UPGRADE_POOL
+    .filter(u => !u.isEvolution && !u.isCursed)
+    .filter(u => !u.forClass || offerCounts.has(u.name)) // skip class-specific upgrades that were never offered
+    .map(u => u.name);
+
+  // Deduplicate names (some may appear multiple times)
+  const uniqueNames = [...new Set(allNames)];
+
+  const results: { name: string; pickRate: number; offered: number; picked: number }[] = [];
+  for (const name of uniqueNames) {
+    const picked = pickCounts.get(name) || 0;
+    const offered = offerCounts.get(name) || 0;
+    // Pick rate = times picked / times offered (as percentage)
+    const pickRate = offered > 0
+      ? Math.round(picked / offered * 1000) / 10
+      : 0;
+    results.push({ name, pickRate, offered, picked });
+  }
+
+  return results.sort((a, b) => b.pickRate - a.pickRate);
+}
+
+function runPlaytestMode(): void {
+  const startTime = Date.now();
+  console.log('='.repeat(60));
+  console.log(`  WIZARD CRAWL PLAYTEST VALIDATION`);
+  console.log(`  Mode: --playtest  |  Runs: ${NUM_RUNS}  |  Max wave: ${MAX_WAVE}`);
+  console.log('='.repeat(60));
+  console.log('');
+
+  // Compute upgrade impacts first (smaller sample for speed)
+  console.log('  Computing upgrade impact baseline...');
+  const upgradeImpacts = simulateUpgradeImpact();
+  console.log('  Done.');
+  console.log('');
+
+  const builds: { label: string; clsKey: string; strategy: UpgradeStrategy }[] = [
+    { label: 'Pyromancer (damage-focused)', clsKey: 'pyromancer', strategy: 'damage-focused' },
+    { label: 'Pyromancer (balanced)', clsKey: 'pyromancer', strategy: 'balanced' },
+    { label: 'Berserker (balanced)', clsKey: 'berserker', strategy: 'balanced' },
+    { label: 'Monk (balanced)', clsKey: 'monk', strategy: 'balanced' },
+  ];
+
+  const allRuns: RunResult[] = [];
+
+  for (const build of builds) {
+    console.log('='.repeat(60));
+    console.log(`  BUILD: ${build.label}`);
+    console.log('='.repeat(60));
+
+    const runs: RunResult[] = [];
+    for (let i = 0; i < NUM_RUNS; i++) {
+      runs.push(simulateRun(build.clsKey, build.strategy, upgradeImpacts));
+    }
+    allRuns.push(...runs);
+
+    const report = computeClassReport(build.clsKey, build.label, runs, NUM_RUNS);
+
+    // Detailed per-wave output (averaged across runs)
+    console.log('');
+    console.log('  Wave  ClearTime  Kills  HP   BossKill  DPS/HP   BossHP');
+    console.log('  ' + '-'.repeat(62));
+
+    for (let w = 1; w <= MAX_WAVE; w++) {
+      const waveRuns = runs.filter(r => r.waveDetails.length >= w);
+      if (waveRuns.length === 0) break;
+
+      const details = waveRuns.map(r => r.waveDetails[w - 1]);
+      const avgClear = Math.round(details.reduce((s, d) => s + d.clearTime, 0) / details.length * 100) / 100;
+      const avgKills = Math.round(details.reduce((s, d) => s + d.kills, 0) / details.length * 10) / 10;
+      const avgHp = Math.round(details.reduce((s, d) => s + d.hpRemaining, 0) / details.length * 10) / 10;
+
+      const isBoss = w % 5 === 0;
+      let bossStr = '';
+      if (isBoss) {
+        const bossDetails = details.filter(d => d.bossKillTime !== undefined);
+        if (bossDetails.length > 0) {
+          const avgBKT = Math.round(bossDetails.reduce((s, d) => s + (d.bossKillTime || 0), 0) / bossDetails.length * 100) / 100;
+          const avgRatio = Math.round(bossDetails.reduce((s, d) => s + (d.dpsHpRatio || 0), 0) / bossDetails.length * 100) / 100;
+          const bossHp = bossDetails[0].bossHp || 0;
+          bossStr = `${String(avgBKT).padStart(8)}  ${String(avgRatio).padStart(6)}  ${String(bossHp).padStart(7)}`;
+        }
+      }
+
+      console.log(
+        `  ${String(w).padStart(4)}  ${String(avgClear).padStart(9)}  ${String(avgKills).padStart(5)}  ${String(avgHp).padStart(3)}  ${bossStr}`
+      );
+    }
+
+    console.log('');
+    console.log(`  Summary: avg wave ${report.avgWaveSurvived}, DPS ${report.dps}, W10 boss kill ${report.avgBossKillTime10}s, W20 boss kill ${report.avgBossKillTime20}s`);
+    console.log(`           avg DPS/HP ratio: ${report.avgDpsHpRatio}`);
+    console.log(`           Top upgrades: ${report.topUpgrades.join(', ')}`);
+    console.log('');
+  }
+
+  // Upgrade pick rate analysis
+  console.log('='.repeat(60));
+  console.log('  UPGRADE PICK RATE ANALYSIS');
+  console.log('='.repeat(60));
+  console.log('');
+
+  const pickRates = computeUpgradePickRates(allRuns);
+  const outlierLow = pickRates.filter(u => u.pickRate < 10 && u.picked > 0);
+  const outlierHigh = pickRates.filter(u => u.pickRate > 90);
+  const neverPicked = pickRates.filter(u => u.picked === 0);
+
+  console.log('  Top 10 most-picked upgrades:');
+  pickRates.slice(0, 10).forEach((u, i) => {
+    console.log(`  ${String(i + 1).padStart(3)}.  ${u.name.padEnd(24)} ${u.pickRate}% (${u.picked} picks)`);
+  });
+
+  if (outlierHigh.length > 0) {
+    console.log('');
+    console.log('  ** OUTLIER: >90% pick rate (too dominant):');
+    for (const u of outlierHigh) {
+      console.log(`     ${u.name}: ${u.pickRate}%`);
+    }
+  }
+
+  if (outlierLow.length > 0) {
+    console.log('');
+    console.log('  ** OUTLIER: <10% pick rate (underperforming):');
+    for (const u of outlierLow) {
+      console.log(`     ${u.name}: ${u.pickRate}%`);
+    }
+  }
+
+  if (neverPicked.length > 0) {
+    console.log('');
+    console.log(`  Never picked (${neverPicked.length} upgrades): ${neverPicked.map(u => u.name).join(', ')}`);
+  }
+
+  // Validation targets
+  console.log('');
+  console.log('='.repeat(60));
+  console.log('  P1 VALIDATION TARGETS');
+  console.log('='.repeat(60));
+
+  // Collect all boss kill times and DPS/HP ratios
+  const allBKT10: number[] = [];
+  const allBKT20: number[] = [];
+  const allDpsHp: number[] = [];
+
+  for (const r of allRuns) {
+    if (r.bossKillTimes[10] !== undefined) allBKT10.push(r.bossKillTimes[10]);
+    if (r.bossKillTimes[20] !== undefined) allBKT20.push(r.bossKillTimes[20]);
+    for (const v of Object.values(r.dpsHpRatios)) allDpsHp.push(v);
+  }
+
+  const avgBKT10 = allBKT10.length > 0 ? Math.round(allBKT10.reduce((s, v) => s + v, 0) / allBKT10.length * 10) / 10 : 0;
+  const avgBKT20 = allBKT20.length > 0 ? Math.round(allBKT20.reduce((s, v) => s + v, 0) / allBKT20.length * 10) / 10 : 0;
+  const avgDpsHp = allDpsHp.length > 0 ? Math.round(allDpsHp.reduce((s, v) => s + v, 0) / allDpsHp.length * 100) / 100 : 0;
+
+  const bkt10Pass = avgBKT10 >= 5 && avgBKT10 <= 8;
+  const bkt20Pass = avgBKT20 >= 15 && avgBKT20 <= 25;
+  const dpsHpPass = avgDpsHp >= 2.7 && avgDpsHp <= 4.3;
+  const pickRatePass = outlierHigh.length === 0 && outlierLow.length === 0;
+
+  console.log(`  Boss kill time W10:  ${avgBKT10}s  (target: 5-8s)   ${bkt10Pass ? 'PASS' : 'FAIL'}`);
+  console.log(`  Boss kill time W20:  ${avgBKT20}s  (target: 15-25s) ${bkt20Pass ? 'PASS' : 'FAIL'}`);
+  console.log(`  Avg DPS/HP ratio:    ${avgDpsHp}    (target: 2.7-4.3) ${dpsHpPass ? 'PASS' : 'FAIL'}`);
+  console.log(`  Upgrade pick rates:  ${pickRatePass ? 'PASS' : 'FAIL (outliers detected)'}`);
+
+  const elapsed = Date.now() - startTime;
+  console.log('');
+  console.log(`  Completed in ${(elapsed / 1000).toFixed(1)}s`);
+  console.log('='.repeat(60));
+
+  // Write JSON
+  const jsonReport = {
+    mode: 'playtest',
+    timestamp: new Date().toISOString(),
+    config: { runs: NUM_RUNS, maxWave: MAX_WAVE },
+    builds: builds.map(b => b.label),
+    validation: {
+      bossKillTime10: { value: avgBKT10, target: '5-8s', pass: bkt10Pass },
+      bossKillTime20: { value: avgBKT20, target: '15-25s', pass: bkt20Pass },
+      dpsHpRatio: { value: avgDpsHp, target: '2.7-4.3', pass: dpsHpPass },
+      upgradePickRates: { pass: pickRatePass, outlierHigh: outlierHigh.map(u => u.name), outlierLow: outlierLow.map(u => u.name) },
+    },
+    upgradePickRates: pickRates,
+    meta: { elapsedMs: elapsed },
+  };
+
+  const jsonPath = path.resolve(process.cwd(), 'tools', 'balance_report.json');
+  fs.writeFileSync(jsonPath, JSON.stringify(jsonReport, null, 2));
+  console.log(`  Report written to: ${jsonPath}`);
 }
 
 function main(): void {
+  if (PLAYTEST) {
+    runPlaytestMode();
+    return;
+  }
+
   const startTime = Date.now();
   console.log('='.repeat(60));
   console.log(`  WIZARD CRAWL BALANCE SIMULATOR`);
@@ -1386,7 +1845,14 @@ function main(): void {
   console.log('='.repeat(60));
   console.log('');
 
+  // Compute upgrade impacts first
+  console.log('  Computing upgrade impact baseline...');
+  const upgradeImpacts = simulateUpgradeImpact();
+  console.log('  Done.');
+  console.log('');
+
   const classReports: ClassReport[] = [];
+  const allRuns: RunResult[] = [];
 
   for (const clsKey of CLASS_ORDER) {
     const cls = CLASSES[clsKey];
@@ -1394,37 +1860,14 @@ function main(): void {
 
     const runs: RunResult[] = [];
     for (let i = 0; i < NUM_RUNS; i++) {
-      runs.push(simulateRun(clsKey));
+      runs.push(simulateRun(clsKey, 'balanced', upgradeImpacts));
     }
+    allRuns.push(...runs);
 
-    const avgWave = runs.reduce((s, r) => s + r.waveSurvived, 0) / NUM_RUNS;
-    const avgKills = runs.reduce((s, r) => s + r.kills, 0) / NUM_RUNS;
-    const avgTime = runs.reduce((s, r) => s + r.totalTime, 0) / NUM_RUNS;
-    const avgDmg = runs.reduce((s, r) => s + r.totalDamage, 0) / NUM_RUNS;
-    const dps = avgTime > 0 ? avgDmg / avgTime : 0;
-    const avgHpDeath = runs.reduce((s, r) => s + r.hpAtDeath, 0) / NUM_RUNS;
-
-    const wave5WR = runs.filter(r => r.wavesSurvived.length >= 5 && r.wavesSurvived[4]).length / NUM_RUNS;
-    const wave10WR = runs.filter(r => r.wavesSurvived.length >= 10 && r.wavesSurvived[9]).length / NUM_RUNS;
-    const wave15WR = runs.filter(r => r.wavesSurvived.length >= 15 && r.wavesSurvived[14]).length / NUM_RUNS;
-    const wave20WR = runs.filter(r => r.wavesSurvived.length >= 20 && r.wavesSurvived[19]).length / NUM_RUNS;
-
-    const report: ClassReport = {
-      className: cls.name,
-      classKey: clsKey,
-      avgWaveSurvived: Math.round(avgWave * 10) / 10,
-      avgKills: Math.round(avgKills * 10) / 10,
-      dps: Math.round(dps * 10) / 10,
-      avgHpAtDeath: Math.round(avgHpDeath * 10) / 10,
-      wave5WinRate: Math.round(wave5WR * 1000) / 10,
-      wave10WinRate: Math.round(wave10WR * 1000) / 10,
-      wave15WinRate: Math.round(wave15WR * 1000) / 10,
-      wave20WinRate: Math.round(wave20WR * 1000) / 10,
-      runs: NUM_RUNS,
-    };
+    const report = computeClassReport(clsKey, cls.name, runs, NUM_RUNS);
     classReports.push(report);
 
-    console.log(` avg wave ${report.avgWaveSurvived}, kills ${report.avgKills}, DPS ${report.dps}`);
+    console.log(` avg wave ${report.avgWaveSurvived}, kills ${report.avgKills}, DPS ${report.dps}, BKT10 ${report.avgBossKillTime10}s`);
   }
 
   // Print class tier list
@@ -1434,11 +1877,11 @@ function main(): void {
   console.log('='.repeat(60));
   const sorted = [...classReports].sort((a, b) => b.avgWaveSurvived - a.avgWaveSurvived);
   console.log('');
-  console.log('  Rank  Class            Wave   Kills   DPS    W5%    W10%   W15%   W20%');
-  console.log('  ' + '-'.repeat(78));
+  console.log('  Rank  Class            Wave   Kills   DPS    W5%    W10%   W15%   W20%   BKT10  BKT20  DPS/HP');
+  console.log('  ' + '-'.repeat(96));
   sorted.forEach((r, i) => {
     console.log(
-      `  ${String(i + 1).padStart(2)}.   ${r.className.padEnd(16)} ${String(r.avgWaveSurvived).padStart(5)}  ${String(r.avgKills).padStart(6)}  ${String(r.dps).padStart(5)}  ${String(r.wave5WinRate).padStart(5)}% ${String(r.wave10WinRate).padStart(5)}% ${String(r.wave15WinRate).padStart(5)}% ${String(r.wave20WinRate).padStart(5)}%`
+      `  ${String(i + 1).padStart(2)}.   ${r.className.padEnd(16)} ${String(r.avgWaveSurvived).padStart(5)}  ${String(r.avgKills).padStart(6)}  ${String(r.dps).padStart(5)}  ${String(r.wave5WinRate).padStart(5)}% ${String(r.wave10WinRate).padStart(5)}% ${String(r.wave15WinRate).padStart(5)}% ${String(r.wave20WinRate).padStart(5)}%  ${String(r.avgBossKillTime10).padStart(5)}  ${String(r.avgBossKillTime20).padStart(5)}  ${String(r.avgDpsHpRatio).padStart(5)}`
     );
   });
 
@@ -1481,6 +1924,33 @@ function main(): void {
     console.log('  (no significant outliers detected)');
   }
 
+  // Upgrade pick rate analysis
+  console.log('');
+  console.log('='.repeat(60));
+  console.log('  UPGRADE PICK RATE ANALYSIS');
+  console.log('='.repeat(60));
+  console.log('');
+
+  const pickRates = computeUpgradePickRates(allRuns);
+  console.log('  Top 10 most-picked upgrades:');
+  pickRates.slice(0, 10).forEach((u, i) => {
+    console.log(`  ${String(i + 1).padStart(3)}.  ${u.name.padEnd(24)} ${u.pickRate}% (${u.picked} picks)`);
+  });
+
+  const outlierHigh = pickRates.filter(u => u.pickRate > 90);
+  const outlierLow = pickRates.filter(u => u.pickRate < 10 && u.picked > 0);
+
+  if (outlierHigh.length > 0) {
+    console.log('');
+    console.log('  ** OUTLIER: >90% pick rate:');
+    for (const u of outlierHigh) console.log(`     ${u.name}: ${u.pickRate}%`);
+  }
+  if (outlierLow.length > 0) {
+    console.log('');
+    console.log('  ** OUTLIER: <10% pick rate:');
+    for (const u of outlierLow) console.log(`     ${u.name}: ${u.pickRate}%`);
+  }
+
   // Upgrade impact
   console.log('');
   console.log('='.repeat(60));
@@ -1488,7 +1958,6 @@ function main(): void {
   console.log('='.repeat(60));
   console.log('');
 
-  const upgradeImpacts = simulateUpgradeImpact();
   const sortedUpgrades = [...upgradeImpacts].sort((a, b) => b.avgWaveDelta - a.avgWaveDelta);
 
   console.log('  Rank  Upgrade                 Delta Waves');
@@ -1515,6 +1984,7 @@ function main(): void {
       value: r.wave10WinRate > 65 ? r.wave10WinRate : r.wave5WinRate,
     })),
     upgradeImpact: sortedUpgrades,
+    upgradePickRates: pickRates.slice(0, 20),
     meta: {
       meanWave: Math.round(meanWave * 10) / 10,
       stddevWave: Math.round(stddev * 10) / 10,

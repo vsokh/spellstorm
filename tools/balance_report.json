@@ -1,484 +1,485 @@
 {
-  "timestamp": "2026-04-13T11:14:04.422Z",
+  "mode": "playtest",
+  "timestamp": "2026-04-14T11:42:33.538Z",
   "config": {
-    "runs": 50,
+    "runs": 20,
     "maxWave": 25
   },
-  "classTierList": [
-    {
-      "className": "Engineer",
-      "classKey": "engineer",
-      "avgWaveSurvived": 14.8,
-      "avgKills": 316.7,
-      "dps": 18.5,
-      "avgHpAtDeath": 0.5,
-      "wave5WinRate": 100,
-      "wave10WinRate": 44,
-      "wave15WinRate": 44,
-      "wave20WinRate": 6,
-      "runs": 50
-    },
-    {
-      "className": "Cryomancer",
-      "classKey": "cryomancer",
-      "avgWaveSurvived": 13.7,
-      "avgKills": 285.3,
-      "dps": 14.2,
-      "avgHpAtDeath": 0,
-      "wave5WinRate": 100,
-      "wave10WinRate": 38,
-      "wave15WinRate": 38,
-      "wave20WinRate": 0,
-      "runs": 50
-    },
-    {
-      "className": "Necromancer",
-      "classKey": "necromancer",
-      "avgWaveSurvived": 11.3,
-      "avgKills": 192.7,
-      "dps": 9,
-      "avgHpAtDeath": 0,
-      "wave5WinRate": 100,
-      "wave10WinRate": 38,
-      "wave15WinRate": 2,
-      "wave20WinRate": 0,
-      "runs": 50
-    },
-    {
-      "className": "Druid",
-      "classKey": "druid",
-      "avgWaveSurvived": 11.3,
-      "avgKills": 202.1,
-      "dps": 20.5,
-      "avgHpAtDeath": 0,
-      "wave5WinRate": 100,
-      "wave10WinRate": 14,
-      "wave15WinRate": 12,
-      "wave20WinRate": 0,
-      "runs": 50
-    },
-    {
-      "className": "Pyromancer",
-      "classKey": "pyromancer",
-      "avgWaveSurvived": 10.2,
-      "avgKills": 165.3,
-      "dps": 30.1,
-      "avgHpAtDeath": 0,
-      "wave5WinRate": 100,
-      "wave10WinRate": 2,
-      "wave15WinRate": 2,
-      "wave20WinRate": 0,
-      "runs": 50
-    },
-    {
-      "className": "Paladin",
-      "classKey": "paladin",
-      "avgWaveSurvived": 9.9,
-      "avgKills": 156.2,
-      "dps": 14.1,
-      "avgHpAtDeath": 0,
-      "wave5WinRate": 100,
-      "wave10WinRate": 2,
-      "wave15WinRate": 0,
-      "wave20WinRate": 0,
-      "runs": 50
-    },
-    {
-      "className": "Ranger",
-      "classKey": "ranger",
-      "avgWaveSurvived": 9.8,
-      "avgKills": 153.4,
-      "dps": 11.6,
-      "avgHpAtDeath": 0,
-      "wave5WinRate": 100,
-      "wave10WinRate": 0,
-      "wave15WinRate": 0,
-      "wave20WinRate": 0,
-      "runs": 50
-    },
-    {
-      "className": "Knight",
-      "classKey": "knight",
-      "avgWaveSurvived": 9.7,
-      "avgKills": 152.1,
-      "dps": 5.7,
-      "avgHpAtDeath": 0,
-      "wave5WinRate": 98,
-      "wave10WinRate": 0,
-      "wave15WinRate": 0,
-      "wave20WinRate": 0,
-      "runs": 50
-    },
-    {
-      "className": "Chronomancer",
-      "classKey": "chronomancer",
-      "avgWaveSurvived": 8.6,
-      "avgKills": 123.6,
-      "dps": 2.2,
-      "avgHpAtDeath": 0,
-      "wave5WinRate": 98,
-      "wave10WinRate": 0,
-      "wave15WinRate": 0,
-      "wave20WinRate": 0,
-      "runs": 50
-    },
-    {
-      "className": "Berserker",
-      "classKey": "berserker",
-      "avgWaveSurvived": 8.3,
-      "avgKills": 120.3,
-      "dps": 10.7,
-      "avgHpAtDeath": 0,
-      "wave5WinRate": 98,
-      "wave10WinRate": 0,
-      "wave15WinRate": 0,
-      "wave20WinRate": 0,
-      "runs": 50
-    },
-    {
-      "className": "Warlock",
-      "classKey": "warlock",
-      "avgWaveSurvived": 7.7,
-      "avgKills": 104.3,
-      "dps": 17.9,
-      "avgHpAtDeath": 0,
-      "wave5WinRate": 70,
-      "wave10WinRate": 10,
-      "wave15WinRate": 2,
-      "wave20WinRate": 0,
-      "runs": 50
-    },
-    {
-      "className": "Arcanist",
-      "classKey": "arcanist",
-      "avgWaveSurvived": 7.6,
-      "avgKills": 98.9,
-      "dps": 6.9,
-      "avgHpAtDeath": 0,
-      "wave5WinRate": 62,
-      "wave10WinRate": 0,
-      "wave15WinRate": 0,
-      "wave20WinRate": 0,
-      "runs": 50
-    },
-    {
-      "className": "Stormcaller",
-      "classKey": "stormcaller",
-      "avgWaveSurvived": 7,
-      "avgKills": 78.9,
-      "dps": 5.3,
-      "avgHpAtDeath": 0,
-      "wave5WinRate": 72,
-      "wave10WinRate": 0,
-      "wave15WinRate": 0,
-      "wave20WinRate": 0,
-      "runs": 50
-    },
-    {
-      "className": "Monk",
-      "classKey": "monk",
-      "avgWaveSurvived": 5.7,
-      "avgKills": 52.5,
-      "dps": 4.2,
-      "avgHpAtDeath": 0,
-      "wave5WinRate": 34,
-      "wave10WinRate": 0,
-      "wave15WinRate": 0,
-      "wave20WinRate": 0,
-      "runs": 50
-    }
+  "builds": [
+    "Pyromancer (damage-focused)",
+    "Pyromancer (balanced)",
+    "Berserker (balanced)",
+    "Monk (balanced)"
   ],
-  "outliers": [],
-  "upgradeImpact": [
-    {
-      "name": "Second Wind",
-      "avgWaveDelta": 6,
-      "sampleSize": 10
+  "validation": {
+    "bossKillTime10": {
+      "value": 6.7,
+      "target": "5-8s",
+      "pass": true
     },
-    {
-      "name": "Primary Boost",
-      "avgWaveDelta": 3,
-      "sampleSize": 10
+    "bossKillTime20": {
+      "value": 17.7,
+      "target": "15-25s",
+      "pass": true
     },
-    {
-      "name": "Rapid Fire",
-      "avgWaveDelta": 3,
-      "sampleSize": 10
+    "dpsHpRatio": {
+      "value": 2.89,
+      "target": "2.7-4.3",
+      "pass": true
     },
+    "upgradePickRates": {
+      "pass": true,
+      "outlierHigh": [],
+      "outlierLow": []
+    }
+  },
+  "upgradePickRates": [
     {
-      "name": "Lingering",
-      "avgWaveDelta": 3,
-      "sampleSize": 10
+      "name": "Undying Rage",
+      "pickRate": 80,
+      "offered": 5,
+      "picked": 4
     },
     {
       "name": "Friendly Fire",
-      "avgWaveDelta": 3,
-      "sampleSize": 10
+      "pickRate": 66.7,
+      "offered": 39,
+      "picked": 26
     },
     {
-      "name": "Mana Flow",
-      "avgWaveDelta": 2,
-      "sampleSize": 10
+      "name": "Primary Boost",
+      "pickRate": 60.7,
+      "offered": 61,
+      "picked": 37
     },
     {
-      "name": "Spell Thief",
-      "avgWaveDelta": 2,
-      "sampleSize": 10
-    },
-    {
-      "name": "Spell Power",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
-    },
-    {
-      "name": "Glass Cannon",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
-    },
-    {
-      "name": "Critical Strike",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
+      "name": "Wildfire",
+      "pickRate": 57.7,
+      "offered": 26,
+      "picked": 15
     },
     {
       "name": "Piercing",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
+      "pickRate": 57.1,
+      "offered": 49,
+      "picked": 28
     },
     {
-      "name": "Split Shot",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
+      "name": "Spell Power",
+      "pickRate": 52.8,
+      "offered": 53,
+      "picked": 28
     },
     {
-      "name": "Ricochet",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
-    },
-    {
-      "name": "Efficiency",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
-    },
-    {
-      "name": "Mana on Kill",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
-    },
-    {
-      "name": "Armor",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
-    },
-    {
-      "name": "Quick Step",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
-    },
-    {
-      "name": "Secondary Mastery",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
-    },
-    {
-      "name": "Double Secondary",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
-    },
-    {
-      "name": "Area Secondary",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
-    },
-    {
-      "name": "Quick Charge",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
-    },
-    {
-      "name": "Ult Regen",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
-    },
-    {
-      "name": "Magnet",
-      "avgWaveDelta": 1,
-      "sampleSize": 10
-    },
-    {
-      "name": "Overflow",
-      "avgWaveDelta": 0.6,
-      "sampleSize": 10
-    },
-    {
-      "name": "Ultimate Power",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Overkill",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Velocity",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Chain Hit",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Homing Bolts",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Big Spells",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Blast Radius",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Swift Cast",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Double Tap",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "name": "Spell Thief",
+      "pickRate": 52.4,
+      "offered": 42,
+      "picked": 22
     },
     {
       "name": "Trigger Happy",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "pickRate": 50,
+      "offered": 38,
+      "picked": 19
     },
     {
-      "name": "Max Mana +30",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "name": "Overkill",
+      "pickRate": 49,
+      "offered": 49,
+      "picked": 24
     },
     {
-      "name": "Vitality",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Vampirism",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Life Steal",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Thorns",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Dodge",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "name": "Glass Cannon",
+      "pickRate": 48.6,
+      "offered": 35,
+      "picked": 17
     },
     {
       "name": "Dash",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Momentum",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Deep Freeze",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Aftershock",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
-    },
-    {
-      "name": "Secondary Power",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "pickRate": 47.8,
+      "offered": 46,
+      "picked": 22
     },
     {
       "name": "Free Cast",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "pickRate": 47.5,
+      "offered": 40,
+      "picked": 19
     },
     {
-      "name": "Combo",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "name": "Dodge",
+      "pickRate": 46.5,
+      "offered": 43,
+      "picked": 20
     },
     {
-      "name": "Ult Mastery",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "name": "Area Secondary",
+      "pickRate": 46.2,
+      "offered": 39,
+      "picked": 18
     },
     {
-      "name": "Ult Echo",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "name": "Rapid Fire",
+      "pickRate": 45,
+      "offered": 40,
+      "picked": 18
     },
     {
       "name": "Spell Weaving",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "pickRate": 42.9,
+      "offered": 42,
+      "picked": 18
     },
     {
-      "name": "Cooldown Cascade",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "name": "Cleave",
+      "pickRate": 42.9,
+      "offered": 7,
+      "picked": 3
     },
     {
-      "name": "Full Rotation",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "name": "Split Shot",
+      "pickRate": 42,
+      "offered": 50,
+      "picked": 21
     },
     {
-      "name": "Q Mastery",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "name": "Second Wind",
+      "pickRate": 41.2,
+      "offered": 51,
+      "picked": 21
     },
     {
-      "name": "Skill Reset",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "name": "Critical Strike",
+      "pickRate": 40.4,
+      "offered": 47,
+      "picked": 19
     },
     {
-      "name": "Chaos Bolts",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "name": "Way of the Fist",
+      "pickRate": 40,
+      "offered": 10,
+      "picked": 4
     },
     {
-      "name": "Gold Rush",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "name": "Vitality",
+      "pickRate": 39.2,
+      "offered": 51,
+      "picked": 20
+    },
+    {
+      "name": "Armor",
+      "pickRate": 37.3,
+      "offered": 51,
+      "picked": 19
+    },
+    {
+      "name": "Secondary Mastery",
+      "pickRate": 36.4,
+      "offered": 44,
+      "picked": 16
     },
     {
       "name": "XP Boost",
-      "avgWaveDelta": 0,
-      "sampleSize": 10
+      "pickRate": 36.4,
+      "offered": 44,
+      "picked": 16
+    },
+    {
+      "name": "Efficiency",
+      "pickRate": 35.1,
+      "offered": 37,
+      "picked": 13
+    },
+    {
+      "name": "Max Mana +30",
+      "pickRate": 34.9,
+      "offered": 43,
+      "picked": 15
+    },
+    {
+      "name": "Momentum",
+      "pickRate": 34.8,
+      "offered": 46,
+      "picked": 16
+    },
+    {
+      "name": "Ricochet",
+      "pickRate": 33.3,
+      "offered": 36,
+      "picked": 12
+    },
+    {
+      "name": "Thorns",
+      "pickRate": 33.3,
+      "offered": 36,
+      "picked": 12
+    },
+    {
+      "name": "Ultimate Power",
+      "pickRate": 32.6,
+      "offered": 43,
+      "picked": 14
+    },
+    {
+      "name": "Blast Radius",
+      "pickRate": 32.6,
+      "offered": 46,
+      "picked": 15
+    },
+    {
+      "name": "Secondary Power",
+      "pickRate": 31.3,
+      "offered": 48,
+      "picked": 15
+    },
+    {
+      "name": "Double Tap",
+      "pickRate": 31,
+      "offered": 42,
+      "picked": 13
+    },
+    {
+      "name": "Ult Regen",
+      "pickRate": 30.4,
+      "offered": 46,
+      "picked": 14
+    },
+    {
+      "name": "Iron Skin",
+      "pickRate": 30,
+      "offered": 10,
+      "picked": 3
+    },
+    {
+      "name": "Mana Flow",
+      "pickRate": 28.9,
+      "offered": 38,
+      "picked": 11
+    },
+    {
+      "name": "Big Spells",
+      "pickRate": 28.8,
+      "offered": 52,
+      "picked": 15
+    },
+    {
+      "name": "Homing Bolts",
+      "pickRate": 27.3,
+      "offered": 44,
+      "picked": 12
+    },
+    {
+      "name": "Spectral",
+      "pickRate": 26.1,
+      "offered": 46,
+      "picked": 12
+    },
+    {
+      "name": "Frozen Touch",
+      "pickRate": 25.6,
+      "offered": 43,
+      "picked": 11
+    },
+    {
+      "name": "Quick Charge",
+      "pickRate": 25,
+      "offered": 56,
+      "picked": 14
+    },
+    {
+      "name": "Combo",
+      "pickRate": 24.5,
+      "offered": 49,
+      "picked": 12
+    },
+    {
+      "name": "Seeker Mines",
+      "pickRate": 24.4,
+      "offered": 41,
+      "picked": 10
+    },
+    {
+      "name": "Fork",
+      "pickRate": 24.2,
+      "offered": 33,
+      "picked": 8
+    },
+    {
+      "name": "Vampirism",
+      "pickRate": 24,
+      "offered": 50,
+      "picked": 12
+    },
+    {
+      "name": "Chain Hit",
+      "pickRate": 23.6,
+      "offered": 55,
+      "picked": 13
+    },
+    {
+      "name": "Aftershock",
+      "pickRate": 23.1,
+      "offered": 52,
+      "picked": 12
+    },
+    {
+      "name": "Deep Freeze",
+      "pickRate": 22.5,
+      "offered": 40,
+      "picked": 9
+    },
+    {
+      "name": "Gold Rush",
+      "pickRate": 21.4,
+      "offered": 42,
+      "picked": 9
+    },
+    {
+      "name": "Full Rotation",
+      "pickRate": 21.3,
+      "offered": 47,
+      "picked": 10
+    },
+    {
+      "name": "Skill Reset",
+      "pickRate": 20.4,
+      "offered": 54,
+      "picked": 11
+    },
+    {
+      "name": "Velocity",
+      "pickRate": 20.3,
+      "offered": 59,
+      "picked": 12
+    },
+    {
+      "name": "Swift Cast",
+      "pickRate": 20,
+      "offered": 45,
+      "picked": 9
+    },
+    {
+      "name": "Q Mastery",
+      "pickRate": 20,
+      "offered": 50,
+      "picked": 10
+    },
+    {
+      "name": "Magnet",
+      "pickRate": 20,
+      "offered": 45,
+      "picked": 9
+    },
+    {
+      "name": "Chaos Bolts",
+      "pickRate": 19.4,
+      "offered": 36,
+      "picked": 7
+    },
+    {
+      "name": "Double Secondary",
+      "pickRate": 18.9,
+      "offered": 53,
+      "picked": 10
+    },
+    {
+      "name": "Gravity Pull",
+      "pickRate": 18.6,
+      "offered": 43,
+      "picked": 8
+    },
+    {
+      "name": "Quick Step",
+      "pickRate": 18.2,
+      "offered": 44,
+      "picked": 8
+    },
+    {
+      "name": "Magma Armor",
+      "pickRate": 18.2,
+      "offered": 33,
+      "picked": 6
+    },
+    {
+      "name": "Cooldown Cascade",
+      "pickRate": 17.9,
+      "offered": 39,
+      "picked": 7
+    },
+    {
+      "name": "Ult Mastery",
+      "pickRate": 17.6,
+      "offered": 51,
+      "picked": 9
+    },
+    {
+      "name": "Overflow",
+      "pickRate": 17.3,
+      "offered": 52,
+      "picked": 9
+    },
+    {
+      "name": "Barrage Mode",
+      "pickRate": 16.7,
+      "offered": 48,
+      "picked": 8
+    },
+    {
+      "name": "Pyroclasm",
+      "pickRate": 15.4,
+      "offered": 39,
+      "picked": 6
+    },
+    {
+      "name": "Ult Echo",
+      "pickRate": 15.2,
+      "offered": 33,
+      "picked": 5
+    },
+    {
+      "name": "Volatile",
+      "pickRate": 14,
+      "offered": 57,
+      "picked": 8
+    },
+    {
+      "name": "Mana on Kill",
+      "pickRate": 13.9,
+      "offered": 36,
+      "picked": 5
+    },
+    {
+      "name": "Zen Master",
+      "pickRate": 13.3,
+      "offered": 15,
+      "picked": 2
+    },
+    {
+      "name": "Boomerang",
+      "pickRate": 13,
+      "offered": 46,
+      "picked": 6
+    },
+    {
+      "name": "Life Steal",
+      "pickRate": 12.2,
+      "offered": 49,
+      "picked": 6
+    },
+    {
+      "name": "Lingering",
+      "pickRate": 12.1,
+      "offered": 33,
+      "picked": 4
+    },
+    {
+      "name": "Bloodlust",
+      "pickRate": 11.1,
+      "offered": 9,
+      "picked": 1
     }
   ],
   "meta": {
-    "meanWave": 9.7,
-    "stddevWave": 2.4,
-    "elapsedMs": 4996
+    "elapsedMs": 2261
   }
 }
