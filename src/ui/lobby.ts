@@ -25,4 +25,7 @@ export function setupLobby(
       onShowSelect();
     });
   }
+
+  const versionEl = document.getElementById('version-display');
+  if (versionEl) versionEl.textContent = `v${__APP_VERSION__}`;
 }
