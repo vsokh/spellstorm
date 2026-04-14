@@ -2624,6 +2624,19 @@ export function drawEnemies(ctx: CanvasRenderingContext2D, state: GameState): vo
       ctx.fill();
     }
 
+    // Elite golden glow
+    if (e._elite && !et.boss) {
+      const pulse = 0.8 + 0.2 * Math.sin(state.time * 4);
+      const eg = ctx.createRadialGradient(e.x, e.y, et.size * 0.2, e.x, e.y, et.size * 1.8);
+      eg.addColorStop(0, `rgba(255,200,60,${0.18 * pulse})`);
+      eg.addColorStop(0.5, `rgba(220,170,40,${0.08 * pulse})`);
+      eg.addColorStop(1, 'transparent');
+      ctx.fillStyle = eg;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, et.size * 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     // Boss damage reduction shield effect
     if (e._dmgReductionActive) {
       const pulse = 0.8 + 0.2 * Math.sin(state.time * 6);
