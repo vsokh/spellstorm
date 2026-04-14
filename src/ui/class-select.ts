@@ -29,8 +29,8 @@ const SPELL_TYPE_LABELS: Record<string, string> = {
 
 const ULTIMATE_DESCRIPTIONS: Record<string, string> = {
   pyromancer: 'Rain 8 meteors across the battlefield, leaving lingering burn zones.',
-  cryomancer: 'Freeze all enemies and deal damage to each.',
-  stormcaller: 'Chain lightning bounces between up to 8 enemies.',
+  cryomancer: 'Freeze all enemies in place and deal burst damage to each.',
+  stormcaller: 'Unleash chain lightning that bounces between up to 8 enemies, dealing heavy damage.',
   arcanist: 'Launch a spiral of 20 homing arcane missiles.',
   necromancer: 'Summon 6 skeletal allies to fight by your side.',
   chronomancer: 'Freeze all enemies in time while you move at increased speed.',
@@ -78,11 +78,11 @@ function generateSpellDescription(spell: SpellDefInput, classKey?: string): stri
     case 'ally_shield':
       return `Shields your ally for ${spell.duration || 0}s.`;
     case 'blink':
-      return `Dash ${spell.range || 0} units forward.`;
+      return `Dash forward.`;
     case 'rewind':
       return 'Rewind to your position from 3s ago.';
     case 'beam':
-      parts.push(`Channels a beam dealing ${spell.dmg || 0} dmg at ${spell.range || 0} range`);
+      parts.push(`Channels a beam dealing ${spell.dmg || 0} dmg`);
       break;
     case 'cone':
       parts.push(`Releases a cone blast dealing ${spell.dmg || 0} dmg`);
@@ -93,36 +93,50 @@ function generateSpellDescription(spell: SpellDefInput, classKey?: string): stri
     case 'zone':
       if (spell.dmg) {
         parts.push(`Creates a zone dealing ${spell.dmg} dmg/tick`);
+      } else if (spell.heal) {
+        parts.push('Creates a healing zone');
+      } else if (spell.stun) {
+        parts.push('Creates a zone that roots enemies');
+      } else if (spell.slow) {
+        parts.push('Creates a slowing field');
       } else {
-        parts.push('Creates an area of effect');
+        parts.push('Creates an area zone');
       }
       break;
     case 'leap':
       parts.push(`Leaps and slams dealing ${spell.dmg || 0} dmg`);
       break;
     case 'barrage':
-      parts.push(`Fires ${spell.count || 0} projectiles in a spread dealing ${spell.dmg || 0} dmg`);
+      parts.push(`Fires ${spell.count || 0} projectiles in a spread dealing ${spell.dmg || 0} dmg each`);
       break;
     case 'trap':
-      if (spell.dmg) {
+      if (spell.count && spell.count > 1) {
+        parts.push(`Places ${spell.count} traps dealing ${spell.dmg || 0} dmg each`);
+      } else if (spell.dmg) {
         parts.push(`Places a trap dealing ${spell.dmg} dmg`);
       } else {
         parts.push('Places a trap that triggers on enemies');
       }
       break;
     case 'aoe_delayed':
-      parts.push(`Summons a delayed area dealing ${spell.dmg || 0} dmg`);
+      parts.push(`Strikes an area after a short delay dealing ${spell.dmg || 0} dmg`);
       break;
     case 'ultimate':
       // Summon-type spells (Spirit Wolf, Summon Imp) use ultimate type but have mana cost
-      parts.push('Summons a companion to fight for you');
+      if (spell.name === 'Spirit Wolf') {
+        parts.push('Summons a spirit wolf that fights alongside you');
+      } else if (spell.name === 'Summon Imp') {
+        parts.push('Summons a demonic imp that attacks nearby enemies');
+      } else {
+        parts.push('Summons a companion to fight for you');
+      }
       break;
     default: {
       const dmg = spell.dmg || 0;
       if (spell.explode) {
         parts.push(`Fires an explosive projectile dealing ${dmg} dmg`);
       } else {
-        parts.push(`Fires a ${spell.homing ? 'homing' : 'fast'} projectile dealing ${dmg} dmg`);
+        parts.push(`Fires a ${spell.homing ? 'homing ' : ''}projectile dealing ${dmg} dmg`);
       }
       break;
     }
