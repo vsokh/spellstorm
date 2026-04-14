@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wizard Crawl - Cover Image Generator</title>
+<title>Spellstorm - Cover Image Generator</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -57,7 +57,7 @@
 </head>
 <body>
 
-<h1>WIZARD CRAWL &mdash; Cover Image Generator</h1>
+<h1>SPELLSTORM &mdash; Cover Image Generator</h1>
 <canvas id="preview-canvas" width="1260" height="1000"></canvas>
 <div class="controls">
   <button id="btn-download">Download PNG (630x500)</button>
@@ -248,7 +248,7 @@
   }
 
   function drawTitle(ctx) {
-    // "WIZARD CRAWL" title
+    // "SPELLSTORM" title
     const titleY = H * 0.2;
     const fontSize = 56;
     ctx.save();
@@ -266,7 +266,7 @@
 
     // First glow pass
     ctx.fillStyle = "rgba(153, 102, 204, 0.4)";
-    ctx.fillText("WIZARD CRAWL", W / 2, titleY);
+    ctx.fillText("SPELLSTORM", W / 2, titleY);
 
     // Second brighter pass
     ctx.shadowBlur = 15;
@@ -278,13 +278,13 @@
     titleGrad.addColorStop(0.45, "#ccaa44");
     titleGrad.addColorStop(1, "#9966cc");
     ctx.fillStyle = titleGrad;
-    ctx.fillText("WIZARD CRAWL", W / 2, titleY);
+    ctx.fillText("SPELLSTORM", W / 2, titleY);
 
     // Subtle stroke for definition
     ctx.shadowBlur = 0;
     ctx.strokeStyle = "rgba(255,255,255,0.08)";
     ctx.lineWidth = 0.5;
-    ctx.strokeText("WIZARD CRAWL", W / 2, titleY);
+    ctx.strokeText("SPELLSTORM", W / 2, titleY);
 
     ctx.restore();
 
@@ -320,7 +320,7 @@
     ctx.shadowColor = "#9966cc";
     ctx.shadowBlur = 8;
     ctx.fillStyle = "#ccbbee";
-    ctx.fillText("Co-op Roguelike Dungeon Crawler", W / 2, titleY + 56);
+    ctx.fillText("Co-op Roguelike Wave Survival", W / 2, titleY + 56);
     ctx.restore();
   }
 
@@ -605,7 +605,7 @@
     // Draw static frame at native resolution
     draw(exportCtx, 2.5); // fixed time for a nice static pose
     const link = document.createElement("a");
-    link.download = "wizard-crawl-cover.png";
+    link.download = "spellstorm-cover.png";
     link.href = exportCanvas.toDataURL("image/png");
     link.click();
   });
