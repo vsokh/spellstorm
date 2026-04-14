@@ -12,6 +12,7 @@ export function enemyTraps(state: GameState, dt: number): void {
     if (!e.alive) continue;
     if (e._deathTimer >= 0) continue;
     if (e._friendly) continue;
+    if (e.stunTimer > 0) continue;
 
     // Trap check (ranger)
     for (const pk of state.pickups) {
