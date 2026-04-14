@@ -333,7 +333,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
   pyromancer: {
     name: 'Pyromancer', color: '#ff6633', glow: '#ff4400',
     desc: 'Fire mastery. High burst damage.',
-    passive: { name: 'Ignite', desc: 'Enemies hit burn for 2 dmg over 2s' },
+    passive: { name: 'Ignite', desc: 'Enemies hit burn for 4 dmg over 2s' },
     spells: [
       { name: 'Fireball', key: 'LMB', type: SpellType.Projectile, dmg: 2, speed: 400, radius: 10, mana: 8, cd: 0.35, life: 1.2, explode: 35, color: '#ff6633', trail: '#ff3300', burn: 2 },
       { name: 'Flame Wave', key: 'RMB', type: SpellType.Cone, dmg: 2, range: 110, mana: 22, cd: 2.5, angle: 0.8, color: '#ff4400' },
@@ -366,7 +366,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
   arcanist: {
     name: 'Arcanist', color: '#ff55aa', glow: '#dd3388',
     desc: 'Arcane arts. Mobility & homing.',
-    passive: { name: 'Arcane Echo', desc: 'Spells have 20% chance to fire twice' },
+    passive: { name: 'Arcane Echo', desc: 'Hits have 20% chance to echo your primary attack' },
     spells: [
       { name: 'Arcane Bolt', key: 'LMB', type: SpellType.Homing, dmg: 1, speed: 300, radius: 8, mana: 7, cd: 0.28, life: 2, homing: 2.5, color: '#ff55aa', trail: '#dd3388' },
       { name: 'Blink', key: 'RMB', type: SpellType.Blink, range: 170, mana: 18, cd: 2.5, color: '#ff88cc' },
@@ -454,7 +454,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
   warlock: {
     name: 'Warlock', color: '#8833aa', glow: '#662288',
     desc: 'Dark magic. High risk, high reward.',
-    passive: { name: 'Dark Pact', desc: 'Spells cost HP instead of 30% mana cost (saves mana)' },
+    passive: { name: 'Dark Pact', desc: 'Casting refunds 30% mana but costs 1 HP' },
     spells: [
       { name: 'Shadow Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 3, speed: 260, radius: 10, mana: 10, cd: 0.5, life: 1.5, color: '#8833aa', trail: '#662288' },
       { name: 'Drain Life', key: 'RMB', type: SpellType.Beam, dmg: 2, range: 200, mana: 18, cd: 1, width: 4, drain: 2, color: '#aa44cc' },
@@ -465,7 +465,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
   monk: {
     name: 'Monk', color: '#eedd88', glow: '#ccaa44',
     desc: 'Martial arts. Fast melee + dodging.',
-    passive: { name: 'Inner Peace', desc: 'Dodge 25% of attacks naturally' },
+    passive: { name: 'Inner Peace', desc: '25% chance to dodge attacks' },
     spells: [
       { name: 'Chi Blast', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 500, radius: 8, mana: 3, cd: 0.15, life: 0.5, color: '#eedd88', trail: '#ccaa44' },
       { name: 'Flying Kick', key: 'RMB', type: SpellType.Leap, range: 180, mana: 12, cd: 2, dmg: 4, aoeR: 55, color: '#ccaa44' },
