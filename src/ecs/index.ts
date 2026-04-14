@@ -6,3 +6,5 @@ export { World } from './world';
 export type { ComponentType } from './world';
 export { SpatialGrid } from './spatial-grid';
 export * from './components';
+export { SystemRunner } from './system-runner';
+export type { GameSystem } from './system-runner';

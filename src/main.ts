@@ -46,8 +46,19 @@ import { setupLobby } from './ui/lobby';
 import { showSelect, setupClassSelect, stopCardAnimation } from './ui/class-select';
 import { setupGameOver } from './ui/game-over';
 
+import { SystemRunner } from './ecs';
 import { profiler } from './debug/profiler';
 import { initPerfOverlay, drawPerfOverlay } from './debug/perf-overlay';
+
+const runner = new SystemRunner();
+runner
+  .add('updatePlayers', 10, updatePlayers)
+  .add('updateSpells', 20, updateSpells)
+  .add('updateAoe', 30, updateAoe)
+  .add('updateZones', 40, updateZones)
+  .add('updateEnemies', 50, updateEnemies)
+  .add('updateEProj', 60, updateEProj)
+  .add('updateWaves', 70, updateWaves);
 
 // ═══════════════════════════════════
 //          INITIALIZATION
@@ -221,27 +232,7 @@ function loop(now: number): void {
       if (state.hitStop < 0) state.hitStop = 0;
     }
 
-    profiler.begin('updatePlayers');
-    updatePlayers(state, gameDt);
-    profiler.end('updatePlayers');
-    profiler.begin('updateSpells');
-    updateSpells(state, gameDt);
-    profiler.end('updateSpells');
-    profiler.begin('updateAoe');
-    updateAoe(state, gameDt);
-    profiler.end('updateAoe');
-    profiler.begin('updateZones');
-    updateZones(state, gameDt);
-    profiler.end('updateZones');
-    profiler.begin('updateEnemies');
-    updateEnemies(state, gameDt);
-    profiler.end('updateEnemies');
-    profiler.begin('updateEProj');
-    updateEProj(state, gameDt);
-    profiler.end('updateEProj');
-    profiler.begin('updateWaves');
-    updateWaves(state, gameDt);
-    profiler.end('updateWaves');
+    runner.update(state, gameDt);
 
     // Combo timer decay
     if (state.comboTimer > 0) {
