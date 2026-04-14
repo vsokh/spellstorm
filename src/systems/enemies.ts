@@ -47,6 +47,14 @@ export function updateEProj(state: GameState, dt: number): void {
     for (const pl of state.players) {
       if (!pl.alive || pl.iframes > 0) continue;
       if (dist(p.x, p.y, pl.x, pl.y) < WIZARD_SIZE + p.radius) {
+        // Paladin reflect shield: bounce projectile back instead of taking damage
+        if (pl._holyShield > 0 && pl.reflectShield) {
+          p.vx = -p.vx * 1.5;
+          p.vy = -p.vy * 1.5;
+          p.life = 3;
+          spawnParticles(state, p.x, p.y, '#ffddaa', 8, 0.6);
+          break; // exit player loop without setting hit
+        }
         damagePlayer(state, pl, p.dmg);
         hit = true;
         break;

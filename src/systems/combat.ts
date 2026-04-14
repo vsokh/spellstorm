@@ -544,6 +544,19 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
       return;
     }
 
+    // Check if ally can resurrect this player
+    const ally = state.players[1 - p.idx];
+    if (ally && ally.alive && ally.resurrection && ally._resurrectionCd <= 0) {
+      ally._resurrectionCd = 45; // 45s cooldown
+      p.hp = Math.floor(p.maxHp / 2);
+      p.iframes = TIMING.IFRAME_RESPAWN;
+      spawnParticles(state, p.x, p.y, '#ffddaa', 25, 1.2);
+      spawnShockwave(state, p.x, p.y, 80, 'rgba(255,221,170,.5)');
+      spawnText(state, p.x, p.y - 25, 'RESURRECTED', '#ffddaa');
+      netSfx(state, SfxName.Pickup);
+      return;
+    }
+
     p.alive = false;
     p._animDeathFade = 1.0;
     spawnParticles(state, p.x, p.y, '#ff6633', 35, 1.3);

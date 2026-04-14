@@ -1612,10 +1612,6 @@ describe('Augment gameplay integration audit', () => {
     // Berserker class-specific
     'undyingRage',      // [87] Undying Rage — cannot die for 3s at 1 HP
 
-    // Paladin class-specific
-    'reflectShield',    // [90] Divine Shield — reflects projectiles
-    'resurrection',     // [91] Resurrection — auto-revive ally
-
     // Druid class-specific
     'packLeader',       // [95] Pack Leader — wolf 2x stronger, 2 wolves
     'overgrowthHeal',   // [96] Overgrowth — entangle heals allies
@@ -1630,8 +1626,8 @@ describe('Augment gameplay integration audit', () => {
     'turretExplode',    // [106] Self-Destruct — turrets explode on expire
   ];
 
-  it('documents all 32 unimplemented augment properties', () => {
-    expect(unimplementedProperties.length).toBe(32);
+  it('documents all 30 unimplemented augment properties', () => {
+    expect(unimplementedProperties.length).toBe(30);
   });
 
   it('all unimplemented properties exist on the Player type', () => {

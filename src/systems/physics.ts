@@ -277,6 +277,9 @@ export function updatePlayers(state: GameState, dt: number): void {
     // Holy shield decay
     if (p._holyShield > 0) p._holyShield -= dt;
 
+    // Resurrection cooldown decay
+    if (p._resurrectionCd > 0) p._resurrectionCd -= dt;
+
     // Dash (SHIFT)
     if (p.hasDash) {
       if (p.dashCd > 0) p.dashCd -= dt;

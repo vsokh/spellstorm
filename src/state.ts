@@ -388,6 +388,7 @@ export function createPlayer(idx: number, clsKey: string): Player {
     undyingRage: 0,
     reflectShield: false,
     resurrection: false,
+    _resurrectionCd: 0,
     packLeader: false,
     overgrowthHeal: false,
     barkSkinRegen: false,

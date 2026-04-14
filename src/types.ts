@@ -268,6 +268,7 @@ export interface Player {
   undyingRage: number;
   reflectShield: boolean;
   resurrection: boolean;
+  _resurrectionCd: number;
   packLeader: boolean;
   overgrowthHeal: boolean;
   barkSkinRegen: boolean;
