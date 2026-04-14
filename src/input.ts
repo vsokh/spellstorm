@@ -34,7 +34,7 @@ export function setupInput(state: GameState, canvas: HTMLCanvasElement): void {
     e.preventDefault();
     // Request pointer lock on first click during gameplay
     if (document.body.classList.contains('in-game') && document.pointerLockElement !== canvas) {
-      canvas.requestPointerLock();
+      try { canvas.requestPointerLock(); } catch (_) { /* iframe may block pointer lock */ }
     }
   });
 

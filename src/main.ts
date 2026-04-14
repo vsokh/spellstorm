@@ -91,6 +91,11 @@ window.addEventListener('resize', resize);
 // Setup input handlers
 setupInput(state, canvas);
 
+// Iframe focus management: ensure canvas can receive keyboard events
+canvas.tabIndex = 0;
+canvas.style.outline = 'none';
+canvas.addEventListener('click', () => canvas.focus());
+
 // Setup performance overlay (F3 to toggle)
 initPerfOverlay(canvas);
 
@@ -135,6 +140,7 @@ function beginGame(c1: string, c2: string): void {
   const fullscreenBtnEl = document.getElementById('fullscreen-btn');
   if (fullscreenBtnEl) fullscreenBtnEl.style.display = 'block';
   document.body.classList.add('in-game');
+  canvas.focus();
 
   state.wave = 1;
   state.waveActive = false;

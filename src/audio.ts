@@ -8,7 +8,14 @@ let audioCtx: AudioContext | null = null;
 
 export function initAudio(): void {
   if (!audioCtx) {
-    audioCtx = new AudioContext();
+    try {
+      audioCtx = new AudioContext();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+    } catch (_) {
+      // AudioContext blocked (e.g. iframe restrictions) — game runs without sound
+    }
   }
 }
 
