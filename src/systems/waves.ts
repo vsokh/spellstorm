@@ -434,6 +434,17 @@ export function updateZones(state: GameState, dt: number): void {
           spawnText(state, p.x, p.y - 20, `+${z.heal}`, '#ffffaa');
         }
       }
+      // Overgrowth: heal allies (non-owner) inside the zone
+      if (state.players[z.owner]?.overgrowthHeal) {
+        for (const ally of state.players) {
+          if (!ally || ally.idx === z.owner) continue;
+          if (dist(z.x, z.y, ally.x, ally.y) < z.radius) {
+            const healAmt = 2 * dt;
+            ally.hp = Math.min(ally.maxHp, ally.hp + healAmt);
+            spawnText(state, ally.x, ally.y - 20, `+${healAmt.toFixed(1)}`, '#44ff88');
+          }
+        }
+      }
       // Haste Zone: boost ally speed
       if (z._hasteZone) {
         for (const pl of state.players) {

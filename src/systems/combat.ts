@@ -1129,8 +1129,23 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       wolf.hp = 8;
       wolf.maxHp = 8;
       wolf._lifespan = 15;
+      if (p.packLeader) {
+        wolf.hp = 16;
+        wolf.maxHp = 16;
+        wolf._dmgMul = 2;
+      }
       state.enemies.push(wolf);
       spawnParticles(state, wolf.x, wolf.y, '#88aa66', 10);
+      if (p.packLeader) {
+        const wolf2 = createFriendlyEnemy(state, p.x - cos * 40, p.y - sin * 40, p.idx);
+        wolf2.type = '_wolf';
+        wolf2.hp = 16;
+        wolf2.maxHp = 16;
+        wolf2._dmgMul = 2;
+        wolf2._lifespan = 15;
+        state.enemies.push(wolf2);
+        spawnParticles(state, wolf2.x, wolf2.y, '#88aa66', 10);
+      }
       netSfx(state, SfxName.Pickup);
     } else if (p.clsKey === 'warlock') {
       // Summon Imp: small ranged demon ally

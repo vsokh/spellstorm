@@ -742,7 +742,7 @@ export const UPGRADE_POOL: UpgradeDef[] = [
   { name: 'Overgrowth', desc: 'Entangle radius 2x, also heals allies inside for 2 HP/s', forClass: 'druid', color: '#44aa33',
     apply: (p: Player) => { if (p.cls.spells[1]) { p.cls.spells[1].radius = (p.cls.spells[1].radius || 60) * 2; } p.overgrowthHeal = true; } },
   { name: 'Bark Skin', desc: '+3 armor, regen 1 HP every 5s (stacks with passive)', forClass: 'druid', color: '#44aa33',
-    apply: (p: Player) => { p.armor = (p.armor || 0) + 3; p.barkSkinRegen = true; } },
+    apply: (p: Player) => { p.armor = (p.armor || 0) + 3; p.barkSkinRegen = true; p.hpRegen = (p.hpRegen || 0) + 0.2; } },
 
   // ── Warlock ──
   { name: 'Soul Siphon', desc: 'Dark Pact HP cost becomes healing instead (pay mana, gain HP)', forClass: 'warlock', color: '#6622aa',
