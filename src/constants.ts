@@ -648,12 +648,12 @@ export const UPGRADE_POOL: UpgradeDef[] = [
 
   // -- QUALITATIVE (behavior-changing) --
   { name: 'Boomerang', desc: 'Projectiles return to you at half range, hitting enemies twice', apply: (p: Player) => { p.boomerang = true; } },
-  { name: 'Volatile', desc: 'Projectiles explode when they expire (2 dmg)', apply: (p: Player) => { p.volatile = true; } },
+  { name: 'Volatile', desc: 'Projectiles explode when they expire (2 dmg, small radius)', apply: (p: Player) => { p.volatile = true; } },
   { name: 'Fork', desc: 'Kills spawn 2 mini-projectiles from the corpse', apply: (p: Player) => { p.forkOnKill = true; } },
   { name: 'Gravity Pull', desc: 'Projectiles pull nearby enemies toward their path', apply: (p: Player) => { p.gravityWell = true; } },
   { name: 'Spectral', desc: 'Projectiles pass through walls and pillars', apply: (p: Player) => { p.spectral = true; } },
   { name: 'Frozen Touch', desc: '25% chance any attack freezes enemies for 1s', apply: (p: Player) => { p.frozenTouch = true; } },
-  { name: 'Seeker Mines', desc: 'Kills drop explosive proximity mines (3 dmg each)', apply: (p: Player) => { p.seekerMines = true; } },
+  { name: 'Seeker Mines', desc: 'Kills drop proximity mines with a small blast radius (3 dmg each)', apply: (p: Player) => { p.seekerMines = true; } },
   { name: 'Barrage Mode', desc: 'Primary fires a 3-shot burst (40% damage each, slower fire rate)', apply: (p: Player) => { p.burstFire = true; const s = p.cls.spells[0]; s.dmg = Math.max(1, Math.ceil(s.dmg * 0.4)); s.cd *= 1.5; } },
 
   // ══════════════════════════════════════
@@ -681,13 +681,13 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p, stacks) => { p.chainLightning = (p.chainLightning || 0) + flatScaling(2, stacks); } },
   { name: 'Overcharge', desc: 'Every 3rd spell deals 3x damage', forClass: 'stormcaller', color: '#bb66ff',
     apply: (p: Player) => { p.overcharge = true; } },
-  { name: 'Storm Shield', desc: 'Lightning randomly strikes nearby enemies (1 dmg/s)', forClass: 'stormcaller', color: '#bb66ff',
+  { name: 'Storm Shield', desc: 'Lightning randomly strikes enemies at close range (1 dmg/s)', forClass: 'stormcaller', color: '#bb66ff',
     apply: (p: Player) => { p.stormShield = true; } },
 
   // ── Arcanist ──
   { name: 'Arcane Amplifier', desc: 'Homing gets 3x stronger, projectiles are 50% faster', forClass: 'arcanist', color: '#ff55aa',
     apply: (p: Player) => { const s = p.cls.spells[0]; s.homing = (s.homing || 0) * 3; if (s.speed) s.speed *= 1.5; } },
-  { name: 'Phase Shift', desc: 'Blink leaves behind an explosion (4 dmg)', forClass: 'arcanist', color: '#ff55aa',
+  { name: 'Phase Shift', desc: 'Blink leaves behind a small explosion (4 dmg)', forClass: 'arcanist', color: '#ff55aa',
     apply: (p: Player) => { p.blinkExplode = true; } },
   { name: 'Spell Mirror', desc: '30% chance to copy any spell you cast for free', forClass: 'arcanist', color: '#ff55aa',
     apply: (p: Player) => { p.spellMirror = hyperStack(p, 'spellMirror', 0.3); } },
@@ -697,7 +697,7 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p: Player) => { p.raiseDead = hyperStack(p, 'raiseDead', 0.25); } },
   { name: 'Death Mark', desc: 'Enemies below 20% HP take 3x damage', forClass: 'necromancer', color: '#55cc55',
     apply: (p: Player) => { p.deathMark = true; } },
-  { name: 'Soul Well', desc: 'Kills create a healing zone (2 HP/s for 3s)', forClass: 'necromancer', color: '#55cc55',
+  { name: 'Soul Well', desc: 'Kills create a medium healing zone (2 HP/s for 3s)', forClass: 'necromancer', color: '#55cc55',
     apply: (p: Player) => { p.soulWell = true; } },
 
   // ── Chronomancer ──
@@ -713,7 +713,7 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p: Player) => { p.shieldBounce = (p.shieldBounce || 0) + 3; } },
   { name: 'Fortify', desc: '+5 max HP, +2 armor, move 15% slower', forClass: 'knight', color: '#aabbcc',
     apply: (p: Player) => { p.maxHp += 5; p.hp += 5; p.armor = (p.armor || 0) + 2; p.moveSpeed *= 0.85; } },
-  { name: 'Taunt Aura', desc: 'Nearby enemies target you instead of your ally', forClass: 'knight', color: '#aabbcc',
+  { name: 'Taunt Aura', desc: 'Enemies within close range target you instead of your ally', forClass: 'knight', color: '#aabbcc',
     apply: (p: Player) => { p.tauntAura = true; } },
 
   // ── Berserker ──
@@ -769,7 +769,7 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p: Player) => { p.turretArmy = true; if (p.cls.spells[1]) p.cls.spells[1].duration = 25; } },
   { name: 'Laser Turret', desc: 'Turrets fire beams instead of shots (2x damage, hits instantly)', forClass: 'engineer', color: '#dd8833',
     apply: (p: Player) => { p.laserTurret = true; } },
-  { name: 'Self-Destruct', desc: 'Turrets explode when they expire (6 dmg, large radius)', forClass: 'engineer', color: '#dd8833',
+  { name: 'Self-Destruct', desc: 'Turrets explode when they expire (6 dmg, medium radius)', forClass: 'engineer', color: '#dd8833',
     apply: (p: Player) => { p.turretExplode = true; } },
 
   // ══════════════════════════════════════
