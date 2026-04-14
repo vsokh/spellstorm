@@ -680,7 +680,7 @@ export interface NetStatePillarData {
 }
 
 export interface NetFxEvent {
-  t: 'p' | 't' | 'sw';  // particle, text, shockwave
+  t: 'p' | 't' | 'sw' | 's';  // particle, text, shockwave, sfx
   x: number;
   y: number;
   c: string;  // color
@@ -688,6 +688,7 @@ export interface NetFxEvent {
   s?: number;  // scale (particles)
   tx?: string; // text content
   mr?: number; // maxR (shockwave)
+  sn?: string; // sfx name
 }
 
 export interface NetStateMessage {

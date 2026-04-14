@@ -1,6 +1,5 @@
-import { GameState, dist, spawnParticles, spawnShockwave, shake } from '../state';
+import { GameState, dist, spawnParticles, spawnShockwave, shake, netSfx } from '../state';
 import { SfxName, PickupType } from '../types';
-import { sfx } from '../audio';
 import { damageEnemy } from './combat';
 
 /**
@@ -23,7 +22,7 @@ export function enemyTraps(state: GameState, dt: number): void {
         if (pk._slow) e.slowTimer = (e.slowTimer || 0) + pk._slow;
         spawnParticles(state, pk.x, pk.y, pk._color, 15);
         spawnShockwave(state, pk.x, pk.y, pk._radius, pk._color);
-        sfx(SfxName.Boom);
+        netSfx(state, SfxName.Boom);
         shake(state, 3);
         break;
       }

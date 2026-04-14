@@ -11,9 +11,10 @@ import {
   Enemy,
   PlayerInput,
   EnemyView,
+  SfxName,
 } from './types';
 import { UPGRADE_POOL, CLASSES, NET_SEND_INTERVAL, NET_SEND_INTERVAL_MAX, NET_CULL_RADIUS, NET_LOD_RADIUS } from './constants';
-import { initAudio } from './audio';
+import { initAudio, sfx } from './audio';
 import { showUpgradeFromHost, checkBothPicked, finishUpgrade } from './systems/upgrades';
 
 // ═══════════════════════════════════
@@ -638,6 +639,9 @@ function applyState(state: GameState, msg: NetStateMessage): void {
           break;
         case 'sw':
           spawnShockwave(state, ev.x, ev.y, ev.mr || 60, ev.c);
+          break;
+        case 's':
+          sfx(ev.sn as SfxName);
           break;
       }
     }

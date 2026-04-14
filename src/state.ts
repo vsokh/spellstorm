@@ -20,7 +20,9 @@ import {
   SpellDefInput,
   NetFxEvent,
   EnemyPool,
+  SfxName,
 } from './types';
+import { sfx } from './audio';
 import { SpatialGrid } from './ecs/spatial-grid';
 import { SpellPool } from './ecs/spell-pool';
 import { EProjPool } from './ecs/eproj-pool';
@@ -510,6 +512,14 @@ export function spawnShockwave(
 
 export function shake(state: GameState, intensity: number): void {
   state.shakeIntensity = Math.max(state.shakeIntensity, intensity);
+}
+
+/** Play sfx locally and queue it for guest when hosting */
+export function netSfx(state: GameState, name: SfxName): void {
+  sfx(name);
+  if (state.mode === NetworkMode.Host) {
+    state.pendingFx.push({ t: 's', x: 0, y: 0, c: '', sn: name });
+  }
 }
 
 export function flashScreen(state: GameState, intensity: number, color?: string): void {

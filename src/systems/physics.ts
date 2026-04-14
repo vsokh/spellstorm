@@ -1,4 +1,4 @@
-import { GameState, dist, clamp, spawnParticles, spawnText, shake } from '../state';
+import { GameState, dist, clamp, spawnParticles, spawnText, shake, netSfx } from '../state';
 import { getInput } from '../input';
 import {
   WIZARD_SIZE,
@@ -16,7 +16,6 @@ import {
   GAME_OVER_DELAY_MS,
 } from '../constants';
 import { Enemy, EnemyView, GamePhase, PickupType, SfxName } from '../types';
-import { sfx } from '../audio';
 import { castSpell, castSpellSilent, castUltimate, damageEnemy } from './combat';
 
 /** Callback set by main.ts to break circular dep with upgrades module */
@@ -286,7 +285,7 @@ export function updatePlayers(state: GameState, dt: number): void {
         p.x = clamp(p.x, WIZARD_SIZE, ROOM_WIDTH - WIZARD_SIZE);
         p.y = clamp(p.y, WIZARD_SIZE, ROOM_HEIGHT - WIZARD_SIZE);
         p.iframes = Math.max(p.iframes, TIMING.IFRAME_DASH);
-        sfx(SfxName.Blink);
+        netSfx(state, SfxName.Blink);
         spawnParticles(state, p.x, p.y, p.cls.color, 10);
       }
       if (!dashKey) state.keys[`_dash${p.idx}`] = false;
@@ -311,7 +310,7 @@ export function updatePlayers(state: GameState, dt: number): void {
       if (pk.collected) continue;
       if (dist(p.x, p.y, pk.x, pk.y) < WIZARD_SIZE + 15) {
         pk.collected = true;
-        sfx(SfxName.Pickup);
+        netSfx(state, SfxName.Pickup);
         if (pk.type === PickupType.Chest) {
           if (onChestPickup) onChestPickup(state);
         } else if (pk.type === PickupType.Health) {

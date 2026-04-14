@@ -11,6 +11,7 @@ import {
   spawnShockwave,
   shake,
   flashScreen,
+  netSfx,
 } from '../state';
 import {
   Player,
@@ -41,7 +42,6 @@ import {
   softCapBonusDmg,
   BOSS_WAVE_XP,
 } from '../constants';
-import { sfx } from '../audio';
 import { createFriendlyEnemy } from './dungeon';
 
 // Pre-allocated scratch array to avoid per-frame filter() allocations
@@ -125,7 +125,7 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
   e.iframes = 0.1;
   e._hitFlash = 0.12;
   spawnParticles(state, e.x, e.y, '#ff6644', 5, TIMING.HIT_PARTICLE_SCALE);
-  sfx(SfxName.Hit);
+  netSfx(state, SfxName.Hit);
 
   // Ultimate charge (+5 per hit, +15 per kill)
   if (p) {
@@ -368,7 +368,7 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
     // Scale shockwave radius with combo
     const shockR = 25 + Math.min(state.comboCount * 0.5, 20);
     spawnShockwave(state, e.x, e.y, shockR);
-    sfx(SfxName.Kill);
+    netSfx(state, SfxName.Kill);
 
     if (et.boss) {
       shake(state, 10);
@@ -456,7 +456,7 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
   p._animHitFlash = TIMING.HIT_FLASH;
   shake(state, 3);
   spawnParticles(state, p.x, p.y, '#ff4444', 8);
-  sfx(SfxName.Hit);
+  netSfx(state, SfxName.Hit);
   spawnText(state, p.x, p.y - 20, `-${dmg}`, '#ff4444');
 
   // Thorns
@@ -466,7 +466,7 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
     if (attacker.hp <= 0) {
       attacker.alive = false;
       spawnParticles(state, attacker.x, attacker.y, ENEMIES[attacker.type].color, 12);
-      sfx(SfxName.Kill);
+      netSfx(state, SfxName.Kill);
     }
   }
 
@@ -478,7 +478,7 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
       p.iframes = TIMING.IFRAME_RESPAWN;
       spawnParticles(state, p.x, p.y, '#ffcc44', 20);
       spawnText(state, p.x, p.y - 25, 'SECOND WIND', '#ffcc44');
-      sfx(SfxName.Pickup);
+      netSfx(state, SfxName.Pickup);
       return;
     }
 
@@ -496,7 +496,7 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
       spawnParticles(state, p.x, p.y, '#44ccff', 25, 1.2);
       spawnShockwave(state, p.x, p.y, 80, 'rgba(68,204,255,.5)');
       spawnText(state, p.x, p.y - 30, `${state.lives} LIVES LEFT`, '#44ccff');
-      sfx(SfxName.Pickup);
+      netSfx(state, SfxName.Pickup);
       shake(state, 5);
       flashScreen(state, 0.2, '68,204,255');
       return;
@@ -506,7 +506,7 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
     p._animDeathFade = 1.0;
     spawnParticles(state, p.x, p.y, '#ff6633', 35, 1.3);
     spawnShockwave(state, p.x, p.y, 70, 'rgba(255,100,50,.5)');
-    sfx(SfxName.Boom);
+    netSfx(state, SfxName.Boom);
     shake(state, 10);
     flashScreen(state, TIMING.FLASH_SCREEN_ULT, '255,100,50');
 
@@ -648,7 +648,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
           }
         }, meteorDelay * 1000);
       }
-      sfx(SfxName.Fire);
+      netSfx(state, SfxName.Fire);
       return;
     }
     // Stormcaller: Thunder Strike — AoE + chain lightning on detonation
@@ -686,9 +686,9 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
           lastX = nearest.x;
           lastY = nearest.y;
         }
-        if (hitEnemies.length > 0) sfx(SfxName.Zap);
+        if (hitEnemies.length > 0) netSfx(state, SfxName.Zap);
       }, (def.delay || TIMING.SPELL_DEFAULT_DELAY) * 1000);
-      sfx(SfxName.Arcane);
+      netSfx(state, SfxName.Arcane);
       return;
     }
     // Cryomancer: Frost Prison — strong slow + freeze after 1.5s
@@ -701,7 +701,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         frostZone.slow = 0.95; frostZone.tickRate = def.tickRate; frostZone.tickTimer = 0; frostZone.age = 0;
         frostZone.drain = 0; frostZone.heal = 0; frostZone.pull = 0; frostZone.freezeAfter = TIMING.FREEZE_DURATION;
       }
-      sfx(SfxName.Ice);
+      netSfx(state, SfxName.Ice);
       return;
     }
     // Necromancer: Death Harvest — drain + pull enemies toward center
@@ -714,7 +714,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         deathZone.slow = def.slow || 0; deathZone.tickRate = def.tickRate; deathZone.tickTimer = 0; deathZone.age = 0;
         deathZone.drain = 1; deathZone.heal = 0; deathZone.pull = 30; deathZone.freezeAfter = 0;
       }
-      sfx(SfxName.Arcane);
+      netSfx(state, SfxName.Arcane);
       return;
     }
     // Arcanist: Arcane Salvo — 5 homing projectiles
@@ -734,7 +734,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
             zap: 0, zapRate: 0, slow: 0, drain: 0, explode: 0, burn: 0,
             stun: 0, clsKey: p.clsKey, _reversed: false, _bounces: 0,
           });
-          sfx(SfxName.Arcane);
+          netSfx(state, SfxName.Arcane);
         }, i * 80);
       }
       return;
@@ -748,7 +748,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         healZone.slow = def.slow || 0; healZone.tickRate = def.tickRate; healZone.tickTimer = 0; healZone.age = 0;
         healZone.drain = 0; healZone.heal = 2; healZone.pull = 0; healZone.freezeAfter = 0;
       }
-      sfx(SfxName.Pickup);
+      netSfx(state, SfxName.Pickup);
       spawnParticles(state, p.x, p.y, '#ffffaa', 15);
       return;
     }
@@ -772,7 +772,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       }
       spawnShockwave(state, p.x, p.y, knockR, 'rgba(255,255,200,.4)');
       spawnParticles(state, p.x, p.y, '#eedd88', 20, 0.8);
-      sfx(SfxName.Boom);
+      netSfx(state, SfxName.Boom);
       shake(state, 4);
       return;
     }
@@ -816,7 +816,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         });
       }
     }
-    sfx(sType);
+    netSfx(state, sType);
   } else if (def.type === SpellType.Beam) {
     const beamFx = state.beams.acquire();
     if (beamFx) { beamFx.x = p.x; beamFx.y = p.y; beamFx.angle = angle; beamFx.range = def.range; beamFx.width = def.width; beamFx.color = def.color; beamFx.life = 0.15; }
@@ -837,7 +837,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         }
       }
     }
-    sfx(SfxName.Zap);
+    netSfx(state, SfxName.Zap);
   } else if (def.type === SpellType.Cone) {
     // Visual particles
     for (let a = -def.angle / 2; a <= def.angle / 2; a += 0.15) {
@@ -857,7 +857,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
       }
     }
-    sfx(SfxName.Fire);
+    netSfx(state, SfxName.Fire);
     shake(state, 4);
   } else if (def.type === SpellType.Nova) {
     spawnShockwave(state, p.x, p.y, def.range, def.color);
@@ -876,7 +876,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       p.hp = Math.min(p.maxHp, p.hp + novaHealed);
       spawnText(state, p.x, p.y - 20, `+${novaHealed} HP`, '#44ff88');
     }
-    sfx(SfxName.Ice);
+    netSfx(state, SfxName.Ice);
     shake(state, 5);
   } else if (def.type === SpellType.AoeDelayed) {
     const wp = toWorld(state, state.mouseX, state.mouseY);
@@ -885,7 +885,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       aoeM.x = wp.x; aoeM.y = wp.y; aoeM.radius = def.radius; aoeM.delay = def.delay; aoeM.dmg = def.dmg;
       aoeM.color = def.color; aoeM.owner = p.idx; aoeM.stun = def.stun || 0; aoeM.age = 0;
     }
-    sfx(SfxName.Arcane);
+    netSfx(state, SfxName.Arcane);
   } else if (def.type === SpellType.Blink) {
     const nx = clamp(p.x + cos * def.range, WIZARD_SIZE, ROOM_WIDTH - WIZARD_SIZE);
     const ny = clamp(p.y + sin * def.range, WIZARD_SIZE, ROOM_HEIGHT - WIZARD_SIZE);
@@ -894,7 +894,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     p.y = ny;
     spawnParticles(state, p.x, p.y, def.color, 12);
     p.iframes = 0.3;
-    sfx(SfxName.Blink);
+    netSfx(state, SfxName.Blink);
   } else if (def.type === SpellType.Barrage) {
     // Muzzle flash for barrage
     spawnParticles(state, p.x + cos * 15, p.y + sin * 15, def.color, 3, 0.3);
@@ -914,7 +914,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
           owner: p.idx, age: 0, pierceLeft: (p.pierce || 0) + (def.pierce || 0), zapTimer: 0,
           clsKey: p.clsKey,
         });
-        sfx(SfxName.Arcane);
+        netSfx(state, SfxName.Arcane);
       }, i * 60);
     }
   } else if (def.type === SpellType.Zone) {
@@ -927,7 +927,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       spellZone.drain = def.drain || 0; spellZone.heal = def.heal || 0; spellZone.pull = 0; spellZone.freezeAfter = 0;
       spellZone._turret = p.clsKey === 'engineer' && def.name.includes('Turret');
     }
-    sfx(SfxName.Ice);
+    netSfx(state, SfxName.Ice);
   } else if (def.type === SpellType.Rewind) {
     const snap = p._rewindSnap;
     if (snap) {
@@ -936,7 +936,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       spawnParticles(state, p.x, p.y, '#ffcc44', 20);
       spawnShockwave(state, p.x, p.y, 60, 'rgba(255,200,60,.4)');
       spawnText(state, p.x, p.y - 25, 'REWIND', '#ffcc44');
-      sfx(SfxName.Blink);
+      netSfx(state, SfxName.Blink);
       shake(state, 3);
       flashScreen(state, 0.15, '255,200,60');
     } else {
@@ -956,7 +956,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     // AoE damage on landing
     spawnShockwave(state, p.x, p.y, def.aoeR, def.color);
     spawnParticles(state, p.x, p.y, def.color, 15, 1);
-    sfx(SfxName.Boom);
+    netSfx(state, SfxName.Boom);
     shake(state, 6);
     for (const e of state.enemies) {
       if (!e.alive) continue;
@@ -973,7 +973,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     target._holyShield = def.duration;
     spawnParticles(state, target.x, target.y, '#ffffcc', 15);
     spawnShockwave(state, target.x, target.y, 40, 'rgba(255,255,200,.4)');
-    sfx(SfxName.Pickup);
+    netSfx(state, SfxName.Pickup);
     spawnText(state, target.x, target.y - 20, 'SHIELDED', '#ffffcc');
   } else if (def.type === SpellType.Trap) {
     // Ranger trap: place at mouse position
@@ -983,7 +983,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       value: 0,
       _owner: p.idx, _dmg: def.dmg, _radius: def.radius, _slow: def.slow || 0, _color: def.color,
     });
-    sfx(SfxName.Hit);
+    netSfx(state, SfxName.Hit);
     // Engineer mine field: place 3 mines
     if (p.clsKey === 'engineer' && def.count && def.count > 1) {
       for (let m = 1; m < def.count; m++) {
@@ -1007,7 +1007,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       wolf._lifespan = 15;
       state.enemies.push(wolf);
       spawnParticles(state, wolf.x, wolf.y, '#88aa66', 10);
-      sfx(SfxName.Pickup);
+      netSfx(state, SfxName.Pickup);
     } else if (p.clsKey === 'warlock') {
       // Summon Imp: small ranged demon ally
       const imp = createFriendlyEnemy(state, p.x + cos * 40, p.y + sin * 40, p.idx);
@@ -1017,7 +1017,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       imp._lifespan = 12;
       state.enemies.push(imp);
       spawnParticles(state, imp.x, imp.y, '#cc4466', 10);
-      sfx(SfxName.Arcane);
+      netSfx(state, SfxName.Arcane);
     }
   }
 }
@@ -1030,7 +1030,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
   p.ultCharge = 0;
   p.ultReady = false;
   p._animUltTimer = TIMING.ANIM_ULT;
-  sfx(SfxName.Boom);
+  netSfx(state, SfxName.Boom);
   shake(state, 12);
   flashScreen(state, TIMING.FLASH_SCREEN);
   spawnParticles(state, p.x, p.y, p.cls.color, 30, TIMING.SPAWN_PARTICLE_SCALE);
@@ -1056,7 +1056,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
           ultAoe.x = mx; ultAoe.y = my; ultAoe.radius = 80; ultAoe.delay = ULTIMATE.METEOR_DELAY;
           ultAoe.dmg = Math.round(5 * pw); ultAoe.color = '#ff2200'; ultAoe.owner = p.idx; ultAoe.stun = 0; ultAoe.age = 0;
         }
-        sfx(SfxName.Fire);
+        netSfx(state, SfxName.Fire);
         // Lingering burn zone after meteor lands
         setTimeout(() => {
           const ultBurnZone = state.zones.acquire();
@@ -1144,7 +1144,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
             if (t.alive) {
               damageEnemy(state, t, chainDmg, p.idx);
               spawnParticles(state, t.x, t.y, '#ffcc44', 6, ULTIMATE.CHAIN_PARTICLE_SCALE);
-              sfx(SfxName.Zap);
+              netSfx(state, SfxName.Zap);
               shake(state, 2);
             }
             // Draw beam to next target
@@ -1176,7 +1176,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
           zap: 0, zapRate: 0, slow: 0, drain: 0, explode: 0, burn: 0,
           stun: 0, clsKey: p.clsKey, _reversed: false, _bounces: 0,
         });
-        sfx(SfxName.Arcane);
+        netSfx(state, SfxName.Arcane);
       }, i * ULTIMATE.ARCANE_STORM_TIMEOUT);
     }
   } else if (p.clsKey === 'necromancer') {
@@ -1244,7 +1244,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
           homing: 0, zap: 0, zapRate: 0, slow: 0, drain: 0, explode: 0, burn: 0,
           stun: 0, clsKey: p.clsKey, _reversed: false, _bounces: 0,
         });
-        sfx(SfxName.Hit);
+        netSfx(state, SfxName.Hit);
       }, i * 30);
     }
   } else if (p.clsKey === 'druid') {
@@ -1290,7 +1290,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
         damageEnemy(state, e, doomDmg, pIdx);
         spawnParticles(state, e.x, e.y, '#662288', 10);
       }
-      sfx(SfxName.Boom);
+      netSfx(state, SfxName.Boom);
       shake(state, 6);
     }, 3000);
   } else if (p.clsKey === 'monk') {
@@ -1317,7 +1317,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
           }
         }
         spawnParticles(state, p.x + Math.cos(angle) * 30, p.y + Math.sin(angle) * 30, '#eedd88', 2, 0.3);
-        sfx(SfxName.Hit);
+        netSfx(state, SfxName.Hit);
       }, i * 40);
     }
   } else if (p.clsKey === 'engineer') {

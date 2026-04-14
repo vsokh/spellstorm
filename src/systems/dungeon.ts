@@ -1,4 +1,4 @@
-import { GameState, nextEnemyId, dist, rand, spawnParticles, spawnText, shake, flashScreen } from '../state';
+import { GameState, nextEnemyId, dist, rand, spawnParticles, spawnText, shake, flashScreen, netSfx } from '../state';
 import { GamePhase, PickupType, Enemy, SfxName } from '../types';
 import {
   ROOM_WIDTH,
@@ -22,7 +22,6 @@ import {
   COMBAT,
 } from '../constants';
 
-import { sfx } from '../audio';
 
 // ═══════════════════════════════════
 //       ARENA GENERATION
@@ -166,12 +165,12 @@ export function startWave(state: GameState): void {
     }
     spawnText(state, ROOM_WIDTH / 2, ROOM_HEIGHT / 2 - 80, 'THE ARCHLORD', '#ffaa00');
     spawnText(state, ROOM_WIDTH / 2, ROOM_HEIGHT / 2 - 50, 'FINAL WAVE!', '#ff4444');
-    sfx(SfxName.Boom);
+    netSfx(state, SfxName.Boom);
     shake(state, 10);
     flashScreen(state, 0.3);
 
     state.waveEnemiesTotal = state.enemies.filter(e => e.alive && !e._friendly).length;
-    sfx(SfxName.Door);
+    netSfx(state, SfxName.Door);
     const waveNumEl = document.getElementById('wave-num');
     if (waveNumEl) waveNumEl.textContent = String(wave);
     return; // Skip normal wave logic
@@ -216,7 +215,7 @@ export function startWave(state: GameState): void {
     state.bossMinionInterval = DUNGEON_TIMING.BOSS_MINION_SPAWN_DURATION / minionCount;
     state.bossMinionTimer = state.bossMinionInterval;
     spawnText(state, ROOM_WIDTH / 2, ROOM_HEIGHT / 2 - 60, `BOSS WAVE ${wave}!`, '#ff4444');
-    sfx(SfxName.Boom);
+    netSfx(state, SfxName.Boom);
     shake(state, 6);
   } else {
     // Normal wave — smooth difficulty curve
@@ -243,7 +242,7 @@ export function startWave(state: GameState): void {
   }
 
   state.waveEnemiesTotal = state.enemies.filter(e => e.alive && !e._friendly).length;
-  sfx(SfxName.Door);
+  netSfx(state, SfxName.Door);
 
   const waveNumEl = document.getElementById('wave-num');
   if (waveNumEl) waveNumEl.textContent = String(wave);

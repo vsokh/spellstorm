@@ -1,7 +1,6 @@
-import { GameState, dist, rand, wrapAngle, spawnParticles, spawnShockwave, spawnText, shake, flashScreen } from '../state';
+import { GameState, dist, rand, wrapAngle, spawnParticles, spawnShockwave, spawnText, shake, flashScreen, netSfx } from '../state';
 import { ENEMIES, ROOM_WIDTH, ROOM_HEIGHT, WALL_THICKNESS, WAVE_PHYSICS, TIMING, RANGES } from '../constants';
 import { SfxName, EnemyView } from '../types';
-import { sfx } from '../audio';
 import { damageEnemy } from './combat';
 
 // Upper bound on enemy collision radius for broad-phase query padding.
@@ -187,7 +186,7 @@ export function updateSpells(state: GameState, dt: number): void {
       if ((hitP || hitE) && s.explode) {
         spawnParticles(state, s.x, s.y, s.color, 15, TIMING.PARTICLE_LIFE_LONG);
         spawnShockwave(state, s.x, s.y, s.explode, s.color);
-        sfx(SfxName.Boom);
+        netSfx(state, SfxName.Boom);
         shake(state, 3);
 
         // Element-specific impact effects based on spell color
@@ -278,7 +277,7 @@ export function updateAoe(state: GameState, dt: number): void {
     if (m.age >= m.delay) {
       spawnParticles(state, m.x, m.y, m.color, 25, 1);
       spawnShockwave(state, m.x, m.y, m.radius, m.color);
-      sfx(SfxName.Boom);
+      netSfx(state, SfxName.Boom);
       shake(state, 6);
       flashScreen(state, 0.1);
       const aoeCandidates = state.enemyGrid.queryArea(m.x, m.y, m.radius + MAX_ENEMY_SIZE);
