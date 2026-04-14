@@ -130,7 +130,7 @@ describe('damageEnemy()', () => {
   });
 
   describe('ultimate charge', () => {
-    it('gains +5 ult charge per hit (with rate 1)', () => {
+    it('gains +3 ult charge per hit (with rate 1)', () => {
       const p = createTestPlayer(0, 'pyromancer');
       p.ultCharge = 0;
       p.ultChargeRate = 1;
@@ -140,7 +140,7 @@ describe('damageEnemy()', () => {
 
       damageEnemy(state, e, 1, 0);
 
-      expect(p.ultCharge).toBe(5);
+      expect(p.ultCharge).toBe(3);
     });
 
     it('caps ult charge at 100 normally', () => {
@@ -182,7 +182,7 @@ describe('damageEnemy()', () => {
 
       damageEnemy(state, e, 1, 0);
 
-      expect(p.ultCharge).toBe(10);
+      expect(p.ultCharge).toBe(6);
     });
   });
 
