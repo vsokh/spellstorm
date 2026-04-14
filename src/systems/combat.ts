@@ -150,7 +150,7 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
     spawnText(state, e.x, e.y - 15, '+1', '#88ddff');
   }
 
-  // Passive: Arcanist echo (20% chance double cast)
+  // Passive: Arcanist echo (20% chance to echo primary attack)
   if (p && p.clsKey === 'arcanist' && Math.random() < COMBAT.ARCANIST_ECHO_CHANCE) {
     castSpellSilent(state, p, 0, Math.atan2(e.y - p.y, e.x - p.x));
   }

@@ -232,7 +232,7 @@ export function updatePlayers(state: GameState, dt: number): void {
       }
     }
 
-    // Monk: Inner Peace - 20% dodge naturally (added at creation, stacks with Dodge upgrade)
+    // Monk: Inner Peace - 25% dodge naturally (added at creation, stacks with Dodge upgrade)
     // Applied via dodgeChance in damagePlayer, set below
     if (p.clsKey === 'monk' && p.dodgeChance < COMBAT.MONK_DODGE_CHANCE) {
       p.dodgeChance = COMBAT.MONK_DODGE_CHANCE;
