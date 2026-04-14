@@ -758,9 +758,15 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     }
     // Monk: Chi Burst — instant heal + knockback pulse
     if (p.clsKey === 'monk') {
-      // Heal self
-      p.hp = Math.min(p.maxHp, p.hp + 3);
-      spawnText(state, p.x, p.y - 20, '+3 HP', '#88ff88');
+      // Heal self (reads spell def so Zen Master 3× multiplier works)
+      const healAmt = def.heal || 3;
+      p.hp = Math.min(p.maxHp, p.hp + healAmt);
+      spawnText(state, p.x, p.y - 20, `+${healAmt} HP`, '#88ff88');
+      // Zen Master: also restore mana equal to heal amount
+      if (p.zenMana) {
+        p.mana = Math.min(p.maxMana, p.mana + healAmt);
+        spawnText(state, p.x, p.y - 35, `+${healAmt} MP`, '#88bbff');
+      }
       // Knockback all enemies in range
       const knockR = 80;
       const knockForce = COMBAT.KNOCKBACK_FORCE;
