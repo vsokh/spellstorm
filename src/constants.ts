@@ -488,12 +488,124 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Mega Turret', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#dd8833', mana: 0, cd: 0 },
     ],
   },
+  graviturge: {
+    name: 'Graviturge', color: '#6644aa', glow: '#4422aa',
+    desc: 'Gravity magic. Proximity aura + sustain.',
+    passive: { name: 'Gravity Well', desc: 'Enemies within 80 units take 0.5 dps; each nearby enemy grants +1 mana/s' },
+    spells: [
+      { name: 'Gravity Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 1.5, speed: 280, radius: 10, mana: 6, cd: 0.32, life: 0.8, slow: 0.5, color: '#6644aa', trail: '#4422aa' },
+      { name: 'Singularity', key: 'RMB', type: SpellType.Zone, dmg: 1.5, mana: 22, cd: 5, radius: 80, duration: 4, tickRate: 0.6, slow: 0.8, color: '#5533aa' },
+      { name: 'Collapse', key: 'Q', type: SpellType.Nova, dmg: 3, mana: 35, cd: 8, range: 120, stun: 1.0, color: '#7755cc' },
+      { name: 'Gravitational Ruin', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#4422aa', mana: 0, cd: 0 },
+    ],
+  },
+  bladecaller: {
+    name: 'Bladecaller', color: '#cc3355', glow: '#aa2244',
+    desc: 'Blade dancer. Kill-chain mobility.',
+    passive: { name: 'Kill Rush', desc: 'Kills within 1.5s of Shadow Step reset its cooldown; kills grant +10% speed for 3s' },
+    spells: [
+      { name: 'Blade Slash', key: 'LMB', type: SpellType.Cone, dmg: 2.5, range: 55, mana: 3, cd: 0.3, angle: 1.2, color: '#cc3355' },
+      { name: 'Shadow Step', key: 'RMB', type: SpellType.Leap, range: 140, mana: 12, cd: 2.5, dmg: 2, aoeR: 45, color: '#aa2244' },
+      { name: 'Blade Toss', key: 'Q', type: SpellType.Barrage, dmg: 1.5, speed: 450, radius: 6, mana: 20, cd: 6, count: 5, spread: 0.5, life: 0.8, color: '#cc3355', trail: '#881133' },
+      { name: 'Thousand Cuts', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#aa2244', mana: 0, cd: 0 },
+    ],
+  },
+  architect: {
+    name: 'Architect', color: '#44aacc', glow: '#228899',
+    desc: 'Zone control. Constructs + fortification.',
+    passive: { name: 'Fortification', desc: 'Take 20% less damage and +1 mana/s while near own zones' },
+    spells: [
+      { name: 'Arcane Bolt', key: 'LMB', type: SpellType.Homing, dmg: 1.5, speed: 320, radius: 7, mana: 5, cd: 0.28, life: 1.5, homing: 2.0, color: '#44aacc', trail: '#228899' },
+      { name: 'Deploy Construct', key: 'RMB', type: SpellType.Zone, dmg: 1, mana: 24, cd: 6, radius: 100, duration: 12, tickRate: 0.9, slow: 0.3, color: '#339dbb' },
+      { name: 'Scatter Mines', key: 'Q', type: SpellType.Trap, mana: 25, cd: 7, dmg: 3, radius: 40, count: 4, spread: 1.0, slow: 1.5, color: '#55ccdd' },
+      { name: 'Mega Construct', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#228899', mana: 0, cd: 0 },
+    ],
+  },
+  hexblade: {
+    name: 'Hexblade', color: '#7755cc', glow: '#5533aa',
+    desc: 'Curse mage. Mark and detonate.',
+    passive: { name: 'Hex Mastery', desc: 'Hex-marked enemies take 25% more damage from all sources; 3 stacks also slows 30%' },
+    spells: [
+      { name: 'Hex Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 1.5, speed: 380, radius: 8, mana: 7, cd: 0.3, life: 1.2, slow: 0.3, color: '#7755cc', trail: '#5533aa' },
+      { name: 'Doom Mark', key: 'RMB', type: SpellType.Homing, dmg: 2, speed: 250, radius: 12, mana: 20, cd: 3, life: 2.5, homing: 3.0, color: '#9966dd', trail: '#5533aa' },
+      { name: 'Hex Blast', key: 'Q', type: SpellType.AoeDelayed, dmg: 3, mana: 30, cd: 7, delay: 0.6, radius: 85, stun: 0.8, color: '#6644bb' },
+      { name: 'Hexstorm', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#5533aa', mana: 0, cd: 0 },
+    ],
+  },
+  warden: {
+    name: 'Warden', color: '#5588aa', glow: '#336688',
+    desc: 'Shield tank. Body-blocks for allies.',
+    passive: { name: 'Sentinel', desc: 'Take 20% less damage from enemies you face; melee attackers are marked for +1 ally damage' },
+    spells: [
+      { name: 'Guardian Strike', key: 'LMB', type: SpellType.Cone, dmg: 2.5, range: 60, mana: 4, cd: 0.4, angle: 1.0, color: '#5588aa' },
+      { name: 'Bastion', key: 'RMB', type: SpellType.Zone, dmg: 0, mana: 20, cd: 5, radius: 70, duration: 3.5, tickRate: 0.5, slow: 0.5, color: '#6699bb' },
+      { name: 'Aegis Link', key: 'Q', type: SpellType.AllyShield, mana: 25, cd: 8, duration: 4, color: '#88bbdd' },
+      { name: 'Unbreakable', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#336688', mana: 0, cd: 0 },
+    ],
+  },
+  cannoneer: {
+    name: 'Cannoneer', color: '#aa7733', glow: '#885522',
+    desc: 'Artillery. Slow power shots, long range.',
+    passive: { name: 'Heavy Caliber', desc: 'Every 4th shot deals 2x damage with double explosion radius' },
+    spells: [
+      { name: 'Power Shot', key: 'LMB', type: SpellType.Projectile, dmg: 3, speed: 500, radius: 11, mana: 10, cd: 0.5, life: 1.5, explode: 40, pierce: 1, color: '#aa7733', trail: '#885522' },
+      { name: 'Concussive Shell', key: 'RMB', type: SpellType.AoeDelayed, dmg: 2, mana: 18, cd: 3.5, delay: 0.4, radius: 60, stun: 0.8, color: '#cc9944' },
+      { name: 'Caltrops', key: 'Q', type: SpellType.Trap, mana: 15, cd: 5, dmg: 2, radius: 55, slow: 2.5, count: 2, spread: 0.6, color: '#ddaa55' },
+      { name: 'Artillery Barrage', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#885522', mana: 0, cd: 0 },
+    ],
+  },
+  soulbinder: {
+    name: 'Soulbinder', color: '#55aa88', glow: '#338866',
+    desc: 'Soul mage. Marks + ally empowerment.',
+    passive: { name: 'Soul Bond', desc: 'LMB marks enemies for 4s; allies deal +1 damage and heal 0.5 HP on marked kills' },
+    spells: [
+      { name: 'Soul Lash', key: 'LMB', type: SpellType.Beam, dmg: 1.5, range: 220, mana: 6, cd: 0.28, width: 3, color: '#55aa88', trail: '#338866' },
+      { name: 'Spirit Chain', key: 'RMB', type: SpellType.Homing, dmg: 2, speed: 260, radius: 10, mana: 18, cd: 3.5, life: 2.5, homing: 3.5, slow: 1.2, color: '#66bb99', trail: '#338866' },
+      { name: 'Soul Surge', key: 'Q', type: SpellType.Zone, dmg: 0, mana: 30, cd: 8, radius: 80, duration: 4, tickRate: 0.8, heal: 1.5, color: '#44aa77' },
+      { name: 'Soul Storm', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#338866', mana: 0, cd: 0 },
+    ],
+  },
+  invoker: {
+    name: 'Invoker', color: '#cc8844', glow: '#aa6622',
+    desc: 'Elemental mastery. Multi-element combos.',
+    passive: { name: 'Elemental Attunement', desc: 'Burning+slowed enemies take +1 dmg/tick; stunned+burning enemies take 2x burn damage' },
+    spells: [
+      { name: 'Flame Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 2, speed: 400, radius: 8, mana: 7, cd: 0.3, life: 1.1, burn: 2, color: '#cc8844', trail: '#aa6622' },
+      { name: 'Frost Spike', key: 'RMB', type: SpellType.Projectile, dmg: 1.5, speed: 480, radius: 7, mana: 16, cd: 2, life: 1.0, slow: 1.5, pierce: 1, color: '#88ccee', trail: '#5599bb' },
+      { name: 'Storm Strike', key: 'Q', type: SpellType.AoeDelayed, dmg: 3.5, mana: 35, cd: 9, delay: 0.7, radius: 70, stun: 0.8, color: '#ffcc44' },
+      { name: 'Elemental Convergence', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#aa6622', mana: 0, cd: 0 },
+    ],
+  },
+  tidecaller: {
+    name: 'Tidecaller', color: '#3388bb', glow: '#226699',
+    desc: 'Water mage. Summons + wave control.',
+    passive: { name: 'Rising Tide', desc: 'Each active summon grants +10% ability damage (max 3); 2+ summons enhance slow to 0.6s' },
+    spells: [
+      { name: 'Water Bolt', key: 'LMB', type: SpellType.Homing, dmg: 1.5, speed: 340, radius: 7, mana: 6, cd: 0.28, life: 1.8, homing: 2.5, color: '#3388bb', trail: '#226699' },
+      { name: 'Tidal Wave', key: 'RMB', type: SpellType.Cone, dmg: 2, range: 130, mana: 22, cd: 3, angle: 0.9, slow: 1.5, color: '#44aadd' },
+      { name: 'Summon Elemental', key: 'Q', type: SpellType.Ultimate, ultCharge: 0, mana: 35, cd: 10, color: '#55bbee' },
+      { name: 'Tsunami', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#226699', mana: 0, cd: 0 },
+    ],
+  },
+  voidweaver: {
+    name: 'Voidweaver', color: '#aa44cc', glow: '#882299',
+    desc: 'Void magic. Traps, zones, debuffs.',
+    passive: { name: 'Entropic Decay', desc: 'Debuffed enemies take 15% more damage from all sources; debuffed kills explode for 1 AOE damage' },
+    spells: [
+      { name: 'Void Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 1.5, speed: 320, radius: 9, mana: 6, cd: 0.32, life: 1.2, burn: 3, slow: 0.4, color: '#aa44cc', trail: '#882299' },
+      { name: 'Corruption Zone', key: 'RMB', type: SpellType.Zone, dmg: 1, mana: 22, cd: 4, radius: 90, duration: 5, tickRate: 0.6, slow: 1.0, color: '#9933bb' },
+      { name: 'Void Traps', key: 'Q', type: SpellType.Trap, mana: 25, cd: 6, dmg: 3, radius: 50, count: 3, spread: 0.9, slow: 2.0, color: '#cc55ee' },
+      { name: 'Void Rift', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#882299', mana: 0, cd: 0 },
+    ],
+  },
 };
 
 export const CLASS_ORDER: string[] = [
   'pyromancer', 'cryomancer', 'stormcaller', 'arcanist', 'necromancer',
   'chronomancer', 'knight', 'berserker', 'paladin', 'ranger',
   'druid', 'warlock', 'monk', 'engineer',
+  'graviturge', 'bladecaller', 'architect', 'hexblade', 'warden',
+  'cannoneer', 'soulbinder', 'invoker', 'tidecaller', 'voidweaver',
 ];
 
 export const BOSS_HP_EXPONENT = 1.6;
