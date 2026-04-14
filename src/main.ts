@@ -44,6 +44,9 @@ import { setupLobby } from './ui/lobby';
 import { showSelect, setupClassSelect, stopCardAnimation } from './ui/class-select';
 import { setupGameOver } from './ui/game-over';
 
+import { profiler } from './debug/profiler';
+import { initPerfOverlay, drawPerfOverlay } from './debug/perf-overlay';
+
 // ═══════════════════════════════════
 //          INITIALIZATION
 // ═══════════════════════════════════
@@ -66,6 +69,9 @@ window.addEventListener('resize', resize);
 
 // Setup input handlers
 setupInput(state, canvas);
+
+// Setup performance overlay (F3 to toggle)
+initPerfOverlay(canvas);
 
 // Wire chest pickup handler to break circular dependency physics -> upgrades
 setChestPickupHandler((s: GameState) => showUpgradeScreen(s));
@@ -177,6 +183,7 @@ setupGameOver();
 let lastTime = performance.now();
 
 function loop(now: number): void {
+  profiler.frameStart();
   const dt = Math.min((now - lastTime) / 1000, 0.05);
   lastTime = now;
   state.time += dt;
@@ -212,13 +219,27 @@ function loop(now: number): void {
       if (state.hitStop < 0) state.hitStop = 0;
     }
 
+    profiler.begin('updatePlayers');
     updatePlayers(state, gameDt);
+    profiler.end('updatePlayers');
+    profiler.begin('updateSpells');
     updateSpells(state, gameDt);
+    profiler.end('updateSpells');
+    profiler.begin('updateAoe');
     updateAoe(state, gameDt);
+    profiler.end('updateAoe');
+    profiler.begin('updateZones');
     updateZones(state, gameDt);
+    profiler.end('updateZones');
+    profiler.begin('updateEnemies');
     updateEnemies(state, gameDt);
+    profiler.end('updateEnemies');
+    profiler.begin('updateEProj');
     updateEProj(state, gameDt);
+    profiler.end('updateEProj');
+    profiler.begin('updateWaves');
     updateWaves(state, gameDt);
+    profiler.end('updateWaves');
 
     // Combo timer decay
     if (state.comboTimer > 0) {
@@ -338,11 +359,18 @@ function loop(now: number): void {
   }
 
   // Shared: camera, effects, HUD
+  profiler.begin('camera');
   updateCamera(state);
+  profiler.end('camera');
+  profiler.begin('effects');
   updateFx(state, dt);
+  profiler.end('effects');
+  profiler.begin('hud');
   updateHUD(state);
+  profiler.end('hud');
 
   // ── DRAW ──
+  profiler.begin('render');
   ctx.fillStyle = '#04030a';
   ctx.fillRect(0, 0, state.width, state.height);
 
@@ -373,10 +401,16 @@ function loop(now: number): void {
 
   // Synergy banner (screen-space, drawn after restore)
   drawSynergyBanner(ctx, state);
+  profiler.end('render');
+
+  // Performance overlay (drawn in screen space, after all game rendering)
+  drawPerfOverlay(ctx);
 
   // Flush all queued network messages as a single batched packet
   flushOutbox();
 
+  profiler.countEntities(state);
+  profiler.frameEnd();
   requestAnimationFrame(loop);
 }
 
