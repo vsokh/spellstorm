@@ -35,25 +35,25 @@ describe('scaledHealthDropChance()', () => {
 });
 
 describe('getXpStep()', () => {
-  it('returns 14 for levels 1-5', () => {
-    expect(getXpStep(1)).toBe(14);
-    expect(getXpStep(3)).toBe(14);
-    expect(getXpStep(5)).toBe(14);
+  it('returns 22 for levels 1-5', () => {
+    expect(getXpStep(1)).toBe(22);
+    expect(getXpStep(3)).toBe(22);
+    expect(getXpStep(5)).toBe(22);
   });
 
-  it('returns 18 for levels 6-10', () => {
-    expect(getXpStep(6)).toBe(18);
-    expect(getXpStep(8)).toBe(18);
-    expect(getXpStep(10)).toBe(18);
+  it('returns 28 for levels 6-10', () => {
+    expect(getXpStep(6)).toBe(28);
+    expect(getXpStep(8)).toBe(28);
+    expect(getXpStep(10)).toBe(28);
   });
 
-  it('returns 25 for levels 11-15', () => {
-    expect(getXpStep(11)).toBe(25);
-    expect(getXpStep(15)).toBe(25);
+  it('returns 38 for levels 11-15', () => {
+    expect(getXpStep(11)).toBe(38);
+    expect(getXpStep(15)).toBe(38);
   });
 
-  it('returns 35 for levels 16+', () => {
-    expect(getXpStep(16)).toBe(35);
-    expect(getXpStep(100)).toBe(35);
+  it('returns 50 for levels 16+', () => {
+    expect(getXpStep(16)).toBe(50);
+    expect(getXpStep(100)).toBe(50);
   });
 });
