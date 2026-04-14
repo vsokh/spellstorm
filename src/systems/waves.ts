@@ -434,6 +434,15 @@ export function updateZones(state: GameState, dt: number): void {
           spawnText(state, p.x, p.y - 20, `+${z.heal}`, '#ffffaa');
         }
       }
+      // Haste Zone: boost ally speed
+      if (z._hasteZone) {
+        for (const pl of state.players) {
+          if (!pl.alive || pl.idx === z.owner) continue;
+          if (dist(z.x, z.y, pl.x, pl.y) < z.radius) {
+            pl._hasteTimer = 3.0;
+          }
+        }
+      }
     }
     if (z.age >= z.duration) {
       // Engineer Self-Destruct: turrets explode on expiry

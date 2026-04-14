@@ -194,6 +194,8 @@ export class Upgrades {
   timeLoop: number = 0;
   hasteZone: boolean = false;
   temporalEcho: boolean = false;
+  _timeLoopUsed: boolean = false;
+  _hasteTimer: number = 0;
   shieldBounce: number = 0;
   tauntAura: boolean = false;
   bloodlust: boolean = false;

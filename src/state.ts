@@ -379,6 +379,8 @@ export function createPlayer(idx: number, clsKey: string): Player {
     timeLoop: 0,
     hasteZone: false,
     temporalEcho: false,
+    _timeLoopUsed: false,
+    _hasteTimer: 0,
     shieldBounce: 0,
     tauntAura: false,
     bloodlust: false,

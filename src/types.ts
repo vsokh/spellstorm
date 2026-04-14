@@ -259,6 +259,8 @@ export interface Player {
   timeLoop: number;
   hasteZone: boolean;
   temporalEcho: boolean;
+  _timeLoopUsed: boolean;
+  _hasteTimer: number;
   shieldBounce: number;
   tauntAura: boolean;
   bloodlust: boolean;
@@ -473,6 +475,7 @@ export interface Zone {
   stun: number;
   _turret?: boolean;
   _megaTurret?: boolean;
+  _hasteZone?: boolean;
 }
 
 export interface AoeMarker {

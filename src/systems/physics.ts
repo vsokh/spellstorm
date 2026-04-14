@@ -259,6 +259,12 @@ export function updatePlayers(state: GameState, dt: number): void {
       if (p._timeStopTimer <= 0) p.moveSpeed = DEFAULT_MOVE_SPEED;
     }
 
+    // Haste zone speed boost decay
+    if (p._hasteTimer > 0) {
+      p.moveSpeed = Math.max(p.moveSpeed, DEFAULT_MOVE_SPEED * 2);
+      p._hasteTimer -= dt;
+    }
+
     // Blood rage decay
     if (p._rage > 0) {
       p._rage -= dt;

@@ -504,6 +504,26 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
       return;
     }
 
+    // Time Loop: rewind instead of dying (once per wave)
+    if (p.timeLoop > 0 && !p._timeLoopUsed) {
+      p._timeLoopUsed = true;
+      const snap = p._rewindSnap;
+      if (snap) {
+        p.hp = Math.min(p.maxHp, Math.max(1, snap.hp));
+        p.mana = Math.min(p.maxMana, Math.max(p.mana, snap.mana));
+      } else {
+        p.hp = Math.ceil(p.maxHp * 0.5);
+      }
+      p.iframes = 2.0;
+      spawnParticles(state, p.x, p.y, '#ffcc44', 25, 1.2);
+      spawnShockwave(state, p.x, p.y, 80, 'rgba(255,200,60,.5)');
+      spawnText(state, p.x, p.y - 25, 'TIME LOOP', '#ffcc44');
+      netSfx(state, SfxName.Blink);
+      shake(state, 5);
+      flashScreen(state, 0.2, '255,200,60');
+      return;
+    }
+
     // Lives system: single-player instant respawn if lives remain
     if (state.mode === NetworkMode.Local && state.lives > 1) {
       state.lives--;
@@ -1026,6 +1046,10 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
           }
         }
       }
+      // Chronomancer Haste Zone: mark temporal field for ally speed boost
+      if (p.hasteZone && p.clsKey === 'chronomancer' && def.name === 'Temporal Field') {
+        spellZone._hasteZone = true;
+      }
     }
     netSfx(state, SfxName.Ice);
   } else if (def.type === SpellType.Rewind) {
@@ -1126,6 +1150,27 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         netSfx(state, SfxName.Arcane);
       }
     }
+  }
+
+  // Temporal Echo: fire a delayed copy at 50% damage
+  if (p.temporalEcho && idx === 0 && (def.type === SpellType.Projectile || def.type === SpellType.Homing)) {
+    setTimeout(() => {
+      if (!p.alive) return;
+      const echoCos = Math.cos(angle);
+      const echoSin = Math.sin(angle);
+      const echoRt = spellToRuntime(def);
+      echoRt.dmg = Math.max(1, Math.round(getEffectiveSpellDmg(p, idx) * 0.5));
+      state.spells.push({
+        ...echoRt,
+        x: p.x + echoCos * WIZARD_SIZE * 1.5,
+        y: p.y + echoSin * WIZARD_SIZE * 1.5,
+        vx: echoCos * def.speed, vy: echoSin * def.speed,
+        owner: p.idx, age: 0, zapTimer: 0,
+        pierceLeft: (p.pierce || 0) + (def.pierce || 0),
+        clsKey: p.clsKey,
+      });
+      spawnParticles(state, p.x + echoCos * 15, p.y + echoSin * 15, '#ffcc44', 2, 0.2);
+    }, 500);
   }
 }
 

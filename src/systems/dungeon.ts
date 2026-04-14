@@ -125,6 +125,7 @@ export function spawnEnemy(state: GameState, type: string, hpScale: number, spdS
 export function startWave(state: GameState): void {
   state.waveActive = true;
   state.shopTempDmg = 0; // reset temporary damage boost each wave
+  for (const p of state.players) { p._timeLoopUsed = false; }
   const wave = state.wave;
   const isBoss = wave % 5 === 0;
   const hpScale = 1 + Math.floor(wave * 0.6);
