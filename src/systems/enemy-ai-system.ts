@@ -34,6 +34,15 @@ export function enemyAI(state: GameState, dt: number): void {
       }
     }
 
+    // Taunt Aura: Knight forces enemies within 100px to target them
+    for (const p of state.players) {
+      if (p && p.alive && p.tauntAura && dist(e.x, e.y, p.x, p.y) < 100) {
+        e.target = p.idx;
+        target = p;
+        break;
+      }
+    }
+
     // Teleport behavior
     if (et.teleport) {
       e._teleportTimer = (e._teleportTimer || 0) - dt;

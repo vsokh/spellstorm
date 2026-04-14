@@ -185,6 +185,39 @@ export function updateSpells(state: GameState, dt: number): void {
           }
         }
         if (s.pierceLeft > 0) { s.pierceLeft--; continue; }
+        // Shield Bounce: Knight's Shield Throw bounces to nearby enemies
+        const bounceCount = state.players[s.owner]?.shieldBounce ?? 0;
+        if (bounceCount > 0 && s.clsKey === 'knight') {
+          const bounced = new Set<EnemyView>([e]);
+          let prev = e;
+          const bounceRange = WAVE_PHYSICS.CHAIN_RANGE;
+          for (let bi = 0; bi < bounceCount; bi++) {
+            let nearest: EnemyView | null = null;
+            let nearestDist = Infinity;
+            const bounceCandidates = state.enemyGrid.queryArea(prev.x, prev.y, bounceRange);
+            for (const idx of bounceCandidates) {
+              const be = state.enemies.at(idx);
+              if (!be.alive || bounced.has(be)) continue;
+              const d = dist(prev.x, prev.y, be.x, be.y);
+              if (d < bounceRange && d < nearestDist) {
+                nearest = be;
+                nearestDist = d;
+              }
+            }
+            if (!nearest) break;
+            const bounceBeam = state.beams.acquire();
+            if (bounceBeam) {
+              bounceBeam.x = prev.x; bounceBeam.y = prev.y;
+              bounceBeam.angle = Math.atan2(nearest.y - prev.y, nearest.x - prev.x);
+              bounceBeam.range = nearestDist;
+              bounceBeam.width = 3; bounceBeam.color = '#ccddee'; bounceBeam.life = 0.12;
+            }
+            damageEnemy(state, nearest, s.dmg, s.owner);
+            spawnParticles(state, nearest.x, nearest.y, '#aabbcc', 4, 0.25);
+            bounced.add(nearest);
+            prev = nearest;
+          }
+        }
         hitE = true;
         break;
       }
