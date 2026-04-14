@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:itch": "bash tools/build-itch.sh",
     "preview": "vite preview",
     "sim": "npx tsx tools/balance_sim.ts",
     "test": "vitest run",
