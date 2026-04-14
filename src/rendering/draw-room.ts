@@ -52,6 +52,7 @@ function updateMotes(dt: number, time: number): void {
 // ═══════════════════════════════════
 
 let floorCanvas: OffscreenCanvas | null = null;
+let wallOverlayCanvas: OffscreenCanvas | null = null;
 
 function generateFloorTexture(): OffscreenCanvas {
   const c = new OffscreenCanvas(ROOM_WIDTH, ROOM_HEIGHT);
@@ -344,6 +345,35 @@ function generateFloorTexture(): OffscreenCanvas {
 }
 
 // ═══════════════════════════════════
+//       WALL OVERLAY CACHE
+// ═══════════════════════════════════
+
+function generateWallOverlay(): OffscreenCanvas {
+  const c = new OffscreenCanvas(ROOM_WIDTH, ROOM_HEIGHT);
+  const ctx = c.getContext('2d')!;
+
+  // Vignette overlay (darkened corners/edges for depth)
+  const cx = ROOM_WIDTH / 2, cy = ROOM_HEIGHT / 2;
+  const vigRadius = Math.min(ROOM_WIDTH, ROOM_HEIGHT) * 0.35;
+  const vigOuter = Math.max(ROOM_WIDTH, ROOM_HEIGHT) * 0.65;
+  const vigGrad = ctx.createRadialGradient(cx, cy, vigRadius, cx, cy, vigOuter);
+  vigGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  vigGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0.04)');
+  vigGrad.addColorStop(1, 'rgba(0, 0, 0, 0.2)');
+  ctx.fillStyle = vigGrad;
+  ctx.fillRect(0, 0, ROOM_WIDTH, ROOM_HEIGHT);
+
+  // Wall fills
+  ctx.fillStyle = '#1a1428';
+  ctx.fillRect(0, 0, ROOM_WIDTH, WALL_THICKNESS);
+  ctx.fillRect(0, ROOM_HEIGHT - WALL_THICKNESS, ROOM_WIDTH, WALL_THICKNESS);
+  ctx.fillRect(0, 0, WALL_THICKNESS, ROOM_HEIGHT);
+  ctx.fillRect(ROOM_WIDTH - WALL_THICKNESS, 0, WALL_THICKNESS, ROOM_HEIGHT);
+
+  return c;
+}
+
+// ═══════════════════════════════════
 //       GROUND FOG LAYER
 // ═══════════════════════════════════
 
@@ -465,6 +495,9 @@ export function drawRoom(ctx: CanvasRenderingContext2D, state: GameState): void 
   // Generate floor texture once
   if (!floorCanvas) {
     floorCanvas = generateFloorTexture();
+  }
+  if (!wallOverlayCanvas) {
+    wallOverlayCanvas = generateWallOverlay();
   }
 
   // Draw cached floor
@@ -675,19 +708,6 @@ export function drawRoom(ctx: CanvasRenderingContext2D, state: GameState): void 
   }
   ctx.globalAlpha = 1;
 
-  // ── Vignette overlay ──
-  // Darkened corners/edges for depth and focus on center
-  {
-    const vigRadius = Math.min(ROOM_WIDTH, ROOM_HEIGHT) * 0.35;
-    const vigOuter = Math.max(ROOM_WIDTH, ROOM_HEIGHT) * 0.65;
-    const vigGrad = ctx.createRadialGradient(cx, cy, vigRadius, cx, cy, vigOuter);
-    vigGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    vigGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0.04)');
-    vigGrad.addColorStop(1, 'rgba(0, 0, 0, 0.2)');
-    ctx.fillStyle = vigGrad;
-    ctx.fillRect(0, 0, ROOM_WIDTH, ROOM_HEIGHT);
-  }
-
   // ── Corner shadow pools ──
   {
     const cornerPositions: [number, number][] = [
@@ -709,12 +729,8 @@ export function drawRoom(ctx: CanvasRenderingContext2D, state: GameState): void 
     }
   }
 
-  // Walls — over everything else
-  ctx.fillStyle = '#1a1428';
-  ctx.fillRect(0, 0, ROOM_WIDTH, WALL_THICKNESS);
-  ctx.fillRect(0, ROOM_HEIGHT - WALL_THICKNESS, ROOM_WIDTH, WALL_THICKNESS);
-  ctx.fillRect(0, 0, WALL_THICKNESS, ROOM_HEIGHT);
-  ctx.fillRect(ROOM_WIDTH - WALL_THICKNESS, 0, WALL_THICKNESS, ROOM_HEIGHT);
+  // Blit cached wall overlay (vignette + wall fills)
+  ctx.drawImage(wallOverlayCanvas!, 0, 0);
 
   // Inner wall glow (pulsing purple edge light)
   ctx.strokeStyle = `rgba(100, 60, 160, ${0.1 + 0.05 * Math.sin(t * 1.2)})`;
