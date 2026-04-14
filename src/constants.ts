@@ -342,7 +342,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Fireball', key: 'LMB', type: SpellType.Projectile, dmg: 2, speed: 400, radius: 10, mana: 8, cd: 0.35, life: 1.2, explode: 35, color: '#ff6633', trail: '#ff3300', burn: 2 },
       { name: 'Flame Wave', key: 'RMB', type: SpellType.Cone, dmg: 2, range: 110, mana: 22, cd: 2.5, angle: 0.8, color: '#ff4400' },
       { name: 'Meteor', key: 'Q', type: SpellType.AoeDelayed, dmg: 4, mana: 40, cd: 8, delay: 0.8, radius: 75, color: '#ff2200' },
-      { name: 'Inferno', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#ff2200', mana: 0, cd: 0 },
+      { name: 'Inferno', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#ff2200', mana: 0, cd: 0 },
     ],
   },
   cryomancer: {
@@ -353,7 +353,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Ice Shard', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 520, radius: 7, mana: 6, cd: 0.22, life: 1, slow: 0.6, color: '#88ddff', trail: '#44aadd' },
       { name: 'Freeze Breath', key: 'RMB', type: SpellType.Cone, dmg: 2, range: 120, mana: 22, cd: 3.5, angle: 0.7, slow: 1.5, color: '#88ddff' },
       { name: 'Blizzard', key: 'Q', type: SpellType.Zone, dmg: 1, mana: 35, cd: 10, radius: 90, duration: 4, tickRate: 0.7, slow: 0.8, color: '#2288dd' },
-      { name: 'Absolute Zero', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#2288dd', mana: 0, cd: 0 },
+      { name: 'Absolute Zero', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#2288dd', mana: 0, cd: 0 },
     ],
   },
   stormcaller: {
@@ -364,7 +364,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Lightning', key: 'LMB', type: SpellType.Beam, dmg: 1, range: 320, mana: 7, cd: 0.28, width: 3, color: '#cc88ff', trail: '#aa55ff' },
       { name: 'Ball Zap', key: 'RMB', type: SpellType.Projectile, dmg: 1, speed: 140, radius: 16, mana: 18, cd: 3, life: 3.5, zap: 75, zapRate: 0.45, color: '#bb66ff', trail: '#9944dd' },
       { name: 'Thunder', key: 'Q', type: SpellType.AoeDelayed, dmg: 3, mana: 35, cd: 8, delay: 0.5, radius: 65, stun: 1, color: '#ffcc44' },
-      { name: 'Storm Fury', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#ffcc44', mana: 0, cd: 0 },
+      { name: 'Storm Fury', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#ffcc44', mana: 0, cd: 0 },
     ],
   },
   arcanist: {
@@ -375,7 +375,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Arcane Bolt', key: 'LMB', type: SpellType.Homing, dmg: 1, speed: 300, radius: 8, mana: 7, cd: 0.28, life: 2, homing: 2.5, color: '#ff55aa', trail: '#dd3388' },
       { name: 'Blink', key: 'RMB', type: SpellType.Blink, range: 170, mana: 18, cd: 2.5, color: '#ff88cc' },
       { name: 'Barrage', key: 'Q', type: SpellType.Barrage, dmg: 1, speed: 380, radius: 7, mana: 35, cd: 7, count: 7, spread: 0.4, life: 1.2, color: '#ff55aa', trail: '#cc2277' },
-      { name: 'Arcane Storm', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#ff55aa', mana: 0, cd: 0 },
+      { name: 'Arcane Storm', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#ff55aa', mana: 0, cd: 0 },
     ],
   },
   necromancer: {
@@ -386,7 +386,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Soul Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 360, radius: 9, mana: 8, cd: 0.35, life: 1.2, color: '#55cc55', trail: '#228822', drain: 1 },
       { name: 'Death Coil', key: 'RMB', type: SpellType.Homing, dmg: 2, speed: 280, radius: 10, mana: 28, cd: 4, life: 2.5, homing: 3.5, drain: 2, color: '#44aa44', trail: '#228822' },
       { name: 'Plague', key: 'Q', type: SpellType.Zone, dmg: 1, mana: 40, cd: 10, radius: 80, duration: 4, tickRate: 0.8, slow: 0.3, color: '#338833' },
-      { name: 'Army of Dead', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#228822', mana: 0, cd: 0 },
+      { name: 'Army of Dead', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#228822', mana: 0, cd: 0 },
     ],
   },
   chronomancer: {
@@ -397,7 +397,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Time Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 480, radius: 8, mana: 6, cd: 0.25, life: 1, stun: 0.15, color: '#ffcc44', trail: '#cc9922' },
       { name: 'Temporal Field', key: 'RMB', type: SpellType.Zone, dmg: 0, mana: 22, cd: 4, radius: 70, duration: 3.5, tickRate: 0.5, slow: 2.5, stun: 0.3, color: '#ffdd66' },
       { name: 'Rewind', key: 'Q', type: SpellType.Rewind, mana: 45, cd: 12, color: '#ffcc44' },
-      { name: 'Time Stop', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#ffdd66', mana: 0, cd: 0 },
+      { name: 'Time Stop', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#ffdd66', mana: 0, cd: 0 },
     ],
   },
   knight: {
@@ -408,7 +408,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Shield Throw', key: 'LMB', type: SpellType.Projectile, dmg: 2, speed: 350, radius: 10, mana: 4, cd: 0.4, life: 0.8, color: '#ccddee', trail: '#8899aa', pierce: 1 },
       { name: 'Shield Rush', key: 'RMB', type: SpellType.Leap, range: 100, mana: 15, cd: 2, dmg: 3, aoeR: 60, stun: 1.5, color: '#8899aa' },
       { name: 'Charge', key: 'Q', type: SpellType.Blink, range: 200, mana: 20, cd: 3.5, color: '#aabbcc' },
-      { name: 'Shield Wall', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#ccddee', mana: 0, cd: 0 },
+      { name: 'Shield Wall', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#ccddee', mana: 0, cd: 0 },
     ],
   },
   berserker: {
@@ -419,7 +419,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Axe Swing', key: 'LMB', type: SpellType.Cone, dmg: 3, range: 50, mana: 2, cd: 0.35, angle: 1.5, color: '#ff6644' },
       { name: 'Throwing Axe', key: 'RMB', type: SpellType.Projectile, dmg: 3, speed: 500, radius: 10, mana: 8, cd: 0.8, life: 1.2, color: '#ff4444', trail: '#cc2222' },
       { name: 'Leap Slam', key: 'Q', type: SpellType.Leap, range: 180, mana: 20, cd: 3.5, dmg: 3, aoeR: 60, color: '#ff3322' },
-      { name: 'Blood Rage', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#ff2222', mana: 0, cd: 0 },
+      { name: 'Blood Rage', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#ff2222', mana: 0, cd: 0 },
     ],
   },
   paladin: {
@@ -430,7 +430,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Smite', key: 'LMB', type: SpellType.Projectile, dmg: 2, speed: 380, radius: 9, mana: 7, cd: 0.35, life: 1.2, color: '#ffddaa', trail: '#ccaa66', explode: 25 },
       { name: 'Holy Shield', key: 'RMB', type: SpellType.AllyShield, mana: 25, cd: 5, duration: 3, color: '#ffffcc' },
       { name: 'Consecrate', key: 'Q', type: SpellType.Zone, dmg: 2, mana: 30, cd: 7, radius: 100, duration: 3, tickRate: 0.6, slow: 0.3, color: '#ffeeaa', heal: 2 },
-      { name: 'Holy Light', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#ffffcc', mana: 0, cd: 0 },
+      { name: 'Holy Light', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#ffffcc', mana: 0, cd: 0 },
     ],
   },
   ranger: {
@@ -441,7 +441,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Arrow', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 600, radius: 5, mana: 4, cd: 0.25, life: 1.4, color: '#88cc44', trail: '#668833' },
       { name: 'Volley', key: 'RMB', type: SpellType.Barrage, dmg: 1, speed: 500, radius: 5, mana: 18, cd: 2.5, count: 4, spread: 0.6, life: 1, color: '#88cc44', trail: '#556622' },
       { name: 'Trap', key: 'Q', type: SpellType.Trap, mana: 15, cd: 4, dmg: 3, radius: 50, slow: 2, color: '#aadd55' },
-      { name: 'Arrow Rain', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#88cc44', mana: 0, cd: 0 },
+      { name: 'Arrow Rain', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#88cc44', mana: 0, cd: 0 },
     ],
   },
   druid: {
@@ -452,7 +452,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Thorn Shot', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 380, radius: 7, mana: 6, cd: 0.32, life: 1.2, burn: 3, slow: 0.4, color: '#44aa33', trail: '#337722' },
       { name: 'Entangle', key: 'RMB', type: SpellType.Zone, dmg: 0, mana: 20, cd: 5, radius: 60, duration: 2, tickRate: 0.5, stun: 2, color: '#66bb44' },
       { name: 'Spirit Wolf', key: 'Q', type: SpellType.Ultimate, ultCharge: 0, mana: 30, cd: 10, color: '#88aa55' },
-      { name: "Nature's Wrath", key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#33aa22', mana: 0, cd: 0 },
+      { name: "Nature's Wrath", key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#33aa22', mana: 0, cd: 0 },
     ],
   },
   warlock: {
@@ -463,7 +463,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Shadow Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 3, speed: 260, radius: 10, mana: 10, cd: 0.5, life: 1.5, color: '#8833aa', trail: '#662288' },
       { name: 'Drain Life', key: 'RMB', type: SpellType.Beam, dmg: 2, range: 200, mana: 18, cd: 1, width: 4, drain: 2, color: '#aa44cc' },
       { name: 'Summon Imp', key: 'Q', type: SpellType.Ultimate, ultCharge: 0, mana: 25, cd: 8, color: '#cc4466' },
-      { name: 'Doom', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#662288', mana: 0, cd: 0 },
+      { name: 'Doom', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#662288', mana: 0, cd: 0 },
     ],
   },
   monk: {
@@ -474,7 +474,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Chi Blast', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 500, radius: 8, mana: 3, cd: 0.15, life: 0.5, color: '#eedd88', trail: '#ccaa44' },
       { name: 'Flying Kick', key: 'RMB', type: SpellType.Leap, range: 180, mana: 12, cd: 2, dmg: 4, aoeR: 55, color: '#ccaa44' },
       { name: 'Chi Burst', key: 'Q', type: SpellType.Zone, dmg: 0, mana: 15, cd: 6, radius: 40, duration: 3, tickRate: 0.8, heal: 2, color: '#ffffcc' },
-      { name: 'Thousand Fists', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#eedd88', mana: 0, cd: 0 },
+      { name: 'Thousand Fists', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#eedd88', mana: 0, cd: 0 },
     ],
   },
   engineer: {
@@ -485,7 +485,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Wrench Throw', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 350, radius: 7, mana: 5, cd: 0.3, life: 1.0, color: '#dd8833', trail: '#aa6622', homing: 1.0 },
       { name: 'Deploy Turret', key: 'RMB', type: SpellType.Zone, dmg: 1, mana: 25, cd: 6, radius: 120, duration: 15, tickRate: 0.8, color: '#cc7722' },
       { name: 'Mine Field', key: 'Q', type: SpellType.Trap, mana: 20, cd: 5, dmg: 4, radius: 45, count: 3, spread: 0.8, color: '#ffaa33' },
-      { name: 'Mega Turret', key: 'R', type: SpellType.Ultimate, ultCharge: 100, color: '#dd8833', mana: 0, cd: 0 },
+      { name: 'Mega Turret', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#dd8833', mana: 0, cd: 0 },
     ],
   },
 };

@@ -5,7 +5,7 @@ import { PlayerInput, NetworkMode } from './types';
 //          INPUT HANDLING
 // ═══════════════════════════════════
 
-const PREVENTED_KEYS = ['Space', 'Tab', 'KeyQ', 'KeyE', 'KeyR'];
+const PREVENTED_KEYS = ['Space', 'Tab', 'KeyQ', 'KeyE'];
 
 export function setupInput(state: GameState, canvas: HTMLCanvasElement): void {
   window.addEventListener('keydown', (e: KeyboardEvent) => {
@@ -73,7 +73,7 @@ export function getInput(state: GameState, playerIdx: number): PlayerInput {
     shoot: state.mouseDown,
     shoot2: state.rightDown,
     ability: !!state.keys['KeyQ'],
-    ult: !!state.keys['KeyR'],
+    ult: !!state.keys['Space'],
     dash: !!(state.keys['ShiftLeft'] || state.keys['ShiftRight']),
   };
 }

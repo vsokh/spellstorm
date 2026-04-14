@@ -212,7 +212,7 @@ export function updatePlayers(state: GameState, dt: number): void {
     }
     if (!input.ability) state.keys[`_q${p.idx}`] = false;
 
-    // Ultimate (R) - needs full charge
+    // Ultimate (Space) - needs full charge
     const ultThreshold = p.ultOverflow ? COMBAT.ULT_THRESHOLD_OVERFLOW : COMBAT.ULT_THRESHOLD;
     if (input.ult && p.ultCharge >= ultThreshold && !state.keys[`_r${p.idx}`]) {
       state.keys[`_r${p.idx}`] = true;
