@@ -200,8 +200,8 @@ input[type=text]:focus {
 
 /* ── Class Detail Panel ── */
 #class-detail {
-  width: 280px;
-  min-width: 280px;
+  width: 320px;
+  min-width: 320px;
   background: rgba(14, 10, 24, 0.9);
   border-right: 1px solid var(--border-subtle);
   overflow-y: auto;
@@ -224,7 +224,7 @@ input[type=text]:focus {
 }
 
 .cd-desc {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--text-mid);
   line-height: 1.5;
   margin-bottom: 14px;
@@ -232,7 +232,7 @@ input[type=text]:focus {
 
 .cd-section-label {
   font-family: 'Cinzel', serif;
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -248,14 +248,14 @@ input[type=text]:focus {
 }
 
 .cd-passive-name {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-bright);
   margin-bottom: 2px;
 }
 
 .cd-passive-desc {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--text-mid);
   line-height: 1.5;
 }
@@ -266,14 +266,14 @@ input[type=text]:focus {
   padding: 3px 10px;
   border: 1px solid;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .cd-synergy-desc {
-  font-size: 9px;
+  font-size: 10px;
   margin-top: 3px;
   opacity: 0.85;
 }
@@ -304,19 +304,19 @@ input[type=text]:focus {
 }
 
 .cd-synergy-name {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.5px;
 }
 
 .cd-synergy-partner {
-  font-size: 9px;
+  font-size: 10px;
   color: var(--text-dim);
   margin-left: auto;
 }
 
 .cd-synergy-flavor {
-  font-size: 8px;
+  font-size: 10px;
   font-style: italic;
   color: var(--text-dim);
   line-height: 1.4;
@@ -324,7 +324,7 @@ input[type=text]:focus {
 }
 
 .cd-synergy-bonuses {
-  font-size: 8px;
+  font-size: 10px;
   color: var(--text-mid);
   line-height: 1.6;
 }
@@ -364,7 +364,7 @@ input[type=text]:focus {
   height: 18px;
   padding: 0 5px;
   border-radius: 3px;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.5px;
   background: rgba(0, 0, 0, 0.35);
@@ -372,13 +372,13 @@ input[type=text]:focus {
 }
 
 .cd-spell-name {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-bright);
 }
 
 .cd-spell-type {
-  font-size: 8px;
+  font-size: 9px;
   color: var(--text-dim);
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -388,7 +388,7 @@ input[type=text]:focus {
 .cd-spell-stats {
   display: flex;
   gap: 10px;
-  font-size: 9px;
+  font-size: 10px;
   color: var(--text-mid);
   margin-bottom: 4px;
 }
@@ -403,7 +403,7 @@ input[type=text]:focus {
 }
 
 .cd-spell-desc {
-  font-size: 9px;
+  font-size: 11px;
   color: #aa99bb;
   line-height: 1.4;
   margin-bottom: 4px;
