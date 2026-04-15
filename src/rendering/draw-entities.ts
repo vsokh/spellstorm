@@ -2471,6 +2471,43 @@ export function drawWizard(ctx: CanvasRenderingContext2D, state: GameState): voi
       }
     }
 
+    // ── Channeling indicator ──
+    if (p.channeling === true && p.channelSlot !== undefined) {
+      const chDef = p.cls.spells[p.channelSlot];
+      const channelDuration = chDef?.channel || 1;
+      const progress = Math.min(1, (p.channelTimer || 0) / channelDuration);
+
+      // Ring drains from full to empty as channel progresses
+      const remaining = 1 - progress;
+      const channelR = WIZARD_SIZE * 2.2;
+      const startAngle = -Math.PI / 2;
+      const endAngle = startAngle + Math.PI * 2 * remaining;
+
+      // Pulsing glow: subtle brightness oscillation while channeling
+      const pulse = 0.6 + 0.4 * Math.sin(state.time * 6);
+
+      // Outer glow ring (wide, translucent)
+      ctx.strokeStyle = `rgba(60, 180, 255, ${0.15 + 0.1 * pulse})`;
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, channelR + 3, startAngle, endAngle);
+      ctx.stroke();
+
+      // Main ring (electric blue / cyan)
+      ctx.strokeStyle = `rgba(80, 200, 255, ${0.7 + 0.3 * pulse})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, channelR, startAngle, endAngle);
+      ctx.stroke();
+
+      // Inner highlight (bright cyan core)
+      ctx.strokeStyle = `rgba(150, 230, 255, ${0.4 + 0.2 * pulse})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, channelR - 2, startAngle, endAngle);
+      ctx.stroke();
+    }
+
     // ── Class-specific ultimate animation ──
     if (p._animUltTimer > 0) {
       drawUltimateAnim(ctx, p.x, p.y, p.clsKey, cls.color, cls.glow, state.time, p._animUltTimer / TIMING.ANIM_ULT);
