@@ -723,6 +723,101 @@ input[type=text]:focus {
   text-align: center;
 }
 
+/* ══════════ PAUSE ══════════ */
+#pause-screen {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(5, 3, 10, 0.94);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 85;
+  gap: 10px;
+  animation: fadeIn 0.2s ease-out;
+}
+#pause-screen h2 {
+  font-family: 'Cinzel', serif;
+  font-size: 28px;
+  color: var(--accent-purple);
+  text-shadow: 0 0 20px var(--glow-purple);
+  margin: 0;
+}
+.pause-class-name {
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.pause-passive {
+  font-size: 10px;
+  color: var(--text-mid);
+  max-width: 500px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.pause-spells {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 700px;
+}
+.pause-spell-card {
+  width: 155px;
+  padding: 14px 12px;
+  background: rgba(20, 14, 32, 0.8);
+  border: 1px solid rgba(120, 80, 180, 0.2);
+  border-radius: 6px;
+  text-align: left;
+  animation: fadeIn 0.3s ease-out both;
+}
+.pause-spell-card:nth-child(2) { animation-delay: 0.06s; }
+.pause-spell-card:nth-child(3) { animation-delay: 0.12s; }
+.pause-spell-card:nth-child(4) { animation-delay: 0.18s; }
+.pause-spell-key {
+  display: inline-block;
+  font-size: 9px;
+  color: #887799;
+  background: rgba(80, 50, 130, 0.2);
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-bottom: 6px;
+}
+.pause-spell-name {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.pause-spell-type {
+  font-size: 8px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.pause-spell-stats {
+  display: flex;
+  gap: 8px;
+  font-size: 9px;
+  color: #887799;
+  margin-bottom: 6px;
+}
+.pause-spell-stats span {
+  white-space: nowrap;
+}
+.pause-spell-desc {
+  font-size: 9px;
+  color: #aa99bb;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+.pause-hint {
+  color: var(--text-dim);
+  font-size: 10px;
+  margin-top: 8px;
+}
+
 /* ══════════ SHOP ══════════ */
 #shop-screen {
   display: none;
@@ -824,6 +919,9 @@ input[type=text]:focus {
 
   /* Issue 6: shrink skill bar icons to avoid overlap with floor display */
   .sp-icon { width: 40px; height: 40px; font-size: 12px; }
+
+  .pause-spell-card { width: 130px; padding: 10px 8px; }
+  #pause-screen h2 { font-size: 22px; }
 }
 
 /* ══════════ RESPONSIVE: short viewports (540px–620px height) ══════════ */

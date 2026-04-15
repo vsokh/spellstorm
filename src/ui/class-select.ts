@@ -10,7 +10,7 @@ import { drawClassBody, drawWeapon, CLASS_SCALE } from '../rendering/draw-entiti
 //       CLASS SELECTION SCREEN
 // ═══════════════════════════════════
 
-const SPELL_TYPE_LABELS: Record<string, string> = {
+export const SPELL_TYPE_LABELS: Record<string, string> = {
   projectile: 'Projectile',
   homing: 'Homing',
   beam: 'Beam',
@@ -27,7 +27,7 @@ const SPELL_TYPE_LABELS: Record<string, string> = {
   ultimate: 'Ultimate',
 };
 
-const ULTIMATE_DESCRIPTIONS: Record<string, string> = {
+export const ULTIMATE_DESCRIPTIONS: Record<string, string> = {
   pyromancer: 'Rain 8 meteors across the battlefield, leaving lingering burn zones.',
   cryomancer: 'Freeze all enemies in place and deal burst damage to each.',
   stormcaller: 'Unleash chain lightning that bounces between up to 8 enemies, dealing heavy damage.',
@@ -66,7 +66,7 @@ const EFFECT_DEFS: { key: keyof SpellDefInput; label: string; cssClass: string }
   { key: 'zap', label: 'Chain', cssClass: 'tag-chain' },
 ];
 
-function buildSpellEffects(spell: SpellDefInput): string {
+export function buildSpellEffects(spell: SpellDefInput): string {
   const tags = EFFECT_DEFS
     .filter(e => spell[e.key])
     .map(e => `<span class="cd-effect-tag ${e.cssClass}">${e.label}</span>`)
@@ -74,7 +74,7 @@ function buildSpellEffects(spell: SpellDefInput): string {
   return tags ? `<div class="cd-spell-effects">${tags}</div>` : '';
 }
 
-function generateSpellDescription(spell: SpellDefInput, classKey?: string): string {
+export function generateSpellDescription(spell: SpellDefInput, classKey?: string): string {
   // Ultimate abilities
   if (spell.ultCharge && spell.mana === 0) {
     const desc = classKey ? ULTIMATE_DESCRIPTIONS[classKey] : undefined;

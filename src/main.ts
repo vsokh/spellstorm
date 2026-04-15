@@ -34,6 +34,7 @@ import { rebuildEnemyGrid } from './systems/spatial';
 import { generateArena, updateWaves, spawnEnemy } from './systems/dungeon';
 import { showUpgradeScreen } from './systems/upgrades';
 import { initShop, openShop } from './systems/shop';
+import { initPause } from './systems/pause';
 import { applySynergies } from './systems/synergy';
 import { updateTethers } from './systems/tether-system';
 
@@ -109,6 +110,9 @@ setChestPickupHandler((s: GameState) => showUpgradeScreen(s));
 
 // Initialize shop event listeners
 initShop(state);
+
+// Initialize pause system
+initPause(state);
 
 // Wire up shop button
 const shopBtn = document.getElementById('shop-btn');
@@ -228,7 +232,8 @@ function loop(now: number): void {
     state.gamePhase === GamePhase.Select ||
     state.gamePhase === GamePhase.Upgrade ||
     state.gamePhase === GamePhase.GameOver ||
-    state.gamePhase === GamePhase.Victory
+    state.gamePhase === GamePhase.Victory ||
+    state.gamePhase === GamePhase.Paused
   ) {
     flushOutbox();
     requestAnimationFrame(loop);
