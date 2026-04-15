@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-15
 **Scope:** 8 anti-kiting mechanics across 24 wizard classes
-**Sources:** `docs/anti-kiting-mechanics.md` (design spec) vs `src/shared/constants.ts` (implementation)
+**Sources:** `docs/anti-kiting-mechanics.md` (design spec) vs `src/constants.ts` (implementation)
 
 ---
 
