@@ -36,6 +36,7 @@ export const CLASS_SCALE: Record<string, number> = {
   pyromancer: 1.0, cryomancer: 1.0, stormcaller: 0.95, arcanist: 0.9,
   necromancer: 1.0, chronomancer: 0.95, knight: 1.2, berserker: 1.25,
   paladin: 1.15, ranger: 0.85, druid: 0.95, warlock: 1.0, monk: 0.88, engineer: 1.0,
+  graviturge: 1.0, bladecaller: 0.9, architect: 1.05, hexblade: 1.0, warden: 1.2,
 };
 
 // ── Class-specific ultimate cast animation ──
@@ -443,6 +444,189 @@ function drawUltimateAnim(ctx: CanvasRenderingContext2D, x: number, y: number, c
         ctx.arc(x + Math.cos(sa) * sd, y + Math.sin(sa) * sd, 2, 0, Math.PI * 2);
         ctx.fill();
       }
+      break;
+    }
+
+    // 15. Graviturge — Concentric rings pulling inward with purple spiral
+    case 'graviturge': {
+      ctx.globalAlpha = alpha;
+      const ringColors = ['#6644aa', '#4422aa', '#8866cc'];
+      for (let r = 0; r < 4; r++) {
+        const shrink = (1 - progress) * S * 4;
+        const radius = S * (3.5 - r * 0.8) - shrink * (r * 0.3);
+        if (radius < 0) continue;
+        ctx.strokeStyle = ringColors[r % 3];
+        ctx.lineWidth = 2 - r * 0.3;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      // Spiral particles pulling inward
+      for (let i = 0; i < 8; i++) {
+        const spiralA = time * 5 + (i / 8) * Math.PI * 2;
+        const spiralR = S * (2.5 * progress + 0.5);
+        const sx = x + Math.cos(spiralA) * spiralR;
+        const sy = y + Math.sin(spiralA) * spiralR;
+        ctx.fillStyle = '#8866cc';
+        ctx.beginPath();
+        ctx.arc(sx, sy, 2 * progress, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
+
+    // 16. Bladecaller — Spinning blade arcs with crimson motion trails
+    case 'bladecaller': {
+      ctx.globalAlpha = alpha;
+      const bladeColors = ['#cc3355', '#aa2244', '#ff4466'];
+      const numBlades = 6;
+      const slashLen = S * 3 * (1 - progress * 0.2);
+      for (let i = 0; i < numBlades; i++) {
+        const bladeA = time * 8 + (i / numBlades) * Math.PI * 2 + progress * 4;
+        ctx.strokeStyle = bladeColors[i % 3];
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        const sx = x + Math.cos(bladeA) * S * 0.3;
+        const sy = y + Math.sin(bladeA) * S * 0.3;
+        const ex = x + Math.cos(bladeA) * slashLen;
+        const ey = y + Math.sin(bladeA) * slashLen;
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(ex, ey);
+        ctx.stroke();
+        // Motion trail
+        ctx.globalAlpha = alpha * 0.3;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        const trailA = bladeA - 0.3;
+        ctx.lineTo(x + Math.cos(trailA) * slashLen * 0.8, y + Math.sin(trailA) * slashLen * 0.8);
+        ctx.stroke();
+        ctx.globalAlpha = alpha;
+      }
+      break;
+    }
+
+    // 17. Architect — Expanding geometric blueprint grid
+    case 'architect': {
+      ctx.globalAlpha = alpha;
+      const gridSize = S * 2 + (1 - progress) * S * 2;
+      ctx.strokeStyle = '#44aacc';
+      ctx.lineWidth = 1.5;
+      // Grid lines
+      const gridStep = S * 0.6;
+      for (let gx = -gridSize; gx <= gridSize; gx += gridStep) {
+        ctx.globalAlpha = alpha * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(x + gx, y - gridSize);
+        ctx.lineTo(x + gx, y + gridSize);
+        ctx.stroke();
+      }
+      for (let gy = -gridSize; gy <= gridSize; gy += gridStep) {
+        ctx.beginPath();
+        ctx.moveTo(x - gridSize, y + gy);
+        ctx.lineTo(x + gridSize, y + gy);
+        ctx.stroke();
+      }
+      // Outer frame
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = '#228899';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - gridSize, y - gridSize, gridSize * 2, gridSize * 2);
+      // Corner nodes
+      ctx.fillStyle = '#55ccdd';
+      for (const cx of [-1, 1]) {
+        for (const cy of [-1, 1]) {
+          ctx.beginPath();
+          ctx.arc(x + cx * gridSize, y + cy * gridSize, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      break;
+    }
+
+    // 18. Hexblade — Orbiting hex runes with chains
+    case 'hexblade': {
+      ctx.globalAlpha = alpha;
+      const hexR = S * 2 + (1 - progress) * S * 1.5;
+      const numHex = 6;
+      const hexPositions: { hx: number; hy: number }[] = [];
+      // Draw hex runes orbiting
+      for (let i = 0; i < numHex; i++) {
+        const ha = time * 2 + (i / numHex) * Math.PI * 2;
+        const hx = x + Math.cos(ha) * hexR;
+        const hy = y + Math.sin(ha) * hexR;
+        hexPositions.push({ hx, hy });
+        // Hexagon shape
+        ctx.strokeStyle = '#9966dd';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let v = 0; v < 6; v++) {
+          const va = (v / 6) * Math.PI * 2;
+          const vr = S * 0.3 * progress;
+          const vx = hx + Math.cos(va) * vr;
+          const vy = hy + Math.sin(va) * vr;
+          v === 0 ? ctx.moveTo(vx, vy) : ctx.lineTo(vx, vy);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        // Glow center
+        ctx.fillStyle = '#7755cc';
+        ctx.beginPath();
+        ctx.arc(hx, hy, S * 0.1 * progress, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Chains between adjacent hexes
+      ctx.strokeStyle = 'rgba(150,100,220,0.5)';
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < numHex; i++) {
+        const a = hexPositions[i];
+        const b = hexPositions[(i + 1) % numHex];
+        ctx.beginPath();
+        ctx.moveTo(a.hx, a.hy);
+        ctx.lineTo(b.hx, b.hy);
+        ctx.stroke();
+      }
+      break;
+    }
+
+    // 19. Warden — Shield dome with defensive pulse rings
+    case 'warden': {
+      ctx.globalAlpha = alpha;
+      const domeR = S * 2.5 + (1 - progress) * S * 2;
+      // Shield dome
+      ctx.fillStyle = radGrad(ctx, x, y, S * 0.5, x, y, domeR, [
+        [0, 'rgba(80,130,170,0.3)'],
+        [0.7, 'rgba(100,160,200,0.15)'],
+        [1, 'transparent'],
+      ]);
+      ctx.beginPath();
+      ctx.arc(x, y, domeR, 0, Math.PI * 2);
+      ctx.fill();
+      // Pulse rings
+      ctx.strokeStyle = '#88bbdd';
+      ctx.lineWidth = 2;
+      for (let r = 0; r < 3; r++) {
+        const delay = r * 0.12;
+        const ringP = Math.max(0, Math.min(1, (1 - progress - delay) / (1 - delay)));
+        const ringR = S * 1 + ringP * S * 3;
+        ctx.globalAlpha = alpha * (1 - ringP);
+        ctx.strokeStyle = r % 2 === 0 ? '#88bbdd' : '#6699bb';
+        ctx.beginPath();
+        ctx.arc(x, y, ringR, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      // Shield crest at center
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = '#aaddff';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(x, y - S * 0.8);
+      ctx.lineTo(x + S * 0.6, y - S * 0.2);
+      ctx.lineTo(x + S * 0.5, y + S * 0.5);
+      ctx.lineTo(x, y + S * 0.8);
+      ctx.lineTo(x - S * 0.5, y + S * 0.5);
+      ctx.lineTo(x - S * 0.6, y - S * 0.2);
+      ctx.closePath();
+      ctx.stroke();
       break;
     }
 
@@ -1204,6 +1388,235 @@ export function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: numbe
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.stroke();
 
+  } else if (clsKey === 'graviturge') {
+    // ── GRAVITURGE: dark purple orb with swirling rings and distorted core ──
+    ctx.fillStyle = radGrad(ctx, x - S * 0.15, y - S * 0.15, S * 0.1, x, y, S, [
+      [0, '#aa88dd'],
+      [0.4, '#6644aa'],
+      [0.8, '#4422aa'],
+      [1, '#221166'],
+    ]);
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.fill();
+
+    // Swirling concentric rings (2-3 rotating slowly)
+    for (let r = 0; r < 3; r++) {
+      const ringRot = time * (1.2 + r * 0.4) * (r % 2 === 0 ? 1 : -1);
+      const ringR = S * (0.6 + r * 0.25);
+      ctx.strokeStyle = rgba(140, 100, 220, 0.3 - r * 0.06);
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(x, y, ringR, ringRot, ringRot + Math.PI * 1.4);
+      ctx.stroke();
+    }
+
+    // Wavy inner core (gravity distortion)
+    const coreWobble = Math.sin(time * 6) * S * 0.05;
+    ctx.fillStyle = radGrad(ctx, x + coreWobble, y - coreWobble, 0, x, y, S * 0.4, [
+      [0, 'rgba(200,180,255,0.8)'],
+      [0.5, 'rgba(120,80,200,0.4)'],
+      [1, 'transparent'],
+    ]);
+    ctx.beginPath(); ctx.arc(x + coreWobble, y - coreWobble, S * 0.4, 0, Math.PI * 2); ctx.fill();
+
+    // Outline glow
+    ctx.strokeStyle = 'rgba(100,70,170,0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.stroke();
+
+  } else if (clsKey === 'bladecaller') {
+    // ── BLADECALLER: crimson slim profile with orbiting curved blades ──
+    ctx.fillStyle = radGrad(ctx, x - S * 0.1, y - S * 0.1, S * 0.1, x, y, S * 0.85, [
+      [0, '#ff6688'],
+      [0.4, '#cc3355'],
+      [0.8, '#aa2244'],
+      [1, '#771133'],
+    ]);
+    ctx.beginPath(); ctx.arc(x, y, S * 0.85, 0, Math.PI * 2); ctx.fill();
+
+    // Two curved blade shapes orbiting
+    for (let i = 0; i < 2; i++) {
+      const bladeA = time * 3 + i * Math.PI;
+      const bx = x + Math.cos(bladeA) * S * 1.3;
+      const by = y + Math.sin(bladeA) * S * 1.3;
+      ctx.strokeStyle = '#ff4466';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      const tipA = bladeA + 0.3;
+      ctx.moveTo(bx + Math.cos(tipA - 0.6) * S * 0.15, by + Math.sin(tipA - 0.6) * S * 0.15);
+      ctx.quadraticCurveTo(
+        bx + Math.cos(tipA) * S * 0.5, by + Math.sin(tipA) * S * 0.5,
+        bx + Math.cos(tipA + 0.6) * S * 0.15, by + Math.sin(tipA + 0.6) * S * 0.15
+      );
+      ctx.stroke();
+    }
+
+    // Speed lines trailing behind
+    ctx.strokeStyle = rgba(200, 50, 80, 0.2);
+    ctx.lineWidth = 0.8;
+    for (let i = 0; i < 3; i++) {
+      const lineA = angle + Math.PI + (i - 1) * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(lineA) * S * 0.8, y + Math.sin(lineA) * S * 0.8);
+      ctx.lineTo(x + Math.cos(lineA) * S * 2, y + Math.sin(lineA) * S * 2);
+      ctx.stroke();
+    }
+
+    // Outline glow
+    ctx.strokeStyle = 'rgba(200,50,80,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(x, y, S * 0.85, 0, Math.PI * 2); ctx.stroke();
+
+  } else if (clsKey === 'architect') {
+    // ── ARCHITECT: teal geometric body with floating construct shapes ──
+    // Slightly angular body (octagon)
+    ctx.fillStyle = radGrad(ctx, x, y, S * 0.1, x, y, S, [
+      [0, '#88ddee'],
+      [0.4, '#44aacc'],
+      [0.8, '#228899'],
+      [1, '#116677'],
+    ]);
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 - Math.PI / 8;
+      const r = S * (i % 2 === 0 ? 1.0 : 0.92);
+      i === 0 ? ctx.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r)
+              : ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+    }
+    ctx.closePath(); ctx.fill();
+
+    // Blueprint grid overlay
+    ctx.strokeStyle = 'rgba(100,200,220,0.2)';
+    ctx.lineWidth = 0.5;
+    for (let g = -2; g <= 2; g++) {
+      ctx.beginPath();
+      ctx.moveTo(x + g * S * 0.35, y - S);
+      ctx.lineTo(x + g * S * 0.35, y + S);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - S, y + g * S * 0.35);
+      ctx.lineTo(x + S, y + g * S * 0.35);
+      ctx.stroke();
+    }
+
+    // Small floating construct shapes orbiting
+    for (let i = 0; i < 3; i++) {
+      const ca = time * 1.2 + (i / 3) * Math.PI * 2;
+      const cd = S * 1.5 + Math.sin(time * 2 + i) * 2;
+      const cx2 = x + Math.cos(ca) * cd;
+      const cy2 = y + Math.sin(ca) * cd;
+      ctx.fillStyle = rgba(80, 200, 220, 0.4 + Math.sin(time * 3 + i) * 0.15);
+      ctx.fillRect(cx2 - 2, cy2 - 2, 4, 4);
+    }
+
+    // Outline glow
+    ctx.strokeStyle = 'rgba(50,150,170,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 - Math.PI / 8;
+      const r = S * (i % 2 === 0 ? 1.0 : 0.92);
+      i === 0 ? ctx.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r)
+              : ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+    }
+    ctx.closePath(); ctx.stroke();
+
+  } else if (clsKey === 'hexblade') {
+    // ── HEXBLADE: purple body with hexagonal pattern overlay and orbiting runes ──
+    ctx.fillStyle = radGrad(ctx, x - S * 0.1, y - S * 0.1, S * 0.1, x, y, S, [
+      [0, '#aa88ee'],
+      [0.4, '#7755cc'],
+      [0.8, '#5533aa'],
+      [1, '#331188'],
+    ]);
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.fill();
+
+    // Hexagonal pattern overlay
+    ctx.strokeStyle = 'rgba(150,120,220,0.25)';
+    ctx.lineWidth = 0.8;
+    for (let i = 0; i < 3; i++) {
+      const hexA = (i / 3) * Math.PI * 2 + time * 0.3;
+      const hr = S * (0.3 + i * 0.2);
+      ctx.beginPath();
+      for (let v = 0; v < 6; v++) {
+        const va = hexA + (v / 6) * Math.PI * 2;
+        const vx = x + Math.cos(va) * hr;
+        const vy = y + Math.sin(va) * hr;
+        v === 0 ? ctx.moveTo(vx, vy) : ctx.lineTo(vx, vy);
+      }
+      ctx.closePath(); ctx.stroke();
+    }
+
+    // Orbiting hex runes (glowing dots)
+    for (let i = 0; i < 4; i++) {
+      const ra = time * 1.8 + (i / 4) * Math.PI * 2;
+      const rd = S * 1.4 + Math.sin(time * 2.5 + i) * 2;
+      const rx = x + Math.cos(ra) * rd;
+      const ry = y + Math.sin(ra) * rd;
+      ctx.fillStyle = radGrad(ctx, rx, ry, 0, rx, ry, 4, [
+        [0, 'rgba(170,130,255,0.7)'],
+        [1, 'transparent'],
+      ]);
+      ctx.beginPath(); ctx.arc(rx, ry, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#9966dd';
+      ctx.beginPath(); ctx.arc(rx, ry, 1.5, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Inner sigil eye
+    ctx.fillStyle = 'rgba(200,150,255,0.5)';
+    ctx.beginPath(); ctx.arc(x, y, S * 0.2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#331188';
+    ctx.beginPath(); ctx.arc(x, y, S * 0.08, 0, Math.PI * 2); ctx.fill();
+
+    // Outline glow
+    ctx.strokeStyle = 'rgba(100,60,180,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.stroke();
+
+  } else if (clsKey === 'warden') {
+    // ── WARDEN: large steel-blue body with shield silhouette and protective aura ──
+    // Solid sturdy body
+    ctx.fillStyle = radGrad(ctx, x, y, S * 0.15, x, y, S, [
+      [0, '#99bbdd'],
+      [0.3, '#5588aa'],
+      [0.7, '#447799'],
+      [1, '#336688'],
+    ]);
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.fill();
+
+    // Shield silhouette
+    ctx.fillStyle = 'rgba(150,200,230,0.25)';
+    ctx.beginPath();
+    ctx.moveTo(x, y - S * 0.7);
+    ctx.lineTo(x + S * 0.55, y - S * 0.15);
+    ctx.lineTo(x + S * 0.4, y + S * 0.5);
+    ctx.lineTo(x, y + S * 0.7);
+    ctx.lineTo(x - S * 0.4, y + S * 0.5);
+    ctx.lineTo(x - S * 0.55, y - S * 0.15);
+    ctx.closePath(); ctx.fill();
+
+    // Shield border highlight
+    ctx.strokeStyle = '#aaddff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y - S * 0.7);
+    ctx.lineTo(x + S * 0.55, y - S * 0.15);
+    ctx.lineTo(x + S * 0.4, y + S * 0.5);
+    ctx.lineTo(x, y + S * 0.7);
+    ctx.lineTo(x - S * 0.4, y + S * 0.5);
+    ctx.lineTo(x - S * 0.55, y - S * 0.15);
+    ctx.closePath(); ctx.stroke();
+
+    // Protective aura ring
+    const auraPulse = 0.15 + 0.1 * Math.sin(time * 3);
+    ctx.strokeStyle = rgba(130, 180, 220, auraPulse);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x, y, S * 1.5, 0, Math.PI * 2); ctx.stroke();
+
+    // Outline glow
+    ctx.strokeStyle = 'rgba(80,130,170,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.stroke();
+
   } else {
     // Default fallback (gradient body)
     ctx.fillStyle = radGrad(ctx, x - S * 0.2, y - S * 0.2, S * 0.1, x, y, S, [
@@ -1333,6 +1746,123 @@ export function drawWeapon(ctx: CanvasRenderingContext2D, x: number, y: number, 
     ctx.moveTo(ex - perpX * 3, ey - perpY * 3);
     ctx.lineTo(ex + Math.cos(angle) * 4 - perpX * 3, ey + Math.sin(angle) * 4 - perpY * 3);
     ctx.stroke();
+
+  } else if (clsKey === 'graviturge') {
+    // Staff with orbiting sphere at tip
+    const sx = x + Math.cos(angle) * staffStart;
+    const sy = y + Math.sin(angle) * staffStart;
+    const ex = x + Math.cos(angle) * staffEnd;
+    const ey = y + Math.sin(angle) * staffEnd;
+    ctx.strokeStyle = '#6644aa';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+    // Orbiting sphere at tip
+    ctx.fillStyle = radGrad(ctx, ex, ey, 0, ex, ey, 6, [
+      [0, '#aa88dd'],
+      [0.5, '#6644aa'],
+      [1, 'transparent'],
+    ]);
+    ctx.beginPath(); ctx.arc(ex, ey, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#4422aa';
+    ctx.beginPath(); ctx.arc(ex, ey, 2.5, 0, Math.PI * 2); ctx.fill();
+    return;
+
+  } else if (clsKey === 'bladecaller') {
+    // Dual curved blades (twin daggers)
+    const perpX = Math.cos(angle + Math.PI / 2);
+    const perpY = Math.sin(angle + Math.PI / 2);
+    for (const side of [-1, 1]) {
+      const bx = x + Math.cos(angle) * staffStart + perpX * side * 4;
+      const by = y + Math.sin(angle) * staffStart + perpY * side * 4;
+      const tipX = x + Math.cos(angle) * staffEnd + perpX * side * 2;
+      const tipY = y + Math.sin(angle) * staffEnd + perpY * side * 2;
+      ctx.fillStyle = '#cc3355';
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(bx + perpX * side * 2, by + perpY * side * 2);
+      ctx.lineTo(bx - perpX * side * 1, by - perpY * side * 1);
+      ctx.closePath(); ctx.fill();
+      // Edge highlight
+      ctx.strokeStyle = '#ff6688';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(bx + perpX * side * 2, by + perpY * side * 2);
+      ctx.stroke();
+    }
+    return;
+
+  } else if (clsKey === 'architect') {
+    // Blueprint staff with geometric tip
+    const sx = x + Math.cos(angle) * staffStart;
+    const sy = y + Math.sin(angle) * staffStart;
+    const ex = x + Math.cos(angle) * staffEnd;
+    const ey = y + Math.sin(angle) * staffEnd;
+    ctx.strokeStyle = '#44aacc';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+    // Geometric diamond tip
+    const perpX = Math.cos(angle + Math.PI / 2);
+    const perpY = Math.sin(angle + Math.PI / 2);
+    ctx.fillStyle = '#55ccdd';
+    ctx.beginPath();
+    ctx.moveTo(ex + Math.cos(angle) * 5, ey + Math.sin(angle) * 5);
+    ctx.lineTo(ex + perpX * 4, ey + perpY * 4);
+    ctx.lineTo(ex - Math.cos(angle) * 3, ey - Math.sin(angle) * 3);
+    ctx.lineTo(ex - perpX * 4, ey - perpY * 4);
+    ctx.closePath(); ctx.fill();
+    return;
+
+  } else if (clsKey === 'hexblade') {
+    // Curved hex sword with rune glow
+    const sx = x + Math.cos(angle) * staffStart;
+    const sy = y + Math.sin(angle) * staffStart;
+    const ex = x + Math.cos(angle) * staffEnd;
+    const ey = y + Math.sin(angle) * staffEnd;
+    const perpX = Math.cos(angle + Math.PI / 2);
+    const perpY = Math.sin(angle + Math.PI / 2);
+    // Curved blade
+    ctx.fillStyle = '#7755cc';
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.quadraticCurveTo(
+      (sx + ex) / 2 + perpX * 5, (sy + ey) / 2 + perpY * 5,
+      sx + perpX * 2, sy + perpY * 2
+    );
+    ctx.lineTo(sx - perpX * 1, sy - perpY * 1);
+    ctx.quadraticCurveTo(
+      (sx + ex) / 2 - perpX * 2, (sy + ey) / 2 - perpY * 2,
+      ex, ey
+    );
+    ctx.closePath(); ctx.fill();
+    // Rune glow on blade
+    ctx.fillStyle = radGrad(ctx, (sx + ex) / 2, (sy + ey) / 2, 0, (sx + ex) / 2, (sy + ey) / 2, 4, [
+      [0, 'rgba(170,130,255,0.6)'],
+      [1, 'transparent'],
+    ]);
+    ctx.beginPath(); ctx.arc((sx + ex) / 2, (sy + ey) / 2, 4, 0, Math.PI * 2); ctx.fill();
+    return;
+
+  } else if (clsKey === 'warden') {
+    // Large shield shape
+    const sx = x + Math.cos(angle) * (staffStart + 2);
+    const sy = y + Math.sin(angle) * (staffStart + 2);
+    const perpX = Math.cos(angle + Math.PI / 2);
+    const perpY = Math.sin(angle + Math.PI / 2);
+    const shieldW = S * 0.7;
+    const shieldH = S * 0.5;
+    ctx.fillStyle = '#6699bb';
+    ctx.beginPath();
+    ctx.moveTo(sx + Math.cos(angle) * shieldH, sy + Math.sin(angle) * shieldH);
+    ctx.lineTo(sx + perpX * shieldW, sy + perpY * shieldW);
+    ctx.lineTo(sx - Math.cos(angle) * shieldH * 0.3, sy - Math.sin(angle) * shieldH * 0.3);
+    ctx.lineTo(sx - perpX * shieldW, sy - perpY * shieldW);
+    ctx.closePath(); ctx.fill();
+    // Shield border
+    ctx.strokeStyle = '#aaddff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    return;
 
   } else {
     // Default: mage staff with glowing orb tip

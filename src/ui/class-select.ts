@@ -42,6 +42,11 @@ const ULTIMATE_DESCRIPTIONS: Record<string, string> = {
   warlock: 'Mark all enemies with Doom — after 3 seconds, they take 35% max HP damage.',
   monk: 'Deliver 20 rapid melee strikes in a cone with knockback.',
   engineer: 'Deploy a powerful Mega Turret with 20 HP that fires for 12 seconds.',
+  graviturge: 'Create a gravity vortex that pulls enemies inward, crushing them with gravitational force.',
+  bladecaller: 'Unleash a flurry of blade strikes, dashing between enemies at blinding speed.',
+  architect: 'Deploy a massive arcane construct that persists on the battlefield, damaging and slowing enemies.',
+  hexblade: 'Curse all enemies with hex stacks that detonate in chain explosions.',
+  warden: 'Become invulnerable and project a protective aura that shields nearby allies.',
 };
 
 const EFFECT_DEFS: { key: keyof SpellDefInput; label: string; cssClass: string }[] = [

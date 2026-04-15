@@ -161,6 +161,27 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
     e._burnOwner = p.idx;
   }
 
+  // Passive: Hexblade hex stacks — each hit adds a stack, 3+ stacks applies slow
+  if (p && p.clsKey === 'hexblade') {
+    e._hexStacks = (e._hexStacks || 0) + 1;
+    if (e._hexStacks >= 3) {
+      e.slowTimer = (e.slowTimer || 0) + 0.5;
+    }
+  }
+
+  // Passive: Hexblade hex mastery — all players deal +25% to hex-marked enemies
+  if (e._hexStacks && e._hexStacks > 0) {
+    const hexBonus = Math.max(1, Math.floor(dmg * 0.25));
+    e.hp -= hexBonus;
+    spawnText(state, e.x, e.y - 20, '+' + hexBonus, '#7755cc');
+  }
+
+  // Passive: Warden mark — allies deal +1 damage to warden-marked enemies
+  if (p && e._wardenMark && p.clsKey !== 'warden') {
+    e.hp -= 1;
+    spawnText(state, e.x, e.y - 20, '+1', '#5588aa');
+  }
+
   // Mana on hit
   if (p && p.manaOnHit) {
     p.mana = Math.min(p.maxMana, p.mana + p.manaOnHit);
@@ -250,6 +271,15 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
       if (p.clsKey === 'necromancer') {
         p.hp = Math.min(p.maxHp, p.hp + 1);
         spawnText(state, p.x, p.y - 15, '+1 HP', '#44ff88');
+      }
+
+      // Passive: Bladecaller kill rush — kills within 1.5s of Shadow Step reset its cd; kills grant speed boost
+      if (p.clsKey === 'bladecaller') {
+        if (p._lastShadowStep && state.time - p._lastShadowStep < 1.5) {
+          p.cd[1] = 0;
+          spawnText(state, p.x, p.y - 15, 'RESET!', '#cc3355');
+        }
+        p._rushSpeed = state.time + 3;
       }
 
       // Raise Dead: chance to convert killed enemy into friendly minion
@@ -1586,6 +1616,119 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
       // Engineer Overclock: turrets fire 20% faster
       megaZone.tickRate *= 0.8;
     }
+  } else if (p.clsKey === 'graviturge') {
+    // Gravitational Ruin: gravity vortex at cursor that pulls and crushes enemies
+    const tx = clamp(p.x + Math.cos(angle) * 120, 60, ROOM_WIDTH - 60);
+    const ty = clamp(p.y + Math.sin(angle) * 120, 60, ROOM_HEIGHT - 60);
+    // Deploy gravity vortex zone
+    const gravZone = state.zones.acquire();
+    if (gravZone) {
+      gravZone.x = tx; gravZone.y = ty; gravZone.radius = ULTIMATE.GRAVITY_PULL_RANGE;
+      gravZone.duration = ULTIMATE.GRAVITY_SLOW_DURATION; gravZone.dmg = Math.round(ULTIMATE.GRAVITY_PULL_DMG * pw);
+      gravZone.color = '#4422aa'; gravZone.owner = p.idx;
+      gravZone.slow = 0.8; gravZone.stun = 0; gravZone.tickRate = 0.5; gravZone.tickTimer = 0; gravZone.age = 0;
+      gravZone.drain = 0; gravZone.heal = 0; gravZone.pull = 1; gravZone.freezeAfter = 0;
+    }
+    // Pull all enemies toward vortex center
+    for (const e of state.enemies) {
+      if (!e.alive || e._friendly) continue;
+      const d = dist(tx, ty, e.x, e.y);
+      if (d < ULTIMATE.GRAVITY_PULL_RANGE && d > 1) {
+        const nx = (tx - e.x) / d;
+        const ny = (ty - e.y) / d;
+        e.vx = nx * 80;
+        e.vy = ny * 80;
+        e.slowTimer = Math.max(e.slowTimer || 0, ULTIMATE.GRAVITY_SLOW_DURATION);
+      }
+    }
+    spawnShockwave(state, tx, ty, ULTIMATE.GRAVITY_PULL_RANGE, 'rgba(100,50,180,.3)');
+    spawnParticles(state, tx, ty, '#6644aa', 20, 1.0);
+  } else if (p.clsKey === 'bladecaller') {
+    // Thousand Cuts: dash to 12 random enemies dealing damage
+    _aliveEnemies.length = 0;
+    for (const e2 of state.enemies) {
+      if (e2.alive && !e2._friendly) _aliveEnemies.push(e2);
+    }
+    const cutDmg = Math.round(ULTIMATE.THOUSAND_CUTS_DMG * pw);
+    p.iframes = ULTIMATE.THOUSAND_CUTS_HITS * 0.1 + 0.5;
+    const targets = _aliveEnemies.slice();
+    for (let i = 0; i < ULTIMATE.THOUSAND_CUTS_HITS; i++) {
+      ((idx: number) => {
+        setTimeout(() => {
+          if (targets.length === 0) return;
+          const t = targets[idx % targets.length];
+          if (!t.alive) return;
+          // Teleport player to target
+          p.x = t.x + rand(-15, 15);
+          p.y = t.y + rand(-15, 15);
+          damageEnemy(state, t, cutDmg, p.idx);
+          spawnParticles(state, t.x, t.y, '#cc3355', 4, 0.3);
+          netSfx(state, SfxName.Hit);
+          shake(state, 2);
+        }, idx * 100);
+      })(i);
+    }
+  } else if (p.clsKey === 'architect') {
+    // Mega Construct: massive zone at cursor position
+    const tx = clamp(p.x + Math.cos(angle) * 100, 60, ROOM_WIDTH - 60);
+    const ty = clamp(p.y + Math.sin(angle) * 100, 60, ROOM_HEIGHT - 60);
+    const megaConstruct = state.zones.acquire();
+    if (megaConstruct) {
+      megaConstruct.x = tx; megaConstruct.y = ty; megaConstruct.radius = ULTIMATE.MEGA_CONSTRUCT_RADIUS;
+      megaConstruct.duration = ULTIMATE.MEGA_CONSTRUCT_DURATION; megaConstruct.dmg = Math.round(ULTIMATE.MEGA_CONSTRUCT_DMG * pw);
+      megaConstruct.color = '#228899'; megaConstruct.owner = p.idx;
+      megaConstruct.slow = 0.5; megaConstruct.stun = 0; megaConstruct.tickRate = 0.5; megaConstruct.tickTimer = 0; megaConstruct.age = 0;
+      megaConstruct.drain = 0; megaConstruct.heal = 0; megaConstruct.pull = 0; megaConstruct.freezeAfter = 0;
+    }
+    spawnShockwave(state, tx, ty, ULTIMATE.MEGA_CONSTRUCT_RADIUS, 'rgba(50,150,180,.3)');
+    spawnParticles(state, tx, ty, '#44aacc', 20, 1.2);
+  } else if (p.clsKey === 'hexblade') {
+    // Hexstorm: apply 3 hex stacks to ALL enemies, then detonate
+    const hexDmg = Math.round(ULTIMATE.HEXSTORM_EXPLOSION_DMG * pw);
+    for (const e of state.enemies) {
+      if (!e.alive || e._friendly) continue;
+      e._hexStacks = (e._hexStacks || 0) + ULTIMATE.HEXSTORM_STACKS;
+      e.slowTimer = (e.slowTimer || 0) + 1.0;
+      damageEnemy(state, e, hexDmg, p.idx);
+      spawnParticles(state, e.x, e.y, '#7755cc', 8, 0.5);
+    }
+    // Chain visual beams between nearby hexed enemies
+    const hexed = state.enemies.filter(e => e.alive && (e._hexStacks || 0) >= 3);
+    for (let i = 0; i < hexed.length && i < 20; i++) {
+      for (let j = i + 1; j < hexed.length && j < 20; j++) {
+        if (dist(hexed[i].x, hexed[i].y, hexed[j].x, hexed[j].y) < 150) {
+          const hexBeam = state.beams.acquire();
+          if (hexBeam) {
+            hexBeam.x = hexed[i].x; hexBeam.y = hexed[i].y;
+            hexBeam.angle = Math.atan2(hexed[j].y - hexed[i].y, hexed[j].x - hexed[i].x);
+            hexBeam.range = dist(hexed[i].x, hexed[i].y, hexed[j].x, hexed[j].y);
+            hexBeam.width = 3; hexBeam.color = '#7755cc'; hexBeam.life = 0.5;
+          }
+        }
+      }
+    }
+    spawnShockwave(state, p.x, p.y, ROOM_WIDTH * 0.5, 'rgba(120,80,200,.2)');
+  } else if (p.clsKey === 'warden') {
+    // Unbreakable: invulnerable + protect allies
+    p.iframes = ULTIMATE.UNBREAKABLE_DURATION;
+    p._invulnTimer = ULTIMATE.UNBREAKABLE_DURATION;
+    // All nearby allies get DR
+    for (const ally of state.players) {
+      if (ally.idx !== p.idx && ally.alive) {
+        ally._wardenDR = ULTIMATE.UNBREAKABLE_DURATION;
+        spawnText(state, ally.x, ally.y - 20, 'PROTECTED', '#5588aa');
+        spawnParticles(state, ally.x, ally.y, '#88bbdd', 10);
+      }
+    }
+    // Mark all nearby enemies
+    for (const e of state.enemies) {
+      if (!e.alive || e._friendly) continue;
+      if (dist(p.x, p.y, e.x, e.y) < 200) {
+        e._wardenMark = true;
+        spawnText(state, e.x, e.y - 15, 'MARKED', '#5588aa');
+      }
+    }
+    spawnShockwave(state, p.x, p.y, 200, 'rgba(80,130,170,.4)');
   }
 
   // ultEcho: buff next N LMB casts with double damage

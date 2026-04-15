@@ -321,6 +321,18 @@ export interface Player {
   _shieldWall: number;
   _holyShield: number;
 
+  // Bladecaller state
+  _lastShadowStep: number;    // timestamp of last Shadow Step cast
+  _rushSpeed: number;          // timestamp until speed boost expires
+
+  // Architect state
+  _fortified: boolean;         // near own zone DR flag
+
+  // Warden state
+  _facingDR: boolean;          // facing enemies DR flag
+  _wardenDR: number;           // allied warden DR timer
+  _invulnTimer: number;        // invulnerability timer
+
   // Animation state
   _animCastFlash: number;     // timer for casting glow (decays to 0)
   _animHitFlash: number;      // timer for hit reaction flash (decays to 0)
@@ -388,6 +400,12 @@ export interface Enemy {
 
   // Elite variant flag
   _elite: boolean;
+
+  // Hexblade hex stacks
+  _hexStacks: number;
+
+  // Warden mark (allies deal +1 dmg)
+  _wardenMark: boolean;
 
   // Network interpolation (guest only)
   _targetX?: number;

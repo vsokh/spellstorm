@@ -282,6 +282,67 @@ export function updatePlayers(state: GameState, dt: number): void {
       }
     }
 
+    // Graviturge: gravity well aura — enemies within 80 units take 0.5 dps, each nearby enemy grants +1 mana/s
+    if (p.clsKey === 'graviturge') {
+      let nearbyCount = 0;
+      for (const e of state.enemies) {
+        if (!e.alive || e._friendly) continue;
+        if (dist(p.x, p.y, e.x, e.y) < 80) {
+          nearbyCount++;
+          e.hp -= 0.5 * dt;
+          if (e.hp <= 0 && e._deathTimer < 0) {
+            damageEnemy(state, e, 1, p.idx);
+          }
+        }
+      }
+      if (nearbyCount > 0) {
+        p.mana = Math.min(p.maxMana, p.mana + nearbyCount * 1 * dt);
+      }
+    }
+
+    // Bladecaller: kill rush speed boost decay
+    if (p.clsKey === 'bladecaller' && p._rushSpeed && p._rushSpeed > state.time) {
+      p.moveSpeed = Math.max(p.moveSpeed, DEFAULT_MOVE_SPEED * 1.1);
+    }
+
+    // Architect: fortification near own zones — 20% DR flag + bonus mana regen
+    if (p.clsKey === 'architect') {
+      p._fortified = false;
+      for (const z of state.zones) {
+        if (!z || z.duration <= 0 || z.owner !== p.idx) continue;
+        if (dist(p.x, p.y, z.x, z.y) < z.radius) {
+          p._fortified = true;
+          p.mana = Math.min(p.maxMana, p.mana + 1 * dt);
+          break;
+        }
+      }
+    }
+
+    // Warden: sentinel — 20% DR when facing enemies, mark melee attackers
+    if (p.clsKey === 'warden') {
+      p._facingDR = false;
+      for (const e of state.enemies) {
+        if (!e.alive || e._friendly) continue;
+        const d = dist(p.x, p.y, e.x, e.y);
+        if (d < 100) {
+          const aimAngle = Math.atan2(e.y - p.y, e.x - p.x);
+          const diff = Math.abs(((aimAngle - p.angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+          if (diff < Math.PI / 3) {
+            p._facingDR = true;
+          }
+          // Mark melee-range enemies for ally bonus damage
+          if (d < 50) {
+            e._wardenMark = true;
+          }
+        }
+      }
+    }
+
+    // Warden DR decay
+    if (p._wardenDR > 0) p._wardenDR -= dt;
+    // Invuln timer decay
+    if (p._invulnTimer > 0) p._invulnTimer -= dt;
+
     // Time stop decay
     if (p._timeStopTimer > 0) {
       p._timeStopTimer -= dt;

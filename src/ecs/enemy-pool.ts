@@ -38,6 +38,8 @@ export interface EnemyInit {
   _dmgReductionTimer: number;
   _dmgReductionTriggered: boolean;
   _elite: boolean;
+  _hexStacks: number;
+  _wardenMark: boolean;
   // Network interpolation (optional)
   _targetX?: number;
   _targetY?: number;
@@ -181,6 +183,12 @@ export class EnemyView {
   get _dmgReductionTriggered(): boolean { return this._pool._dmgReductionTriggered[this._idx] === 1; }
   set _dmgReductionTriggered(v: boolean) { this._pool._dmgReductionTriggered[this._idx] = v ? 1 : 0; }
 
+  get _hexStacks() { return this._pool._hexStacks[this._idx]; }
+  set _hexStacks(v: number) { this._pool._hexStacks[this._idx] = v; }
+
+  get _wardenMark(): boolean { return this._pool._wardenMark[this._idx] === 1; }
+  set _wardenMark(v: boolean) { this._pool._wardenMark[this._idx] = v ? 1 : 0; }
+
   // String field
   get type(): string { return this._pool.type[this._idx]; }
   set type(v: string) { this._pool.type[this._idx] = v; }
@@ -228,12 +236,16 @@ export class EnemyPool {
   _prevY: Float32Array;
   _lerpT: Float32Array;
 
+  // Hexblade / Warden
+  _hexStacks: Float32Array;
+
   // Uint8 for booleans (0/1)
   alive: Uint8Array;
   _friendly: Uint8Array;
   _elite: Uint8Array;
   _dmgReductionActive: Uint8Array;
   _dmgReductionTriggered: Uint8Array;
+  _wardenMark: Uint8Array;
 
   // Regular arrays for non-numeric data
   type: string[];
@@ -279,12 +291,15 @@ export class EnemyPool {
     this._prevY = new Float32Array(c);
     this._lerpT = new Float32Array(c);
 
+    this._hexStacks = new Float32Array(c);
+
     // Uint8 (booleans)
     this.alive = new Uint8Array(c);
     this._friendly = new Uint8Array(c);
     this._elite = new Uint8Array(c);
     this._dmgReductionActive = new Uint8Array(c);
     this._dmgReductionTriggered = new Uint8Array(c);
+    this._wardenMark = new Uint8Array(c);
 
     // Non-typed
     this.type = new Array(c).fill('');
@@ -418,6 +433,8 @@ export class EnemyPool {
     this._dmgReductionActive[idx] = e._dmgReductionActive ? 1 : 0;
     this._dmgReductionTimer[idx] = e._dmgReductionTimer ?? 0;
     this._dmgReductionTriggered[idx] = e._dmgReductionTriggered ? 1 : 0;
+    this._hexStacks[idx] = e._hexStacks ?? 0;
+    this._wardenMark[idx] = e._wardenMark ? 1 : 0;
     // Network interpolation
     this._targetX[idx] = e._targetX ?? 0;
     this._targetY[idx] = e._targetY ?? 0;
@@ -469,12 +486,15 @@ export class EnemyPool {
     newLerpT.fill(1, this._capacity);
     this._lerpT = newLerpT;
 
+    this._hexStacks = growFloat32(this._hexStacks, newCap);
+
     // Uint8
     this.alive = growUint8(this.alive, newCap);
     this._friendly = growUint8(this._friendly, newCap);
     this._elite = growUint8(this._elite, newCap);
     this._dmgReductionActive = growUint8(this._dmgReductionActive, newCap);
     this._dmgReductionTriggered = growUint8(this._dmgReductionTriggered, newCap);
+    this._wardenMark = growUint8(this._wardenMark, newCap);
 
     // _spdMul / _dmgMul new slots default to 1
     this._spdMul.fill(1, this._capacity);
