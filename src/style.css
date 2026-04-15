@@ -556,21 +556,22 @@ input[type=text]:focus {
 
 /* ══════════ HUD ══════════ */
 #hud {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  height: 56px;
-  background: linear-gradient(to top, rgba(7, 5, 14, 0.95), rgba(7, 5, 14, 0.6));
-  border-top: 1px solid rgba(80, 50, 130, 0.1);
-  display: none; align-items: center;
-  justify-content: space-between;
-  padding: 0 16px; z-index: 10;
+  position: fixed; top: 10px; left: 12px;
+  background: rgba(7, 5, 14, 0.88);
+  border: 1px solid rgba(80, 50, 130, 0.15);
+  border-radius: 8px;
+  display: none; flex-direction: column; align-items: flex-start;
+  padding: 10px 14px; z-index: 10;
   pointer-events: none;
   backdrop-filter: blur(4px);
+  gap: 6px;
+  min-width: 170px;
 }
 
-.hud-side { display: flex; align-items: center; gap: 8px; font-size: 10px; }
-.bar-o { width: 65px; height: 4px; background: rgba(15, 10, 25, 0.8); border-radius: 2px; overflow: hidden; }
-.bar-i { height: 100%; border-radius: 2px; transition: width 0.15s; }
-.xp-lv { font-size: 8px; color: #bb77ff; min-width: 22px; }
+.hud-side { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.bar-o { width: 140px; height: 8px; background: rgba(15, 10, 25, 0.8); border-radius: 4px; overflow: hidden; }
+.bar-i { height: 100%; border-radius: 4px; transition: width 0.15s; }
+.xp-lv { font-size: 11px; color: #bb77ff; min-width: 28px; }
 .bar-xp { flex: 1; }
 #skill-bar {
   position: fixed;
@@ -614,14 +615,14 @@ input[type=text]:focus {
 }
 
 #gold-display {
-  position: fixed; top: 10px; left: 12px;
+  position: fixed; top: 160px; left: 12px;
   font-size: 11px; color: var(--accent-gold);
   z-index: 10; display: none;
   letter-spacing: 1px;
 }
 
 #shop-btn {
-  position: fixed; top: 30px; left: 12px;
+  position: fixed; top: 180px; left: 12px;
   font-family: 'Cinzel', serif;
   font-size: 11px; padding: 3px 10px;
   background: rgba(40, 20, 60, 0.85);
@@ -643,7 +644,7 @@ input[type=text]:focus {
 }
 
 #fullscreen-btn {
-  position: fixed; top: 30px; left: 80px;
+  position: fixed; top: 180px; left: 80px;
   font-family: 'Cinzel', serif;
   font-size: 14px; padding: 3px 10px;
   background: rgba(40, 20, 60, 0.85);
