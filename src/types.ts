@@ -105,6 +105,13 @@ export interface SpellDef {
       [step: number]: { stun?: number; aoeR?: number; slow?: number; knockback?: number }
     }
   };
+  // Charge-up fields
+  chargeTime: number;      // Max charge duration in seconds (0.5-2.5)
+  chargeSlow: number;      // Movement speed multiplier while charging (0.3-0.8)
+  chargeMinDmg: number;    // Damage at 0 charge (tap-fire). Defaults to dmg * 0.3
+  chargeMaxDmg: number;    // Damage at full charge. Defaults to dmg * 3
+  chargePierce: number;    // At full charge, projectile gains this many pierce
+  chargeRadius: number;    // At full charge, explosion/aoe gains this much extra radius
 }
 
 /** Partial spell definition as written in CLASSES constants (many fields optional) */
@@ -388,6 +395,10 @@ export interface Player {
 
   // Cannoneer state
   _cannonShots: number;        // cannoneer shot counter
+
+  // Charge-up state
+  _chargeLevel: number;     // 0.0-1.0 progress
+  _chargeSlot: number;      // which spell slot (0=LMB, 1=RMB) is charging, -1 if none
 
   // Tidecaller state
   _summonCount: number;        // tidecaller active summon count

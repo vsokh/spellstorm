@@ -723,6 +723,37 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
 //       SPELL CASTING
 // ═══════════════════════════════════
 
+/** Charged cast: temporarily overrides spell stats based on charge level, then delegates to castSpell */
+export function castChargedSpell(state: GameState, p: Player, idx: number, angle: number, chargeLevel: number): void {
+  const def = p.cls.spells[idx];
+
+  // Compute charge-scaled values
+  const minDmg = def.chargeMinDmg || def.dmg * 0.3;
+  const maxDmg = def.chargeMaxDmg || def.dmg * 3;
+  const chargeDmg = minDmg + (maxDmg - minDmg) * chargeLevel;
+
+  // Temporarily override def values for the cast
+  const origDmg = def.dmg;
+  def.dmg = chargeDmg;
+
+  const origPierce = def.pierce;
+  if (def.chargePierce) {
+    def.pierce = (def.pierce || 0) + Math.floor(def.chargePierce * chargeLevel);
+  }
+
+  const origExplode = def.explode;
+  if (def.chargeRadius) {
+    def.explode = (def.explode || 0) + Math.floor(def.chargeRadius * chargeLevel);
+  }
+
+  castSpell(state, p, idx, angle);
+
+  // Restore original values
+  def.dmg = origDmg;
+  def.pierce = origPierce;
+  def.explode = origExplode;
+}
+
 /** Silent cast: no mana cost, no cooldown, no sound (for split shot / double tap) */
 export function castSpellSilent(state: GameState, p: Player, idx: number, angle: number, dmgMult = 1): void {
   const def = p.cls.spells[idx];

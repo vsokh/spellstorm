@@ -98,6 +98,12 @@ function normalizeSpellDef(input: SpellDefInput): SpellDef {
     aoeR: input.aoeR ?? 0,
     heal: input.heal ?? 0,
     ultCharge: input.ultCharge ?? 0,
+    chargeTime: input.chargeTime ?? 0,
+    chargeSlow: input.chargeSlow ?? 0,
+    chargeMinDmg: input.chargeMinDmg ?? 0,
+    chargeMaxDmg: input.chargeMaxDmg ?? 0,
+    chargePierce: input.chargePierce ?? 0,
+    chargeRadius: input.chargeRadius ?? 0,
   };
 }
 

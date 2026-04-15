@@ -16,7 +16,7 @@ import {
   GAME_OVER_DELAY_MS,
 } from '../constants';
 import { Enemy, EnemyView, GamePhase, NetworkMode, PickupType, SfxName } from '../types';
-import { castSpell, castSpellSilent, castUltimate, damageEnemy, switchStance } from './combat';
+import { castSpell, castChargedSpell, castSpellSilent, castUltimate, damageEnemy, switchStance } from './combat';
 
 /** Callback set by main.ts to break circular dep with upgrades module */
 export let onChestPickup: ((state: GameState) => void) | null = null;
@@ -48,6 +48,9 @@ export function updatePlayers(state: GameState, dt: number): void {
 
   for (const p of state.players) {
     if (!p.alive) {
+      // Cancel any active charge on death
+      p._chargeSlot = -1;
+      p._chargeLevel = 0;
       if (p.respawnTimer > 0) {
         p.respawnTimer -= dt;
         if (p.respawnTimer <= 0 && state.lives > 0 && state.gamePhase === GamePhase.Playing) {
@@ -82,7 +85,7 @@ export function updatePlayers(state: GameState, dt: number): void {
       continue;
     }
     const input = getInput(state, p.idx);
-    if (p.stunTimer > 0) { p.stunTimer -= dt; continue; }
+    if (p.stunTimer > 0) { p.stunTimer -= dt; p._chargeSlot = -1; p._chargeLevel = 0; continue; }
     const slow = p.slowTimer > 0 ? WAVE_PHYSICS.SLOW_MOVE_MULT : 1;
     if (p.slowTimer > 0) p.slowTimer -= dt;
 
@@ -96,7 +99,14 @@ export function updatePlayers(state: GameState, dt: number): void {
     if (!isNaN(input.angle)) p.angle = input.angle;
 
     // Absolute movement: W=up S=down A=left D=right
-    const ms = p.moveSpeed * slow;
+    let ms = p.moveSpeed * slow;
+    // Charge-up movement slow
+    if (p._chargeSlot >= 0) {
+      const chargeDef = p.cls.spells[p._chargeSlot];
+      if (chargeDef && chargeDef.chargeSlow) {
+        ms *= chargeDef.chargeSlow;
+      }
+    }
     let mvx = (input.mx || 0) * ms;
     let mvy = (input.my || 0) * ms;
     // Normalize diagonal
@@ -215,29 +225,84 @@ export function updatePlayers(state: GameState, dt: number): void {
     // ── SPELL CASTING ──
     const sd = p.cls.spells;
 
-    // Primary (LMB)
-    if (input.shoot && p.cd[0] <= 0 && p.mana >= sd[0].mana) {
-      castSpell(state, p, 0, input.angle);
-      p._animCastFlash = TIMING.ANIM_CAST;
-      // Split shot: extra bolts at angles
-      if (p.splitShot) {
-        for (let ss = 1; ss <= p.splitShot; ss++) {
-          const off = Math.ceil(ss / 2) * WAVE_PHYSICS.SPLIT_SHOT_ANGLE * (ss % 2 === 0 ? 1 : -1);
-          castSpellSilent(state, p, 0, input.angle + off, COMBAT.SPLIT_SHOT_SIDE_DAMAGE_MULT);
+    // Primary (LMB) — with charge-up support
+    const lmbDef = sd[0];
+    if (lmbDef.chargeTime && lmbDef.chargeTime > 0) {
+      // Charge-up spell
+      if (input.shoot && p.cd[0] <= 0 && p.mana >= lmbDef.mana) {
+        if (p._chargeSlot !== 0) {
+          // Start charging
+          p._chargeSlot = 0;
+          p._chargeLevel = 0;
+        } else {
+          // Continue charging
+          p._chargeLevel = Math.min(1, p._chargeLevel + dt / lmbDef.chargeTime);
         }
       }
-      // Double tap: fire again after short delay
-      if (p.doubleTap) {
-        for (let dt2 = 0; dt2 < p.doubleTap; dt2++) {
-          setTimeout(() => castSpellSilent(state, p, 0, input.angle), 60 * (dt2 + 1));
+      if (!input.shoot && p._chargeSlot === 0) {
+        // Released — fire charged spell if we have mana
+        if (p.cd[0] <= 0 && p.mana >= lmbDef.mana) {
+          castChargedSpell(state, p, 0, input.angle, p._chargeLevel);
+          p._animCastFlash = TIMING.ANIM_CAST;
+          // Split shot support
+          if (p.splitShot) {
+            for (let ss = 1; ss <= p.splitShot; ss++) {
+              const off = Math.ceil(ss / 2) * WAVE_PHYSICS.SPLIT_SHOT_ANGLE * (ss % 2 === 0 ? 1 : -1);
+              castSpellSilent(state, p, 0, input.angle + off, COMBAT.SPLIT_SHOT_SIDE_DAMAGE_MULT);
+            }
+          }
+          if (p.doubleTap) {
+            for (let dt2 = 0; dt2 < p.doubleTap; dt2++) {
+              setTimeout(() => castSpellSilent(state, p, 0, input.angle), 60 * (dt2 + 1));
+            }
+          }
+        }
+        p._chargeSlot = -1;
+        p._chargeLevel = 0;
+      }
+    } else {
+      // Original non-charge LMB logic (unchanged)
+      if (input.shoot && p.cd[0] <= 0 && p.mana >= sd[0].mana) {
+        castSpell(state, p, 0, input.angle);
+        p._animCastFlash = TIMING.ANIM_CAST;
+        if (p.splitShot) {
+          for (let ss = 1; ss <= p.splitShot; ss++) {
+            const off = Math.ceil(ss / 2) * WAVE_PHYSICS.SPLIT_SHOT_ANGLE * (ss % 2 === 0 ? 1 : -1);
+            castSpellSilent(state, p, 0, input.angle + off, COMBAT.SPLIT_SHOT_SIDE_DAMAGE_MULT);
+          }
+        }
+        if (p.doubleTap) {
+          for (let dt2 = 0; dt2 < p.doubleTap; dt2++) {
+            setTimeout(() => castSpellSilent(state, p, 0, input.angle), 60 * (dt2 + 1));
+          }
         }
       }
     }
 
-    // Secondary (RMB)
-    if (input.shoot2 && p.cd[1] <= 0 && p.mana >= sd[1].mana) {
-      castSpell(state, p, 1, input.angle);
-      p._animCastFlash = TIMING.ANIM_CAST;
+    // Secondary (RMB) — with charge-up support
+    const rmbDef = sd[1];
+    if (rmbDef.chargeTime && rmbDef.chargeTime > 0) {
+      if (input.shoot2 && p.cd[1] <= 0 && p.mana >= rmbDef.mana) {
+        if (p._chargeSlot !== 1) {
+          p._chargeSlot = 1;
+          p._chargeLevel = 0;
+        } else {
+          p._chargeLevel = Math.min(1, p._chargeLevel + dt / rmbDef.chargeTime);
+        }
+      }
+      if (!input.shoot2 && p._chargeSlot === 1) {
+        if (p.cd[1] <= 0 && p.mana >= rmbDef.mana) {
+          castChargedSpell(state, p, 1, input.angle, p._chargeLevel);
+          p._animCastFlash = TIMING.ANIM_CAST;
+        }
+        p._chargeSlot = -1;
+        p._chargeLevel = 0;
+      }
+    } else {
+      if (input.shoot2 && p.cd[1] <= 0 && p.mana >= sd[1].mana) {
+        castSpell(state, p, 1, input.angle);
+        p._animCastFlash = TIMING.ANIM_CAST;
+      }
     }
 
     // Ability (Q) - only trigger once per press

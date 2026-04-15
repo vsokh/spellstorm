@@ -478,7 +478,8 @@ export const CLASSES: Record<string, ClassDefInput> = {
     hp: 6, moveSpeed: 200, maxMana: 90, manaRegen: 14,
     passive: { name: 'Eagle Eye', desc: 'Primary range +40%. Consecutive Arrow hits build Focus — 3rd+ hit crits' },
     spells: [
-      { name: 'Arrow', key: 'LMB', type: SpellType.Projectile, dmg: 1.0, speed: 600, radius: 5, mana: 4, cd: 0.25, life: 1.8, pierce: 2, color: '#88cc44', trail: '#668833' },
+      { name: 'Power Shot', key: 'LMB', type: SpellType.Projectile, dmg: 1.5, speed: 600, radius: 5, mana: 4, cd: 0.8, life: 1.8, pierce: 2, color: '#88cc44', trail: '#668833',
+        chargeTime: 1.2, chargeSlow: 0.5, chargeMinDmg: 0.5, chargeMaxDmg: 4.5, chargePierce: 2 },
       { name: 'Volley', key: 'RMB', type: SpellType.Barrage, dmg: 1, speed: 500, radius: 5, mana: 18, cd: 2.5, count: 4, spread: 0.6, life: 1, color: '#88cc44', trail: '#556622' },
       { name: 'Trap', key: 'Q', type: SpellType.Trap, mana: 15, cd: 4, dmg: 3, radius: 50, slow: 2, color: '#aadd55' },
       { name: 'Arrow Rain', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#88cc44', mana: 0, cd: 0 },
@@ -502,7 +503,8 @@ export const CLASSES: Record<string, ClassDefInput> = {
     hp: 6, moveSpeed: 175, maxMana: 120, manaRegen: 18,
     passive: { name: 'Dark Pact', desc: 'Casting refunds 30% mana but costs 1 HP' },
     spells: [
-      { name: 'Shadow Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 3, speed: 260, radius: 10, mana: 10, cd: 0.5, life: 1.5, color: '#8833aa', trail: '#662288' },
+      { name: 'Shadow Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 3, speed: 260, radius: 10, mana: 10, cd: 0.5, life: 1.5, color: '#8833aa', trail: '#662288',
+        chargeTime: 0.8, chargeSlow: 0.5, chargeMinDmg: 1.5, chargeMaxDmg: 6.0, chargeRadius: 30 },
       { name: 'Drain Life', key: 'RMB', type: SpellType.Beam, dmg: 2, range: 200, mana: 18, cd: 1, width: 4, drain: 2, color: '#aa44cc' },
       { name: 'Summon Imp', key: 'Q', type: SpellType.Ultimate, ultCharge: 0, mana: 25, cd: 8, color: '#cc4466' },
       { name: 'Doom', key: 'Space', type: SpellType.Ultimate, ultCharge: 90, color: '#662288', mana: 0, cd: 0 },
@@ -621,7 +623,8 @@ export const CLASSES: Record<string, ClassDefInput> = {
     hp: 9, moveSpeed: 170, maxMana: 90, manaRegen: 12,
     passive: { name: 'Heavy Caliber', desc: 'Every 4th shot deals 2x damage with double explosion radius' },
     spells: [
-      { name: 'Power Shot', key: 'LMB', type: SpellType.Projectile, dmg: 3, speed: 500, radius: 11, mana: 10, cd: 0.5, life: 1.5, explode: 40, pierce: 1, color: '#aa7733', trail: '#885522' },
+      { name: 'Power Shot', key: 'LMB', type: SpellType.Projectile, dmg: 3, speed: 500, radius: 11, mana: 10, cd: 0.5, life: 1.5, explode: 40, pierce: 1, color: '#aa7733', trail: '#885522',
+        chargeTime: 1.0, chargeSlow: 0.4, chargeMinDmg: 1.0, chargeMaxDmg: 8.0, chargePierce: 1, chargeRadius: 25 },
       { name: 'Concussive Shell', key: 'RMB', type: SpellType.AoeDelayed, dmg: 2, mana: 18, cd: 3.5, delay: 0.4, radius: 60, stun: 0.8, color: '#cc9944' },
       { name: 'Caltrops', key: 'Q', type: SpellType.Trap, mana: 15, cd: 5, dmg: 2, radius: 55, slow: 2.5, count: 2, spread: 0.6, color: '#ddaa55' },
       { name: 'Artillery Barrage', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#885522', mana: 0, cd: 0 },

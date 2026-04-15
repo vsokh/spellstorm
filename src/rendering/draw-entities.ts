@@ -2435,6 +2435,42 @@ export function drawWizard(ctx: CanvasRenderingContext2D, state: GameState): voi
       ctx.fill();
     }
 
+    // ── Charge indicator ──
+    if (p._chargeSlot >= 0 && p._chargeLevel > 0) {
+      const chargeR = WIZARD_SIZE * 2 + p._chargeLevel * WIZARD_SIZE * 1.5;
+      const startAngle = -Math.PI / 2;
+      const endAngle = startAngle + Math.PI * 2 * p._chargeLevel;
+
+      // Color transitions: white -> yellow -> orange -> red
+      let chargeColor: string;
+      if (p._chargeLevel < 0.5) {
+        chargeColor = '#ffffff';
+      } else if (p._chargeLevel < 0.8) {
+        chargeColor = '#ffcc00';
+      } else if (p._chargeLevel < 1.0) {
+        chargeColor = '#ff8800';
+      } else {
+        // Full charge: pulsing red
+        const pulse = 0.5 + 0.5 * Math.sin(state.time * 12);
+        chargeColor = `rgba(255, 0, 0, ${0.6 + 0.4 * pulse})`;
+      }
+
+      ctx.strokeStyle = chargeColor;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, chargeR, startAngle, endAngle);
+      ctx.stroke();
+
+      // Glow effect at full charge
+      if (p._chargeLevel >= 1.0) {
+        ctx.strokeStyle = `rgba(255, 100, 0, ${0.3 + 0.2 * Math.sin(state.time * 8)})`;
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, chargeR + 3, startAngle, endAngle);
+        ctx.stroke();
+      }
+    }
+
     // ── Class-specific ultimate animation ──
     if (p._animUltTimer > 0) {
       drawUltimateAnim(ctx, p.x, p.y, p.clsKey, cls.color, cls.glow, state.time, p._animUltTimer / TIMING.ANIM_ULT);

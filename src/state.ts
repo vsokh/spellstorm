@@ -306,6 +306,12 @@ function normalizeSpellDef(input: SpellDefInput): SpellDef {
     heal: input.heal ?? 0,
     ultCharge: input.ultCharge ?? 0,
     combo: input.combo,
+    chargeTime: input.chargeTime ?? 0,
+    chargeSlow: input.chargeSlow ?? 0,
+    chargeMinDmg: input.chargeMinDmg ?? 0,
+    chargeMaxDmg: input.chargeMaxDmg ?? 0,
+    chargePierce: input.chargePierce ?? 0,
+    chargeRadius: input.chargeRadius ?? 0,
   };
 }
 
@@ -461,6 +467,8 @@ export function createPlayer(idx: number, clsKey: string): Player {
     _eagleEyeStreak: 0,
     _eagleEyeTimer: 0,
     _cannonShots: 0,
+    _chargeLevel: 0,
+    _chargeSlot: -1,
     _summonCount: 0,
     currentForm: cls.stanceForms ? 'A' : undefined,
     formSwitchCd: 0,
