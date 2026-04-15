@@ -182,6 +182,39 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
     spawnText(state, e.x, e.y - 20, '+1', '#5588aa');
   }
 
+  // Passive: Soulbinder soul mark — LMB marks enemies
+  if (p && p.clsKey === 'soulbinder') {
+    e._soulMark = state.time + 4;
+  }
+
+  // Passive: Soulbinder soul bond — allies deal +1 to soul-marked enemies
+  if (p && e._soulMark && e._soulMark > state.time && p.clsKey !== 'soulbinder') {
+    e.hp -= 1;
+    spawnText(state, e.x, e.y - 20, '+1', '#55aa88');
+  }
+
+  // Passive: Invoker elemental attunement — burning+slowed enemies take +1
+  if (p && p.clsKey === 'invoker' && (e._burnTimer > 0) && (e.slowTimer > 0)) {
+    e.hp -= 1;
+    spawnText(state, e.x, e.y - 20, '+1', '#cc8844');
+  }
+
+  // Passive: Voidweaver entropic decay — debuffed enemies take 15% more damage
+  if (p && p.clsKey === 'voidweaver' && ((e._burnTimer || 0) > 0 || (e.slowTimer || 0) > 0 || (e.stunTimer || 0) > 0)) {
+    const entropicBonus = Math.max(1, Math.floor(dmg * 0.15));
+    e.hp -= entropicBonus;
+    spawnText(state, e.x, e.y - 20, '+' + entropicBonus, '#aa44cc');
+  }
+
+  // Passive: Cannoneer heavy caliber — every 4th shot does 2x damage
+  if (p && p.clsKey === 'cannoneer') {
+    p._cannonShots = (p._cannonShots || 0) + 1;
+    if (p._cannonShots % 4 === 0) {
+      e.hp -= dmg; // extra damage (doubles it)
+      spawnText(state, e.x, e.y - 25, 'HEAVY!', '#aa7733');
+    }
+  }
+
   // Mana on hit
   if (p && p.manaOnHit) {
     p.mana = Math.min(p.maxMana, p.mana + p.manaOnHit);
@@ -280,6 +313,24 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
           spawnText(state, p.x, p.y - 15, 'RESET!', '#cc3355');
         }
         p._rushSpeed = state.time + 3;
+      }
+
+      // Passive: Soulbinder — ally heals on marked kill
+      if (p.clsKey !== 'soulbinder' && e._soulMark && e._soulMark > state.time) {
+        p.hp = Math.min(p.maxHp, p.hp + 0.5);
+        spawnText(state, p.x, p.y - 15, '+0.5 HP', '#55aa88');
+      }
+
+      // Passive: Voidweaver — debuffed kills explode
+      if (p.clsKey === 'voidweaver' && ((e._burnTimer || 0) > 0 || (e.slowTimer || 0) > 0 || (e.stunTimer || 0) > 0)) {
+        for (const nearby of state.enemies) {
+          if (!nearby.alive || nearby === e || nearby._friendly) continue;
+          if (dist(e.x, e.y, nearby.x, nearby.y) < 60) {
+            damageEnemy(state, nearby, 1, p.idx);
+            spawnParticles(state, nearby.x, nearby.y, '#aa44cc', 4);
+          }
+        }
+        spawnShockwave(state, e.x, e.y, 60, 'rgba(170,70,200,.3)');
       }
 
       // Raise Dead: chance to convert killed enemy into friendly minion
@@ -1729,6 +1780,132 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
       }
     }
     spawnShockwave(state, p.x, p.y, 200, 'rgba(80,130,170,.4)');
+  } else if (p.clsKey === 'cannoneer') {
+    // Artillery Barrage: rain explosive shells
+    const shellDmg = Math.round(ULTIMATE.ARTILLERY_DMG * pw);
+    for (let i = 0; i < ULTIMATE.ARTILLERY_SHELLS; i++) {
+      ((idx: number) => {
+        setTimeout(() => {
+          const tx = p.x + rand(-200, 200);
+          const ty = p.y + rand(-200, 200);
+          const clampedX = clamp(tx, 60, ROOM_WIDTH - 60);
+          const clampedY = clamp(ty, 60, ROOM_HEIGHT - 60);
+          // Spawn AOE explosion
+          const marker = state.aoeMarkers.acquire();
+          if (marker) {
+            marker.x = clampedX; marker.y = clampedY;
+            marker.radius = ULTIMATE.ARTILLERY_RADIUS; marker.delay = 0.4;
+            marker.dmg = shellDmg; marker.owner = p.idx;
+            marker.color = '#aa7733'; marker.age = 0; marker.stun = 0.5;
+          }
+          spawnParticles(state, clampedX, clampedY, '#dd8833', 10, 0.5);
+          shake(state, 4);
+          netSfx(state, SfxName.Hit);
+        }, idx * 300);
+      })(i);
+    }
+    spawnShockwave(state, p.x, p.y, 200, 'rgba(170,120,50,.3)');
+  } else if (p.clsKey === 'soulbinder') {
+    // Soul Storm: drain life from all enemies in range
+    const stormDmg = Math.round(ULTIMATE.SOUL_STORM_DMG * pw);
+    let totalDrained = 0;
+    for (const e of state.enemies) {
+      if (!e.alive || e._friendly) continue;
+      if (dist(p.x, p.y, e.x, e.y) < ULTIMATE.SOUL_STORM_RADIUS) {
+        damageEnemy(state, e, stormDmg, p.idx);
+        totalDrained += stormDmg;
+        spawnParticles(state, e.x, e.y, '#55aa88', 6, 0.4);
+        // Mark all hit enemies
+        e._soulMark = state.time + 4;
+      }
+    }
+    const healAmt = Math.floor(totalDrained * 0.25);
+    if (healAmt > 0) {
+      p.hp = Math.min(p.maxHp, p.hp + healAmt);
+      spawnText(state, p.x, p.y - 15, '+' + healAmt + ' HP', '#44ff88');
+    }
+    spawnShockwave(state, p.x, p.y, ULTIMATE.SOUL_STORM_RADIUS, 'rgba(80,170,130,.3)');
+    spawnParticles(state, p.x, p.y, '#55aa88', 15, 1.0);
+  } else if (p.clsKey === 'invoker') {
+    // Elemental Convergence: triple overlapping zones
+    const tx = clamp(p.x + Math.cos(angle) * 120, 60, ROOM_WIDTH - 60);
+    const ty = clamp(p.y + Math.sin(angle) * 120, 60, ROOM_HEIGHT - 60);
+    const zoneDmg = Math.round(ULTIMATE.CONVERGENCE_DMG * pw);
+    // Fire zone
+    const fireZone = state.zones.acquire();
+    if (fireZone) {
+      fireZone.x = tx - 30; fireZone.y = ty; fireZone.radius = ULTIMATE.CONVERGENCE_RADIUS;
+      fireZone.duration = ULTIMATE.CONVERGENCE_DURATION; fireZone.dmg = zoneDmg;
+      fireZone.color = '#ff6633'; fireZone.owner = p.idx;
+      fireZone.slow = 0; fireZone.stun = 0; fireZone.tickRate = 0.5; fireZone.tickTimer = 0; fireZone.age = 0;
+      fireZone.drain = 0; fireZone.heal = 0; fireZone.pull = 0; fireZone.freezeAfter = 0;
+    }
+    // Ice zone
+    const iceZone = state.zones.acquire();
+    if (iceZone) {
+      iceZone.x = tx + 30; iceZone.y = ty; iceZone.radius = ULTIMATE.CONVERGENCE_RADIUS;
+      iceZone.duration = ULTIMATE.CONVERGENCE_DURATION; iceZone.dmg = zoneDmg;
+      iceZone.color = '#44bbff'; iceZone.owner = p.idx;
+      iceZone.slow = 1.5; iceZone.stun = 0; iceZone.tickRate = 0.5; iceZone.tickTimer = 0; iceZone.age = 0;
+      iceZone.drain = 0; iceZone.heal = 0; iceZone.pull = 0; iceZone.freezeAfter = 0;
+    }
+    // Lightning zone
+    const lightZone = state.zones.acquire();
+    if (lightZone) {
+      lightZone.x = tx; lightZone.y = ty - 30; lightZone.radius = ULTIMATE.CONVERGENCE_RADIUS;
+      lightZone.duration = ULTIMATE.CONVERGENCE_DURATION; lightZone.dmg = zoneDmg;
+      lightZone.color = '#ffcc44'; lightZone.owner = p.idx;
+      lightZone.slow = 0; lightZone.stun = 0.5; lightZone.tickRate = 0.6; lightZone.tickTimer = 0; lightZone.age = 0;
+      lightZone.drain = 0; lightZone.heal = 0; lightZone.pull = 0; lightZone.freezeAfter = 0;
+    }
+    spawnShockwave(state, tx, ty, ULTIMATE.CONVERGENCE_RADIUS, 'rgba(200,130,70,.3)');
+    spawnParticles(state, tx, ty, '#ff6633', 8, 0.5);
+    spawnParticles(state, tx, ty, '#44bbff', 8, 0.5);
+    spawnParticles(state, tx, ty, '#ffcc44', 8, 0.5);
+  } else if (p.clsKey === 'tidecaller') {
+    // Tsunami: push all enemies away + damage + slow
+    for (const e of state.enemies) {
+      if (!e.alive || e._friendly) continue;
+      const d = dist(p.x, p.y, e.x, e.y);
+      if (d < ULTIMATE.TSUNAMI_RADIUS && d > 1) {
+        const nx = (e.x - p.x) / d;
+        const ny = (e.y - p.y) / d;
+        e.vx = nx * ULTIMATE.TSUNAMI_PUSH;
+        e.vy = ny * ULTIMATE.TSUNAMI_PUSH;
+        e.slowTimer = Math.max(e.slowTimer || 0, ULTIMATE.TSUNAMI_SLOW);
+        damageEnemy(state, e, Math.round(ULTIMATE.TSUNAMI_DMG * pw), p.idx);
+        spawnParticles(state, e.x, e.y, '#3388bb', 4, 0.3);
+      }
+    }
+    spawnShockwave(state, p.x, p.y, ULTIMATE.TSUNAMI_RADIUS, 'rgba(50,130,180,.4)');
+    spawnParticles(state, p.x, p.y, '#44aadd', 20, 1.2);
+  } else if (p.clsKey === 'voidweaver') {
+    // Void Rift: pull zone + DOT + debuffs
+    const tx = clamp(p.x + Math.cos(angle) * 120, 60, ROOM_WIDTH - 60);
+    const ty = clamp(p.y + Math.sin(angle) * 120, 60, ROOM_HEIGHT - 60);
+    const riftZone = state.zones.acquire();
+    if (riftZone) {
+      riftZone.x = tx; riftZone.y = ty; riftZone.radius = ULTIMATE.VOID_RIFT_RADIUS;
+      riftZone.duration = ULTIMATE.VOID_RIFT_DURATION; riftZone.dmg = Math.round(ULTIMATE.VOID_RIFT_DMG * pw);
+      riftZone.color = '#882299'; riftZone.owner = p.idx;
+      riftZone.slow = 1.0; riftZone.stun = 0; riftZone.tickRate = 0.5; riftZone.tickTimer = 0; riftZone.age = 0;
+      riftZone.drain = 0; riftZone.heal = 0; riftZone.pull = 1; riftZone.freezeAfter = 0;
+    }
+    // Pull enemies toward rift
+    for (const e of state.enemies) {
+      if (!e.alive || e._friendly) continue;
+      const d = dist(tx, ty, e.x, e.y);
+      if (d < ULTIMATE.VOID_RIFT_RADIUS && d > 1) {
+        const nx = (tx - e.x) / d;
+        const ny = (ty - e.y) / d;
+        e.vx = nx * 60;
+        e.vy = ny * 60;
+        e.slowTimer = Math.max(e.slowTimer || 0, 1.0);
+        e._burnTimer = (e._burnTimer || 0) + 3;
+      }
+    }
+    spawnShockwave(state, tx, ty, ULTIMATE.VOID_RIFT_RADIUS, 'rgba(130,30,150,.3)');
+    spawnParticles(state, tx, ty, '#aa44cc', 20, 1.0);
   }
 
   // ultEcho: buff next N LMB casts with double damage

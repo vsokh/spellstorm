@@ -40,6 +40,7 @@ export interface EnemyInit {
   _elite: boolean;
   _hexStacks: number;
   _wardenMark: boolean;
+  _soulMark: number;
   // Network interpolation (optional)
   _targetX?: number;
   _targetY?: number;
@@ -189,6 +190,9 @@ export class EnemyView {
   get _wardenMark(): boolean { return this._pool._wardenMark[this._idx] === 1; }
   set _wardenMark(v: boolean) { this._pool._wardenMark[this._idx] = v ? 1 : 0; }
 
+  get _soulMark() { return this._pool._soulMark[this._idx]; }
+  set _soulMark(v: number) { this._pool._soulMark[this._idx] = v; }
+
   // String field
   get type(): string { return this._pool.type[this._idx]; }
   set type(v: string) { this._pool.type[this._idx] = v; }
@@ -238,6 +242,9 @@ export class EnemyPool {
 
   // Hexblade / Warden
   _hexStacks: Float32Array;
+
+  // Soulbinder
+  _soulMark: Float32Array;
 
   // Uint8 for booleans (0/1)
   alive: Uint8Array;
@@ -292,6 +299,7 @@ export class EnemyPool {
     this._lerpT = new Float32Array(c);
 
     this._hexStacks = new Float32Array(c);
+    this._soulMark = new Float32Array(c);
 
     // Uint8 (booleans)
     this.alive = new Uint8Array(c);
@@ -435,6 +443,7 @@ export class EnemyPool {
     this._dmgReductionTriggered[idx] = e._dmgReductionTriggered ? 1 : 0;
     this._hexStacks[idx] = e._hexStacks ?? 0;
     this._wardenMark[idx] = e._wardenMark ? 1 : 0;
+    this._soulMark[idx] = e._soulMark ?? 0;
     // Network interpolation
     this._targetX[idx] = e._targetX ?? 0;
     this._targetY[idx] = e._targetY ?? 0;
@@ -487,6 +496,7 @@ export class EnemyPool {
     this._lerpT = newLerpT;
 
     this._hexStacks = growFloat32(this._hexStacks, newCap);
+    this._soulMark = growFloat32(this._soulMark, newCap);
 
     // Uint8
     this.alive = growUint8(this.alive, newCap);

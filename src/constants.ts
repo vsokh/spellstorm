@@ -288,6 +288,21 @@ export const ULTIMATE = {
   HEXSTORM_EXPLOSION_DMG: 4,
   UNBREAKABLE_DURATION: 5,
   UNBREAKABLE_DR: 0.8,
+  ARTILLERY_SHELLS: 6,
+  ARTILLERY_DMG: 5,
+  ARTILLERY_RADIUS: 70,
+  SOUL_STORM_RADIUS: 200,
+  SOUL_STORM_DMG: 3,
+  CONVERGENCE_RADIUS: 90,
+  CONVERGENCE_DURATION: 4,
+  CONVERGENCE_DMG: 2,
+  TSUNAMI_RADIUS: 300,
+  TSUNAMI_DMG: 4,
+  TSUNAMI_PUSH: 150,
+  TSUNAMI_SLOW: 2,
+  VOID_RIFT_RADIUS: 160,
+  VOID_RIFT_DURATION: 5,
+  VOID_RIFT_DMG: 3,
 } as const;
 
 export const RANGES = {
@@ -572,6 +587,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
   cannoneer: {
     name: 'Cannoneer', color: '#aa7733', glow: '#885522',
     desc: 'Artillery. Slow power shots, long range.',
+    hp: 9, moveSpeed: 170, maxMana: 90, manaRegen: 12,
     passive: { name: 'Heavy Caliber', desc: 'Every 4th shot deals 2x damage with double explosion radius' },
     spells: [
       { name: 'Power Shot', key: 'LMB', type: SpellType.Projectile, dmg: 3, speed: 500, radius: 11, mana: 10, cd: 0.5, life: 1.5, explode: 40, pierce: 1, color: '#aa7733', trail: '#885522' },
@@ -583,6 +599,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
   soulbinder: {
     name: 'Soulbinder', color: '#55aa88', glow: '#338866',
     desc: 'Soul mage. Marks + ally empowerment.',
+    hp: 7, moveSpeed: 185, maxMana: 110, manaRegen: 15,
     passive: { name: 'Soul Bond', desc: 'LMB marks enemies for 4s; allies deal +1 damage and heal 0.5 HP on marked kills' },
     spells: [
       { name: 'Soul Lash', key: 'LMB', type: SpellType.Beam, dmg: 1.5, range: 220, mana: 6, cd: 0.28, width: 3, color: '#55aa88', trail: '#338866' },
@@ -594,6 +611,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
   invoker: {
     name: 'Invoker', color: '#cc8844', glow: '#aa6622',
     desc: 'Elemental mastery. Multi-element combos.',
+    hp: 7, moveSpeed: 190, maxMana: 100, manaRegen: 14,
     passive: { name: 'Elemental Attunement', desc: 'Burning+slowed enemies take +1 dmg/tick; stunned+burning enemies take 2x burn damage' },
     spells: [
       { name: 'Flame Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 2, speed: 400, radius: 8, mana: 7, cd: 0.3, life: 1.1, burn: 2, color: '#cc8844', trail: '#aa6622' },
@@ -605,6 +623,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
   tidecaller: {
     name: 'Tidecaller', color: '#3388bb', glow: '#226699',
     desc: 'Water mage. Summons + wave control.',
+    hp: 8, moveSpeed: 180, maxMana: 100, manaRegen: 14,
     passive: { name: 'Rising Tide', desc: 'Each active summon grants +10% ability damage (max 3); 2+ summons enhance slow to 0.6s' },
     spells: [
       { name: 'Water Bolt', key: 'LMB', type: SpellType.Homing, dmg: 1.5, speed: 340, radius: 7, mana: 6, cd: 0.28, life: 1.8, homing: 2.5, color: '#3388bb', trail: '#226699' },
@@ -616,6 +635,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
   voidweaver: {
     name: 'Voidweaver', color: '#aa44cc', glow: '#882299',
     desc: 'Void magic. Traps, zones, debuffs.',
+    hp: 6, moveSpeed: 185, maxMana: 110, manaRegen: 16,
     passive: { name: 'Entropic Decay', desc: 'Debuffed enemies take 15% more damage from all sources; debuffed kills explode for 1 AOE damage' },
     spells: [
       { name: 'Void Bolt', key: 'LMB', type: SpellType.Projectile, dmg: 1.5, speed: 320, radius: 9, mana: 6, cd: 0.32, life: 1.2, burn: 3, slow: 0.4, color: '#aa44cc', trail: '#882299' },

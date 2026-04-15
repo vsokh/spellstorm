@@ -333,6 +333,12 @@ export interface Player {
   _wardenDR: number;           // allied warden DR timer
   _invulnTimer: number;        // invulnerability timer
 
+  // Cannoneer state
+  _cannonShots: number;        // cannoneer shot counter
+
+  // Tidecaller state
+  _summonCount: number;        // tidecaller active summon count
+
   // Animation state
   _animCastFlash: number;     // timer for casting glow (decays to 0)
   _animHitFlash: number;      // timer for hit reaction flash (decays to 0)
@@ -406,6 +412,9 @@ export interface Enemy {
 
   // Warden mark (allies deal +1 dmg)
   _wardenMark: boolean;
+
+  // Soulbinder mark expiry timestamp
+  _soulMark: number;
 
   // Network interpolation (guest only)
   _targetX?: number;

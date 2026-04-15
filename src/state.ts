@@ -434,6 +434,8 @@ export function createPlayer(idx: number, clsKey: string): Player {
     _facingDR: false,
     _wardenDR: 0,
     _invulnTimer: 0,
+    _cannonShots: 0,
+    _summonCount: 0,
     _animCastFlash: 0,
     _animHitFlash: 0,
     _animDeathFade: -1,

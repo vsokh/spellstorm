@@ -37,6 +37,7 @@ export const CLASS_SCALE: Record<string, number> = {
   necromancer: 1.0, chronomancer: 0.95, knight: 1.2, berserker: 1.25,
   paladin: 1.15, ranger: 0.85, druid: 0.95, warlock: 1.0, monk: 0.88, engineer: 1.0,
   graviturge: 1.0, bladecaller: 0.9, architect: 1.05, hexblade: 1.0, warden: 1.2,
+  cannoneer: 1.1, soulbinder: 0.95, invoker: 1.0, tidecaller: 1.0, voidweaver: 0.95,
 };
 
 // ── Class-specific ultimate cast animation ──
@@ -627,6 +628,191 @@ function drawUltimateAnim(ctx: CanvasRenderingContext2D, x: number, y: number, c
       ctx.lineTo(x - S * 0.6, y - S * 0.2);
       ctx.closePath();
       ctx.stroke();
+      break;
+    }
+
+    case 'cannoneer': {
+      // Falling artillery shells with explosion rings
+      ctx.globalAlpha = alpha;
+      const shellCount = 4;
+      for (let i = 0; i < shellCount; i++) {
+        const shellAngle = (i / shellCount) * Math.PI * 2 + time * 2;
+        const shellDist = S * 1.5 + (1 - progress) * S * 2;
+        const sx2 = x + Math.cos(shellAngle) * shellDist;
+        const sy2 = y + Math.sin(shellAngle) * shellDist;
+        // Shell trail (falling from above effect)
+        ctx.strokeStyle = '#dd8833';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(sx2, sy2 - S * 1.5 * progress);
+        ctx.lineTo(sx2, sy2);
+        ctx.stroke();
+        // Explosion ring
+        const ringR = S * 0.5 + (1 - progress) * S;
+        ctx.strokeStyle = '#aa7733';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(sx2, sy2, ringR, 0, Math.PI * 2);
+        ctx.stroke();
+        // Shell head
+        ctx.fillStyle = '#ffaa44';
+        ctx.beginPath();
+        ctx.arc(sx2, sy2, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Central flash
+      ctx.fillStyle = radGrad(ctx, x, y, 0, x, y, S * 2, [
+        [0, 'rgba(255,170,50,0.4)'],
+        [1, 'transparent'],
+      ]);
+      ctx.beginPath();
+      ctx.arc(x, y, S * 2, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+
+    case 'soulbinder': {
+      // Swirling soul wisps converging on center
+      ctx.globalAlpha = alpha;
+      const wispCount = 8;
+      for (let i = 0; i < wispCount; i++) {
+        const wispAngle = (i / wispCount) * Math.PI * 2 + time * 3;
+        const spiralR = S * 2.5 * progress;
+        const wx = x + Math.cos(wispAngle) * spiralR;
+        const wy = y + Math.sin(wispAngle) * spiralR;
+        ctx.fillStyle = radGrad(ctx, wx, wy, 0, wx, wy, S * 0.4, [
+          [0, '#aaffcc'],
+          [0.5, '#55aa88'],
+          [1, 'transparent'],
+        ]);
+        ctx.beginPath();
+        ctx.arc(wx, wy, S * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        // Trail line to center
+        ctx.strokeStyle = 'rgba(85,170,136,0.3)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(wx, wy);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
+      // Central soul glow
+      ctx.fillStyle = radGrad(ctx, x, y, 0, x, y, S * 1.5, [
+        [0, 'rgba(100,255,170,0.5)'],
+        [0.6, 'rgba(50,136,100,0.2)'],
+        [1, 'transparent'],
+      ]);
+      ctx.beginPath();
+      ctx.arc(x, y, S * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+
+    case 'invoker': {
+      // Three elemental rings rotating and overlapping
+      ctx.globalAlpha = alpha;
+      const elemColors = ['#ff6633', '#44bbff', '#ffcc44'];
+      for (let i = 0; i < 3; i++) {
+        const ringAngle = time * (2 + i * 0.5) + (i * Math.PI * 2 / 3);
+        const ringR = S * 1.5 + (1 - progress) * S;
+        ctx.strokeStyle = elemColors[i];
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(x, y, ringR, ringAngle, ringAngle + Math.PI * 1.2);
+        ctx.stroke();
+        // Element orb
+        const orbX = x + Math.cos(ringAngle + Math.PI * 0.6) * ringR;
+        const orbY = y + Math.sin(ringAngle + Math.PI * 0.6) * ringR;
+        ctx.fillStyle = elemColors[i];
+        ctx.beginPath();
+        ctx.arc(orbX, orbY, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Central convergence flash
+      ctx.fillStyle = radGrad(ctx, x, y, 0, x, y, S * 1.2, [
+        [0, 'rgba(200,130,70,0.4)'],
+        [1, 'transparent'],
+      ]);
+      ctx.beginPath();
+      ctx.arc(x, y, S * 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+
+    case 'tidecaller': {
+      // Rising water wave expanding outward with ripple rings
+      ctx.globalAlpha = alpha;
+      const waveR = S * 1 + (1 - progress) * S * 3;
+      // Water fill
+      ctx.fillStyle = radGrad(ctx, x, y, S * 0.5, x, y, waveR, [
+        [0, 'rgba(50,130,180,0.3)'],
+        [0.6, 'rgba(60,160,210,0.15)'],
+        [1, 'transparent'],
+      ]);
+      ctx.beginPath();
+      ctx.arc(x, y, waveR, 0, Math.PI * 2);
+      ctx.fill();
+      // Ripple rings
+      for (let r = 0; r < 3; r++) {
+        const rippleP = Math.max(0, Math.min(1, (1 - progress - r * 0.1) / (1 - r * 0.1)));
+        const rippleR = S * 0.5 + rippleP * S * 3;
+        ctx.globalAlpha = alpha * (1 - rippleP) * 0.7;
+        ctx.strokeStyle = r % 2 === 0 ? '#44aadd' : '#3388bb';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, y, rippleR, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      // Wave crest arcs
+      ctx.globalAlpha = alpha * 0.6;
+      ctx.strokeStyle = '#88ddff';
+      ctx.lineWidth = 1.5;
+      for (let w = 0; w < 4; w++) {
+        const wAngle = (w / 4) * Math.PI * 2 + time * 2;
+        ctx.beginPath();
+        ctx.arc(x, y, waveR * 0.7, wAngle, wAngle + 0.6);
+        ctx.stroke();
+      }
+      break;
+    }
+
+    case 'voidweaver': {
+      // Void portal with swirling purple energy
+      ctx.globalAlpha = alpha;
+      const voidR = S * 2 + (1 - progress) * S;
+      // Dark void center
+      ctx.fillStyle = radGrad(ctx, x, y, 0, x, y, voidR, [
+        [0, 'rgba(30,0,40,0.5)'],
+        [0.5, 'rgba(130,30,150,0.3)'],
+        [1, 'transparent'],
+      ]);
+      ctx.beginPath();
+      ctx.arc(x, y, voidR, 0, Math.PI * 2);
+      ctx.fill();
+      // Swirling tendrils
+      const tendrilCount = 6;
+      for (let i = 0; i < tendrilCount; i++) {
+        const tAngle = (i / tendrilCount) * Math.PI * 2 + time * 4;
+        const tR = voidR * 0.6;
+        const tx2 = x + Math.cos(tAngle) * tR;
+        const ty2 = y + Math.sin(tAngle) * tR;
+        ctx.strokeStyle = i % 2 === 0 ? '#aa44cc' : '#cc55ee';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(
+          x + Math.cos(tAngle + 0.5) * tR * 0.8,
+          y + Math.sin(tAngle + 0.5) * tR * 0.8,
+          tx2, ty2
+        );
+        ctx.stroke();
+      }
+      // Inner rift glow
+      ctx.fillStyle = '#aa44cc';
+      ctx.globalAlpha = alpha * 0.6;
+      ctx.beginPath();
+      ctx.arc(x, y, S * 0.4, 0, Math.PI * 2);
+      ctx.fill();
       break;
     }
 
@@ -1617,6 +1803,154 @@ export function drawClassBody(ctx: CanvasRenderingContext2D, x: number, y: numbe
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.stroke();
 
+  } else if (clsKey === 'cannoneer') {
+    // ── CANNONEER: stocky bronze body with metallic sheen ──
+    ctx.fillStyle = radGrad(ctx, x - S * 0.15, y - S * 0.15, S * 0.1, x, y, S, [
+      [0, '#ddbb77'],
+      [0.3, '#aa7733'],
+      [0.7, '#886622'],
+      [1, '#664411'],
+    ]);
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.fill();
+
+    // Metallic sheen highlight
+    ctx.fillStyle = 'rgba(220,200,150,0.25)';
+    ctx.beginPath();
+    ctx.arc(x - S * 0.25, y - S * 0.3, S * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ammo belt cross
+    ctx.strokeStyle = '#996633';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x - S * 0.6, y - S * 0.4);
+    ctx.lineTo(x + S * 0.6, y + S * 0.4);
+    ctx.stroke();
+
+    // Outline
+    ctx.strokeStyle = 'rgba(100,70,30,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.stroke();
+
+  } else if (clsKey === 'soulbinder') {
+    // ── SOULBINDER: ethereal teal body with wispy soul tendrils ──
+    ctx.fillStyle = radGrad(ctx, x, y, S * 0.1, x, y, S, [
+      [0, '#aaffdd'],
+      [0.3, '#55aa88'],
+      [0.7, '#338866'],
+      [1, '#226644'],
+    ]);
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.fill();
+
+    // Orbiting soul wisps
+    for (let i = 0; i < 3; i++) {
+      const wAngle = (i / 3) * Math.PI * 2 + time * 2.5;
+      const wx = x + Math.cos(wAngle) * S * 1.3;
+      const wy = y + Math.sin(wAngle) * S * 1.3;
+      ctx.fillStyle = radGrad(ctx, wx, wy, 0, wx, wy, S * 0.25, [
+        [0, 'rgba(150,255,200,0.6)'],
+        [1, 'transparent'],
+      ]);
+      ctx.beginPath(); ctx.arc(wx, wy, S * 0.25, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Inner glow
+    ctx.strokeStyle = 'rgba(100,200,150,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.stroke();
+
+  } else if (clsKey === 'invoker') {
+    // ── INVOKER: warm amber body with three elemental orbs orbiting ──
+    ctx.fillStyle = radGrad(ctx, x - S * 0.15, y - S * 0.15, S * 0.1, x, y, S, [
+      [0, '#ffdd88'],
+      [0.3, '#cc8844'],
+      [0.7, '#aa6622'],
+      [1, '#884411'],
+    ]);
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.fill();
+
+    // Three elemental orbs (fire, ice, lightning)
+    const orbColors = ['#ff6633', '#44bbff', '#ffcc44'];
+    for (let i = 0; i < 3; i++) {
+      const orbAngle = (i / 3) * Math.PI * 2 + time * 2;
+      const ox = x + Math.cos(orbAngle) * S * 1.2;
+      const oy = y + Math.sin(orbAngle) * S * 1.2;
+      ctx.fillStyle = orbColors[i];
+      ctx.beginPath(); ctx.arc(ox, oy, S * 0.18, 0, Math.PI * 2); ctx.fill();
+      // Orb glow
+      ctx.fillStyle = radGrad(ctx, ox, oy, 0, ox, oy, S * 0.3, [
+        [0, orbColors[i]],
+        [1, 'transparent'],
+      ]);
+      ctx.beginPath(); ctx.arc(ox, oy, S * 0.3, 0, Math.PI * 2); ctx.fill();
+    }
+
+    ctx.strokeStyle = 'rgba(170,100,30,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.stroke();
+
+  } else if (clsKey === 'tidecaller') {
+    // ── TIDECALLER: watery blue body with ripple ring effect ──
+    ctx.fillStyle = radGrad(ctx, x, y, S * 0.1, x, y, S, [
+      [0, '#88ddff'],
+      [0.3, '#3388bb'],
+      [0.7, '#226699'],
+      [1, '#114477'],
+    ]);
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.fill();
+
+    // Ripple ring effect
+    const ripplePulse = 0.12 + 0.08 * Math.sin(time * 4);
+    ctx.strokeStyle = rgba(100, 200, 255, ripplePulse);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x, y, S * 1.4, 0, Math.PI * 2); ctx.stroke();
+
+    // Wave arc decorations
+    ctx.strokeStyle = 'rgba(100,180,240,0.3)';
+    ctx.lineWidth = 1.5;
+    for (let w = 0; w < 3; w++) {
+      const wAngle2 = (w / 3) * Math.PI * 2 + time * 1.5;
+      ctx.beginPath();
+      ctx.arc(x, y, S * 1.1, wAngle2, wAngle2 + 0.7);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = 'rgba(30,100,150,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.stroke();
+
+  } else if (clsKey === 'voidweaver') {
+    // ── VOIDWEAVER: dark purple body with void distortion ──
+    ctx.fillStyle = radGrad(ctx, x, y, S * 0.1, x, y, S, [
+      [0, '#cc77ee'],
+      [0.3, '#aa44cc'],
+      [0.7, '#882299'],
+      [1, '#551166'],
+    ]);
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.fill();
+
+    // Void rift shapes (tear marks)
+    ctx.strokeStyle = '#cc55ee';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 4; i++) {
+      const riftAngle = (i / 4) * Math.PI * 2 + time * 3;
+      const rx = x + Math.cos(riftAngle) * S * 0.5;
+      const ry = y + Math.sin(riftAngle) * S * 0.5;
+      const rx2 = x + Math.cos(riftAngle) * S * 0.9;
+      const ry2 = y + Math.sin(riftAngle) * S * 0.9;
+      ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx2, ry2); ctx.stroke();
+    }
+
+    // Distortion ring
+    const voidPulse = 0.15 + 0.1 * Math.sin(time * 3.5);
+    ctx.strokeStyle = rgba(170, 70, 200, voidPulse);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x, y, S * 1.3, 0, Math.PI * 2); ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(130,30,150,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(x, y, S, 0, Math.PI * 2); ctx.stroke();
+
   } else {
     // Default fallback (gradient body)
     ctx.fillStyle = radGrad(ctx, x - S * 0.2, y - S * 0.2, S * 0.1, x, y, S, [
@@ -1862,6 +2196,144 @@ export function drawWeapon(ctx: CanvasRenderingContext2D, x: number, y: number, 
     ctx.strokeStyle = '#aaddff';
     ctx.lineWidth = 1.5;
     ctx.stroke();
+    return;
+
+  } else if (clsKey === 'cannoneer') {
+    // Cannon barrel shape (thick barrel pointing forward)
+    const sx = x + Math.cos(angle) * staffStart;
+    const sy = y + Math.sin(angle) * staffStart;
+    const ex = x + Math.cos(angle) * (staffEnd + 4);
+    const ey = y + Math.sin(angle) * (staffEnd + 4);
+    const perpX = Math.cos(angle + Math.PI / 2);
+    const perpY = Math.sin(angle + Math.PI / 2);
+    // Barrel body
+    ctx.fillStyle = '#886633';
+    ctx.beginPath();
+    ctx.moveTo(sx + perpX * 3, sy + perpY * 3);
+    ctx.lineTo(ex + perpX * 2.5, ey + perpY * 2.5);
+    ctx.lineTo(ex - perpX * 2.5, ey - perpY * 2.5);
+    ctx.lineTo(sx - perpX * 3, sy - perpY * 3);
+    ctx.closePath(); ctx.fill();
+    // Muzzle ring
+    ctx.strokeStyle = '#aa8844';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(ex + perpX * 3.5, ey + perpY * 3.5);
+    ctx.lineTo(ex - perpX * 3.5, ey - perpY * 3.5);
+    ctx.stroke();
+    // Muzzle bore
+    ctx.fillStyle = '#332211';
+    ctx.beginPath();
+    ctx.arc(ex, ey, 2, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+
+  } else if (clsKey === 'soulbinder') {
+    // Soul chain weapon (glowing tether beam)
+    const sx = x + Math.cos(angle) * staffStart;
+    const sy = y + Math.sin(angle) * staffStart;
+    const ex = x + Math.cos(angle) * staffEnd;
+    const ey = y + Math.sin(angle) * staffEnd;
+    // Staff body
+    ctx.strokeStyle = '#338866';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+    // Wispy end glow
+    ctx.fillStyle = radGrad(ctx, ex, ey, 0, ex, ey, 6, [
+      [0, '#aaffcc'],
+      [0.5, '#55aa88'],
+      [1, 'transparent'],
+    ]);
+    ctx.beginPath(); ctx.arc(ex, ey, 6, 0, Math.PI * 2); ctx.fill();
+    // Soul chain links
+    for (let i = 1; i < 3; i++) {
+      const t = i / 3;
+      const lx = sx + (ex - sx) * t;
+      const ly = sy + (ey - sy) * t;
+      ctx.fillStyle = '#55aa88';
+      ctx.beginPath(); ctx.arc(lx, ly, 1.5, 0, Math.PI * 2); ctx.fill();
+    }
+    return;
+
+  } else if (clsKey === 'invoker') {
+    // Triple-element staff with 3 colored orbs at tip
+    const sx = x + Math.cos(angle) * staffStart;
+    const sy = y + Math.sin(angle) * staffStart;
+    const ex = x + Math.cos(angle) * staffEnd;
+    const ey = y + Math.sin(angle) * staffEnd;
+    // Staff body
+    ctx.strokeStyle = '#aa6622';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+    // Three orbs in triangle arrangement at tip
+    const orbColors2 = ['#ff6633', '#44bbff', '#ffcc44'];
+    const perpX = Math.cos(angle + Math.PI / 2);
+    const perpY = Math.sin(angle + Math.PI / 2);
+    const offsets = [[0, -3], [2.5, 2], [-2.5, 2]];
+    for (let i = 0; i < 3; i++) {
+      const ox = ex + perpX * offsets[i][0] + Math.cos(angle) * offsets[i][1];
+      const oy = ey + perpY * offsets[i][0] + Math.sin(angle) * offsets[i][1];
+      ctx.fillStyle = orbColors2[i];
+      ctx.beginPath(); ctx.arc(ox, oy, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+    return;
+
+  } else if (clsKey === 'tidecaller') {
+    // Trident shape (3-pronged fork)
+    const sx = x + Math.cos(angle) * staffStart;
+    const sy = y + Math.sin(angle) * staffStart;
+    const ex = x + Math.cos(angle) * staffEnd;
+    const ey = y + Math.sin(angle) * staffEnd;
+    const perpX = Math.cos(angle + Math.PI / 2);
+    const perpY = Math.sin(angle + Math.PI / 2);
+    // Shaft
+    ctx.strokeStyle = '#3388bb';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+    // Center prong
+    const tipLen = S * 0.5;
+    ctx.strokeStyle = '#44aadd';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex + Math.cos(angle) * tipLen, ey + Math.sin(angle) * tipLen);
+    ctx.stroke();
+    // Side prongs
+    for (const side of [-1, 1]) {
+      const baseX = ex + perpX * side * 3;
+      const baseY = ey + perpY * side * 3;
+      ctx.beginPath();
+      ctx.moveTo(baseX, baseY);
+      ctx.lineTo(baseX + Math.cos(angle) * tipLen * 0.8, baseY + Math.sin(angle) * tipLen * 0.8);
+      ctx.stroke();
+    }
+    // Cross bar
+    ctx.beginPath();
+    ctx.moveTo(ex + perpX * 4, ey + perpY * 4);
+    ctx.lineTo(ex - perpX * 4, ey - perpY * 4);
+    ctx.stroke();
+    return;
+
+  } else if (clsKey === 'voidweaver') {
+    // Void staff with dark orb at tip
+    const sx = x + Math.cos(angle) * staffStart;
+    const sy = y + Math.sin(angle) * staffStart;
+    const ex = x + Math.cos(angle) * staffEnd;
+    const ey = y + Math.sin(angle) * staffEnd;
+    // Staff body
+    ctx.strokeStyle = '#882299';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+    // Dark orb at tip with void distortion
+    ctx.fillStyle = radGrad(ctx, ex, ey, 0, ex, ey, 6, [
+      [0, '#220033'],
+      [0.4, '#aa44cc'],
+      [1, 'transparent'],
+    ]);
+    ctx.beginPath(); ctx.arc(ex, ey, 6, 0, Math.PI * 2); ctx.fill();
+    // Inner core
+    ctx.fillStyle = '#cc55ee';
+    ctx.beginPath(); ctx.arc(ex, ey, 2, 0, Math.PI * 2); ctx.fill();
     return;
 
   } else {

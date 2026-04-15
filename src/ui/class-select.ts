@@ -47,6 +47,11 @@ const ULTIMATE_DESCRIPTIONS: Record<string, string> = {
   architect: 'Deploy a massive arcane construct that persists on the battlefield, damaging and slowing enemies.',
   hexblade: 'Curse all enemies with hex stacks that detonate in chain explosions.',
   warden: 'Become invulnerable and project a protective aura that shields nearby allies.',
+  cannoneer: 'Rain explosive artillery shells across the battlefield, stunning enemies caught in the blasts.',
+  soulbinder: 'Unleash a soul storm that drains life from all nearby enemies, healing you for a portion of damage dealt.',
+  invoker: 'Summon the elemental convergence — overlapping fire, ice, and lightning zones at the target location.',
+  tidecaller: 'Unleash a massive tsunami wave that pushes all enemies away, dealing damage and slowing them.',
+  voidweaver: 'Open a void rift that pulls enemies inward while burning and slowing them.',
 };
 
 const EFFECT_DEFS: { key: keyof SpellDefInput; label: string; cssClass: string }[] = [

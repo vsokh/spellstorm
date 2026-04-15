@@ -55,7 +55,10 @@ export function enemyStatus(state: GameState, dt: number): void {
       e._burnTick = (e._burnTick || 0) - dt;
       if (e._burnTick <= 0) {
         e._burnTick = TIMING.BURN_TICK;
-        damageEnemy(state, e, 1, e._burnOwner || 0);
+        // Invoker passive: stunned+burning enemies take 2x burn damage
+        const burnOwnerPlayer = state.players[e._burnOwner || 0];
+        const burnDmg = (burnOwnerPlayer && burnOwnerPlayer.clsKey === 'invoker' && e.stunTimer > 0) ? 2 : 1;
+        damageEnemy(state, e, burnDmg, e._burnOwner || 0);
 
         // Wildfire: burn spreads to nearby enemies
         const burnOwner = state.players[e._burnOwner || 0];

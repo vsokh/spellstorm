@@ -343,6 +343,15 @@ export function updatePlayers(state: GameState, dt: number): void {
     // Invuln timer decay
     if (p._invulnTimer > 0) p._invulnTimer -= dt;
 
+    // Tidecaller: count active summons for Rising Tide passive
+    if (p.clsKey === 'tidecaller') {
+      let summonCount = 0;
+      for (const e of state.enemies) {
+        if (e.alive && e._friendly && e._owner === p.idx) summonCount++;
+      }
+      p._summonCount = Math.min(3, summonCount);
+    }
+
     // Time stop decay
     if (p._timeStopTimer > 0) {
       p._timeStopTimer -= dt;

@@ -401,6 +401,7 @@ export function createFriendlyEnemy(state: GameState, x: number, y: number, owne
     _elite: false,
     _hexStacks: 0,
     _wardenMark: false,
+    _soulMark: 0,
     _dmgReductionActive: false, _dmgReductionTimer: 0, _dmgReductionTriggered: false,
   };
 }
