@@ -474,7 +474,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
     name: 'Ranger', color: '#88cc44', glow: '#668833',
     desc: 'Ranged DPS. Fast attacks, high mobility.',
     hp: 6, moveSpeed: 200, maxMana: 90, manaRegen: 14,
-    passive: { name: 'Eagle Eye', desc: 'Primary range +40%, crits at max range' },
+    passive: { name: 'Eagle Eye', desc: 'Primary range +40%. Consecutive Arrow hits build Focus — 3rd+ hit crits' },
     spells: [
       { name: 'Arrow', key: 'LMB', type: SpellType.Projectile, dmg: 1.0, speed: 600, radius: 5, mana: 4, cd: 0.25, life: 1.8, pierce: 2, color: '#88cc44', trail: '#668833' },
       { name: 'Volley', key: 'RMB', type: SpellType.Barrage, dmg: 1, speed: 500, radius: 5, mana: 18, cd: 2.5, count: 4, spread: 0.6, life: 1, color: '#88cc44', trail: '#556622' },

@@ -162,12 +162,18 @@ export function updateSpells(state: GameState, dt: number): void {
       const e = state.enemies.at(idx);
       if (!e.alive || e.iframes > 0) continue;
       if (dist(s.x, s.y, e.x, e.y) < ENEMIES[e.type].size + s.radius) {
-        // Ranger Eagle Eye: crit at max range (>70% of projectile life)
+        // Ranger Eagle Eye: consecutive Arrow hits build Focus, 3rd+ crits
         let hitDmg = s.dmg;
-        if (s.clsKey === 'ranger' && s.age > s.life * 0.7) {
+        if (s.clsKey === 'ranger' && s._slot === 0) {
           const p = state.players[s.owner];
-          hitDmg *= (p?.critMul || 2);
-          spawnText(state, e.x, e.y - 25, 'CRIT!', '#ffcc44');
+          if (p) {
+            p._eagleEyeStreak++;
+            p._eagleEyeTimer = 1.5;
+            if (p._eagleEyeStreak >= 3) {
+              hitDmg *= (p.critMul || 2);
+              spawnText(state, e.x, e.y - 25, `FOCUS x${p._eagleEyeStreak}!`, '#ffcc44');
+            }
+          }
         }
         damageEnemy(state, e, hitDmg, s.owner);
 

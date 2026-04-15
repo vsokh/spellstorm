@@ -333,6 +333,10 @@ export interface Player {
   _wardenDR: number;           // allied warden DR timer
   _invulnTimer: number;        // invulnerability timer
 
+  // Ranger Eagle Eye state
+  _eagleEyeStreak: number;      // consecutive arrow hits (crits at 3+)
+  _eagleEyeTimer: number;       // seconds until streak resets (1.5s window)
+
   // Cannoneer state
   _cannonShots: number;        // cannoneer shot counter
 

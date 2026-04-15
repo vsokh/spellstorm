@@ -128,6 +128,15 @@ export function updatePlayers(state: GameState, dt: number): void {
     if (p._animHitFlash > 0) p._animHitFlash -= dt;
     if (p._animUltTimer > 0) p._animUltTimer -= dt;
 
+    // Ranger Eagle Eye: decay streak timer
+    if (p._eagleEyeTimer > 0) {
+      p._eagleEyeTimer -= dt;
+      if (p._eagleEyeTimer <= 0) {
+        p._eagleEyeStreak = 0;
+        p._eagleEyeTimer = 0;
+      }
+    }
+
     // Full Rotation timers
     if (p.fullRotation) {
       if (p.fullRotationTimer > 0) {
