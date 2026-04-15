@@ -3653,6 +3653,7 @@ export function drawEnemies(ctx: CanvasRenderingContext2D, state: GameState): vo
   const lifespanBars: { x: number; y: number; w: number; ratio: number }[] = [];
   const summonHpBars: { x: number; y: number; w: number; ratio: number }[] = [];
   const slowIndicators: { x: number; y: number; r: number }[] = [];
+  const markIndicators: { x: number; y: number; r: number; stacks: number; color: string }[] = [];
 
   for (const e of state.enemies) {
     if (!e.alive) continue;
@@ -3818,6 +3819,15 @@ export function drawEnemies(ctx: CanvasRenderingContext2D, state: GameState): vo
     if (e.slowTimer > 0) {
       slowIndicators.push({ x: e.x, y: e.y, r: et.size + 3 });
     }
+
+    // Mark indicator (batched)
+    if (e._markStacks > 0 && e._markTimer > 0) {
+      const markColor = e._markName === 'frost' ? '#88CCFF' :
+                        e._markName === 'soul' ? '#55aa88' :
+                        e._markName === 'judgment' ? '#ffdd44' :
+                        e._markName === 'static' ? '#ffcc44' : '#ffaa44';
+      markIndicators.push({ x: e.x, y: e.y, r: et.size + 5, stacks: e._markStacks, color: markColor });
+    }
   }
 
   // ── Batched health bars ──
@@ -3865,6 +3875,30 @@ export function drawEnemies(ctx: CanvasRenderingContext2D, state: GameState): vo
       ctx.beginPath();
       ctx.arc(si.x, si.y, si.r, 0, Math.PI * 2);
       ctx.stroke();
+    }
+  }
+
+  // ── Batched mark indicators ──
+  if (markIndicators.length > 0) {
+    for (const m of markIndicators) {
+      const pulse = 0.7 + 0.3 * Math.sin(state.time * 5);
+      ctx.strokeStyle = m.color;
+      ctx.globalAlpha = 0.6 * pulse;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+      ctx.stroke();
+      // Stack dots
+      for (let si = 0; si < m.stacks; si++) {
+        const dotAngle = -Math.PI / 2 + (si - (m.stacks - 1) / 2) * 0.5;
+        const dotX = m.x + Math.cos(dotAngle) * (m.r + 4);
+        const dotY = m.y + Math.sin(dotAngle) * (m.r + 4);
+        ctx.fillStyle = m.color;
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
     }
   }
 }

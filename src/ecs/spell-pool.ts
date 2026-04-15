@@ -6,6 +6,8 @@
 // SpellView provides backward-compatible property access via getters/setters.
 // Uses swap-and-pop release instead of splice for O(1) removal.
 
+import type { SpellDef } from '../types';
+
 /** Minimal init shape accepted by SpellPool.add() / push() */
 export interface SpellInit {
   type: string;
@@ -35,6 +37,9 @@ export interface SpellInit {
   _reversed: boolean;
   _bounces: number;
   _slot: number;
+  // Mark/detonate carried from def
+  applyMark?: SpellDef['applyMark'];
+  detonateMark?: SpellDef['detonateMark'];
 }
 
 // ── Typed-array helpers ──
@@ -149,6 +154,13 @@ export class SpellView {
   // Uint8 (boolean) fields
   get _reversed(): boolean { return this._pool._reversed[this._idx] === 1; }
   set _reversed(v: boolean) { this._pool._reversed[this._idx] = v ? 1 : 0; }
+
+  // Mark/detonate (object arrays)
+  get applyMark(): SpellDef['applyMark'] | undefined { return this._pool.applyMark[this._idx]; }
+  set applyMark(v: SpellDef['applyMark'] | undefined) { this._pool.applyMark[this._idx] = v; }
+
+  get detonateMark(): SpellDef['detonateMark'] | undefined { return this._pool.detonateMark[this._idx]; }
+  set detonateMark(v: SpellDef['detonateMark'] | undefined) { this._pool.detonateMark[this._idx] = v; }
 }
 
 // ═══════════════════════════════════
@@ -194,6 +206,10 @@ export class SpellPool {
   trail: string[];
   clsKey: string[];
 
+  // Object arrays for mark/detonate
+  applyMark: (SpellDef['applyMark'] | undefined)[];
+  detonateMark: (SpellDef['detonateMark'] | undefined)[];
+
   // Pre-allocated view pool
   private _views: (SpellView | undefined)[];
 
@@ -235,6 +251,10 @@ export class SpellPool {
     this.color = new Array(c).fill('');
     this.trail = new Array(c).fill('');
     this.clsKey = new Array(c).fill('');
+
+    // Object arrays for mark/detonate
+    this.applyMark = new Array(c).fill(undefined);
+    this.detonateMark = new Array(c).fill(undefined);
 
     this._views = [];
   }
@@ -290,6 +310,9 @@ export class SpellPool {
       this.color[idx] = this.color[last];
       this.trail[idx] = this.trail[last];
       this.clsKey[idx] = this.clsKey[last];
+      // Objects
+      this.applyMark[idx] = this.applyMark[last];
+      this.detonateMark[idx] = this.detonateMark[last];
     }
     this._count--;
   }
@@ -377,6 +400,9 @@ export class SpellPool {
     this._slot[idx] = s._slot ?? 0;
     // Uint8 (boolean) fields
     this._reversed[idx] = s._reversed ? 1 : 0;
+    // Object fields for mark/detonate
+    this.applyMark[idx] = s.applyMark ?? undefined;
+    this.detonateMark[idx] = s.detonateMark ?? undefined;
   }
 
   /** Grow capacity by doubling */
@@ -417,6 +443,10 @@ export class SpellPool {
     while (this.color.length < newCap) this.color.push('');
     while (this.trail.length < newCap) this.trail.push('');
     while (this.clsKey.length < newCap) this.clsKey.push('');
+
+    // Object arrays
+    while (this.applyMark.length < newCap) this.applyMark.push(undefined);
+    while (this.detonateMark.length < newCap) this.detonateMark.push(undefined);
 
     this._capacity = newCap;
   }

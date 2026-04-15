@@ -126,6 +126,13 @@ export function createTestEnemy(overrides: Partial<import('../types').Enemy> = {
     _dmgReductionTimer: 0,
     _dmgReductionTriggered: false,
     _elite: false,
+    _hexStacks: 0,
+    _wardenMark: false,
+    _soulMark: 0,
+    _markName: '',
+    _markStacks: 0,
+    _markTimer: 0,
+    _markOwner: 0,
     ...overrides,
   };
 }

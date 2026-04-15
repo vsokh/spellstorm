@@ -41,6 +41,11 @@ export interface EnemyInit {
   _hexStacks: number;
   _wardenMark: boolean;
   _soulMark: number;
+  // Generic mark/detonate system
+  _markName: string;
+  _markStacks: number;
+  _markTimer: number;
+  _markOwner: number;
   // Network interpolation (optional)
   _targetX?: number;
   _targetY?: number;
@@ -193,6 +198,19 @@ export class EnemyView {
   get _soulMark() { return this._pool._soulMark[this._idx]; }
   set _soulMark(v: number) { this._pool._soulMark[this._idx] = v; }
 
+  // Generic mark/detonate system
+  get _markStacks() { return this._pool._markStacks[this._idx]; }
+  set _markStacks(v: number) { this._pool._markStacks[this._idx] = v; }
+
+  get _markTimer() { return this._pool._markTimer[this._idx]; }
+  set _markTimer(v: number) { this._pool._markTimer[this._idx] = v; }
+
+  get _markOwner() { return this._pool._markOwner[this._idx]; }
+  set _markOwner(v: number) { this._pool._markOwner[this._idx] = v; }
+
+  get _markName(): string { return this._pool._markName[this._idx]; }
+  set _markName(v: string) { this._pool._markName[this._idx] = v; }
+
   // String field
   get type(): string { return this._pool.type[this._idx]; }
   set type(v: string) { this._pool.type[this._idx] = v; }
@@ -245,6 +263,12 @@ export class EnemyPool {
 
   // Soulbinder
   _soulMark: Float32Array;
+
+  // Generic mark/detonate system
+  _markStacks: Float32Array;
+  _markTimer: Float32Array;
+  _markOwner: Int32Array;
+  _markName: string[];
 
   // Uint8 for booleans (0/1)
   alive: Uint8Array;
@@ -301,6 +325,12 @@ export class EnemyPool {
     this._hexStacks = new Float32Array(c);
     this._soulMark = new Float32Array(c);
 
+    // Generic mark/detonate
+    this._markStacks = new Float32Array(c);
+    this._markTimer = new Float32Array(c);
+    this._markOwner = new Int32Array(c);
+    this._markName = new Array(c).fill('');
+
     // Uint8 (booleans)
     this.alive = new Uint8Array(c);
     this._friendly = new Uint8Array(c);
@@ -352,6 +382,11 @@ export class EnemyPool {
     this._spdMul.fill(1, 0, this._capacity);
     this._dmgMul.fill(1, 0, this._capacity);
     this.alive.fill(0, 0, this._capacity);
+    // Reset mark arrays
+    this._markStacks.fill(0, 0, this._capacity);
+    this._markTimer.fill(0, 0, this._capacity);
+    this._markOwner.fill(0, 0, this._capacity);
+    this._markName.fill('', 0, this._capacity);
   }
 
   /** Iterate over all enemies (yields EnemyView). */
@@ -444,6 +479,11 @@ export class EnemyPool {
     this._hexStacks[idx] = e._hexStacks ?? 0;
     this._wardenMark[idx] = e._wardenMark ? 1 : 0;
     this._soulMark[idx] = e._soulMark ?? 0;
+    // Generic mark/detonate
+    this._markName[idx] = e._markName ?? '';
+    this._markStacks[idx] = e._markStacks ?? 0;
+    this._markTimer[idx] = e._markTimer ?? 0;
+    this._markOwner[idx] = e._markOwner ?? 0;
     // Network interpolation
     this._targetX[idx] = e._targetX ?? 0;
     this._targetY[idx] = e._targetY ?? 0;
@@ -497,6 +537,12 @@ export class EnemyPool {
 
     this._hexStacks = growFloat32(this._hexStacks, newCap);
     this._soulMark = growFloat32(this._soulMark, newCap);
+
+    // Generic mark/detonate
+    this._markStacks = growFloat32(this._markStacks, newCap);
+    this._markTimer = growFloat32(this._markTimer, newCap);
+    this._markOwner = growInt32(this._markOwner, newCap);
+    while (this._markName.length < newCap) this._markName.push('');
 
     // Uint8
     this.alive = growUint8(this.alive, newCap);

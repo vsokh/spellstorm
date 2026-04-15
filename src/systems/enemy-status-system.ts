@@ -75,5 +75,15 @@ export function enemyStatus(state: GameState, dt: number): void {
         }
       }
     }
+
+    // Mark timer decay
+    if (e._markTimer > 0) {
+      e._markTimer -= dt;
+      if (e._markTimer <= 0) {
+        e._markName = '';
+        e._markStacks = 0;
+        e._markTimer = 0;
+      }
+    }
   }
 }

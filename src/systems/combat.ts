@@ -781,6 +781,91 @@ export function castSpellSilent(state: GameState, p: Player, idx: number, angle:
   }
 }
 
+// ── Mark/Detonate helpers ──
+
+/** Apply a mark to an enemy (stacks up to maxStacks, refreshes timer) */
+export function applyMarkToEnemy(
+  e: Enemy,
+  mark: NonNullable<SpellDef['applyMark']>,
+  ownerIdx: number
+): void {
+  const maxStk = mark.maxStacks ?? 1;
+  if (e._markName === mark.name) {
+    if (e._markStacks < maxStk) e._markStacks++;
+    e._markTimer = mark.duration;
+  } else {
+    e._markName = mark.name;
+    e._markStacks = 1;
+    e._markTimer = mark.duration;
+    e._markOwner = ownerIdx;
+  }
+}
+
+/** Detonate marks on an enemy for bonus damage and effects */
+export function detonateMarks(
+  state: GameState,
+  e: Enemy,
+  det: NonNullable<SpellDef['detonateMark']>,
+  ownerIdx: number,
+  color: string
+): void {
+  const stacks = e._markStacks;
+  if (stacks <= 0 || e._markName !== det.name) return;
+
+  const bonusDmg = det.dmgPerStack * stacks;
+  damageEnemy(state, e, bonusDmg, ownerIdx);
+
+  const markColor = e._markName === 'frost' ? '#88CCFF' :
+                    e._markName === 'soul' ? '#55aa88' :
+                    e._markName === 'judgment' ? '#ffdd44' :
+                    e._markName === 'static' ? '#ffcc44' : '#ffaa44';
+  spawnText(state, e.x, e.y - 30, 'DETONATE!', markColor);
+  spawnParticles(state, e.x, e.y, color, 12, 0.5);
+  spawnShockwave(state, e.x, e.y, det.aoeOnDetonate || 40, color);
+
+  if (det.aoeOnDetonate && det.aoeOnDetonate > 0) {
+    const aoeCandidates = state.enemyGrid.queryArea(e.x, e.y, det.aoeOnDetonate);
+    for (const aidx of aoeCandidates) {
+      const ae = state.enemies.at(aidx);
+      if (!ae.alive || ae === e) continue;
+      if (dist(e.x, e.y, ae.x, ae.y) < det.aoeOnDetonate) {
+        damageEnemy(state, ae, Math.ceil(bonusDmg * 0.5), ownerIdx);
+      }
+    }
+  }
+
+  if (det.spreadOnDetonate) {
+    const spreadRange = 80;
+    const spreadCandidates = state.enemyGrid.queryArea(e.x, e.y, spreadRange);
+    for (const sidx of spreadCandidates) {
+      const se = state.enemies.at(sidx);
+      if (!se.alive || se === e) continue;
+      if (dist(e.x, e.y, se.x, se.y) < spreadRange && se._markStacks === 0) {
+        se._markName = det.name;
+        se._markStacks = 1;
+        se._markTimer = 3;
+        se._markOwner = ownerIdx;
+      }
+    }
+  }
+
+  if (det.effectOnDetonate) {
+    if (det.effectOnDetonate.stun) e.stunTimer = (e.stunTimer || 0) + det.effectOnDetonate.stun * stacks;
+    if (det.effectOnDetonate.slow) e.slowTimer = (e.slowTimer || 0) + det.effectOnDetonate.slow * stacks;
+    if (det.effectOnDetonate.heal) {
+      const p = state.players[ownerIdx];
+      if (p) {
+        p.hp = Math.min(p.maxHp, p.hp + det.effectOnDetonate.heal * stacks);
+        spawnText(state, p.x, p.y - 20, `+${det.effectOnDetonate.heal * stacks} HP`, '#44ff88');
+      }
+    }
+  }
+
+  e._markName = '';
+  e._markStacks = 0;
+  e._markTimer = 0;
+}
+
 function spellToRuntime(def: SpellDef): Spell {
   return {
     type: def.type,
@@ -804,6 +889,8 @@ function spellToRuntime(def: SpellDef): Spell {
     _reversed: false,
     _bounces: 0,
     _slot: 0,
+    applyMark: def.applyMark,
+    detonateMark: def.detonateMark,
   };
 }
 
@@ -1168,6 +1255,8 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
             p.hp = Math.min(p.maxHp, p.hp + def.drain);
             spawnText(state, p.x, p.y - 20, `+${def.drain}`, '#44ff88');
           }
+          if (def.applyMark) applyMarkToEnemy(e, def.applyMark, p.idx);
+          if (def.detonateMark) detonateMarks(state, e, def.detonateMark, p.idx, def.color);
           if (!primaryTarget) primaryTarget = e;
           break;
         }
@@ -1219,6 +1308,8 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         damageEnemy(state, e, Math.round(getEffectiveSpellDmg(p, idx) * echoDmgMul), p.idx);
         if (def.slow) e.slowTimer = (e.slowTimer || 0) + def.slow;
         if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
+        if (def.applyMark) applyMarkToEnemy(e, def.applyMark, p.idx);
+        if (def.detonateMark) detonateMarks(state, e, def.detonateMark, p.idx, def.color);
       }
     }
     netSfx(state, SfxName.Fire);
@@ -1234,6 +1325,8 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         if (def.slow) e.slowTimer = (e.slowTimer || 0) + def.slow;
         if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
         if (def.drain) novaHealed += def.drain;
+        if (def.applyMark) applyMarkToEnemy(e, def.applyMark, p.idx);
+        if (def.detonateMark) detonateMarks(state, e, def.detonateMark, p.idx, def.color);
       }
     }
     if (novaHealed > 0) {

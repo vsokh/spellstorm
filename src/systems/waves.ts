@@ -1,7 +1,7 @@
 import { GameState, dist, rand, wrapAngle, spawnParticles, spawnShockwave, spawnText, shake, flashScreen, netSfx } from '../state';
 import { ENEMIES, ROOM_WIDTH, ROOM_HEIGHT, WALL_THICKNESS, WAVE_PHYSICS, TIMING, RANGES } from '../constants';
 import { SfxName, EnemyView } from '../types';
-import { damageEnemy } from './combat';
+import { damageEnemy, applyMarkToEnemy, detonateMarks } from './combat';
 
 // Upper bound on enemy collision radius for broad-phase query padding.
 // The largest enemy (archlord) has size 28; 30 provides a safe margin.
@@ -204,6 +204,9 @@ export function updateSpells(state: GameState, dt: number): void {
             spawnText(state, p.x, p.y - 20, `+${s.drain}`, '#44ff88');
           }
         }
+        // Mark/Detonate system
+        if (s.applyMark) applyMarkToEnemy(e, s.applyMark, s.owner);
+        if (s.detonateMark) detonateMarks(state, e, s.detonateMark, s.owner, s.color);
         if (s.pierceLeft > 0) { s.pierceLeft--; continue; }
         // Shield Bounce: Knight's Shield Throw bounces to nearby enemies
         const bounceCount = state.players[s.owner]?.shieldBounce ?? 0;
