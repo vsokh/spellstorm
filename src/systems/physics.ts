@@ -463,6 +463,25 @@ export function updatePlayers(state: GameState, dt: number): void {
     p._furyActive = p.clsKey === 'berserker' && p.hp <= p.maxHp / 2;
     if (p._furyActive) p.moveSpeed = Math.max(p.moveSpeed, DEFAULT_MOVE_SPEED * 1.5);
 
+    // Proximity aura damage
+    if (p.cls.passive.proximityBonus?.aura) {
+      p._proximityAuraTick -= dt;
+      if (p._proximityAuraTick <= 0) {
+        p._proximityAuraTick = COMBAT.PROXIMITY_AURA_TICK_RATE;
+        const auraRange = p.cls.passive.proximityBonus.range + (p.closeQuarters * 20);
+        const auraDmg = p.cls.passive.proximityBonus.aura * COMBAT.PROXIMITY_AURA_TICK_RATE;
+        // Use spatial grid for efficiency
+        const candidates = state.enemyGrid.queryArea(p.x, p.y, auraRange);
+        for (const idx of candidates) {
+          const e = state.enemies.at(idx);
+          if (!e.alive) continue;
+          if (dist(p.x, p.y, e.x, e.y) < auraRange) {
+            damageEnemy(state, e, Math.max(1, Math.round(auraDmg)), p.idx);
+          }
+        }
+      }
+    }
+
     // Druid: Regrowth - regen 1 HP every 7 seconds
     if (p.clsKey === 'druid') {
       p._auraTick = (p._auraTick || 0) + dt;

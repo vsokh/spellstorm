@@ -200,6 +200,9 @@ export const COMBAT = {
   ELITE_HP_MULT: 2.5,             // 2.5x HP
   ELITE_DMG_MULT: 1.3,            // 1.3x damage
   ELITE_XP_MULT: 2,               // 2x XP on death
+  // Positional bonuses
+  BACKSTAB_ANGLE: Math.PI / 4,       // 45 degrees
+  PROXIMITY_AURA_TICK_RATE: 0.5,     // tick every 0.5s
 } as const;
 
 export const TIMING = {
@@ -451,7 +454,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
     name: 'Berserker', color: '#ff4444', glow: '#cc2222',
     desc: 'Melee DPS. The lower the HP, the stronger.',
     hp: 14, moveSpeed: 200, maxMana: 70, manaRegen: 10,
-    passive: { name: 'Fury', desc: 'Below 50% HP: +50% damage and speed, 5% lifesteal' },
+    passive: { name: 'Fury', desc: 'Below 50% HP: +50% damage and speed, 5% lifesteal. Close enemies take 1 dps and you deal +30% damage', proximityBonus: { range: 80, dmgMult: 1.3, aura: 1.0 } },
     spells: [
       { name: 'Axe Combo', key: 'LMB', type: SpellType.Cone, dmg: 2.5, range: 50, mana: 2, cd: 0.35, angle: 1.5, color: '#ff6644',
         combo: { steps: 3, timeout: 2.0, dmgScale: [1.0, 1.2, 2.0], effects: { 3: { aoeR: 50 } } } },
@@ -479,7 +482,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
     passive: { name: 'Eagle Eye', desc: 'Primary range +40%. Consecutive Arrow hits build Focus — 3rd+ hit crits' },
     spells: [
       { name: 'Power Shot', key: 'LMB', type: SpellType.Projectile, dmg: 1.5, speed: 600, radius: 5, mana: 4, cd: 0.8, life: 1.8, pierce: 2, color: '#88cc44', trail: '#668833',
-        chargeTime: 1.2, chargeSlow: 0.5, chargeMinDmg: 0.5, chargeMaxDmg: 4.5, chargePierce: 2 },
+        chargeTime: 1.2, chargeSlow: 0.5, chargeMinDmg: 0.5, chargeMaxDmg: 4.5, chargePierce: 2, positionBonus: { type: 'pillar', mult: 1.5, pillarRange: 100 } },
       { name: 'Volley', key: 'RMB', type: SpellType.Barrage, dmg: 1, speed: 500, radius: 5, mana: 18, cd: 2.5, count: 4, spread: 0.6, life: 1, color: '#88cc44', trail: '#556622' },
       { name: 'Trap', key: 'Q', type: SpellType.Trap, mana: 15, cd: 4, dmg: 3, radius: 50, slow: 2, color: '#aadd55' },
       { name: 'Arrow Rain', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#88cc44', mana: 0, cd: 0 },
@@ -514,7 +517,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
     name: 'Monk', color: '#eedd88', glow: '#ccaa44',
     desc: 'Martial arts. Fast melee + dodging.',
     hp: 7, moveSpeed: 210, maxMana: 80, manaRegen: 12,
-    passive: { name: 'Inner Peace', desc: '25% chance to dodge attacks' },
+    passive: { name: 'Inner Peace', desc: '25% chance to dodge attacks. +50% damage from behind enemies', backstab: 1.5 },
     spells: [
       { name: 'Chi Combo', key: 'LMB', type: SpellType.Cone, dmg: 1, range: 60, mana: 3, cd: 0.2, angle: 1.2, color: '#eedd88',
         combo: { steps: 3, timeout: 1.5, dmgScale: [0.8, 1.2, 2.5], effects: { 3: { stun: 0.5, aoeR: 40 } } } },
@@ -549,7 +552,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
   bladecaller: {
     name: 'Bladecaller', color: '#cc3355', glow: '#aa2244',
     desc: 'Blade dancer. Kill-chain mobility.',
-    passive: { name: 'Kill Rush', desc: 'Kills within 1.5s of Shadow Step reset its cooldown; kills grant +10% speed for 3s' },
+    passive: { name: 'Kill Rush', desc: 'Kills within 1.5s of Shadow Step reset its cooldown; kills grant +10% speed for 3s. 2x backstab damage', backstab: 2.0 },
     spells: [
       { name: 'Blade Chain', key: 'LMB', type: SpellType.Cone, dmg: 2.5, range: 55, mana: 3, cd: 0.3, angle: 1.2, color: '#cc3355',
         combo: { steps: 4, timeout: 1.8, dmgScale: [0.8, 1.0, 1.5, 3.0], effects: { 4: { aoeR: 60, stun: 0.3 } } } },
@@ -971,6 +974,14 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p: Player) => { p.laserTurret = true; } },
   { name: 'Self-Destruct', desc: 'Turrets explode when they expire (6 dmg, medium radius)', forClass: 'engineer', color: '#dd8833',
     apply: (p: Player) => { p.turretExplode = true; } },
+
+  // ── Positional Bonus Upgrades ──
+  { name: "Assassin's Mark", desc: 'Backstab bonus +0.3x per stack (max 3)', forClass: undefined, maxStacks: 3, stackable: true, color: '#aa2244',
+    offerCondition: (passive) => !!passive.backstab,
+    apply: (p: Player) => { p.assassinMark = (p.assassinMark || 0) + 1; } },
+  { name: 'Close Quarters', desc: 'Proximity range +20, +1 armor while in range (max 3)', forClass: undefined, maxStacks: 3, stackable: true, color: '#ff6644',
+    offerCondition: (passive) => !!passive.proximityBonus,
+    apply: (p: Player) => { p.closeQuarters = (p.closeQuarters || 0) + 1; p.armor = (p.armor || 0) + 1; } },
 
   // ══════════════════════════════════════
   //     EVOLUTION UPGRADES
