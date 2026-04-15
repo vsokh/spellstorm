@@ -249,10 +249,10 @@ export function updatePlayers(state: GameState, dt: number): void {
     p._furyActive = p.clsKey === 'berserker' && p.hp <= p.maxHp / 2;
     if (p._furyActive) p.moveSpeed = Math.max(p.moveSpeed, DEFAULT_MOVE_SPEED * 1.5);
 
-    // Druid: Regrowth - regen 1 HP every 5 seconds
+    // Druid: Regrowth - regen 1 HP every 7 seconds
     if (p.clsKey === 'druid') {
       p._auraTick = (p._auraTick || 0) + dt;
-      if (p._auraTick >= 5) {
+      if (p._auraTick >= 7) {
         p._auraTick = 0;
         if (p.hp < p.maxHp) {
           p.hp = Math.min(p.maxHp, p.hp + 1);

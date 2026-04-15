@@ -485,9 +485,9 @@ export const CLASSES: Record<string, ClassDefInput> = {
     name: 'Druid', color: '#44aa33', glow: '#337722',
     desc: 'Nature magic. Summons + heals.',
     hp: 9, moveSpeed: 185, maxMana: 100, manaRegen: 14,
-    passive: { name: 'Regrowth', desc: 'Regen 1 HP every 5 seconds' },
+    passive: { name: 'Regrowth', desc: 'Regen 1 HP every 7 seconds' },
     spells: [
-      { name: 'Thorn Swipe', key: 'LMB', type: SpellType.Cone, dmg: 2, range: 80, mana: 4, cd: 0.32, angle: 1.0, slow: 0.4, color: '#44aa33' },
+      { name: 'Thorn Swipe', key: 'LMB', type: SpellType.Cone, dmg: 1.5, range: 80, mana: 4, cd: 0.32, angle: 1.0, slow: 0.4, color: '#44aa33' },
       { name: 'Entangle', key: 'RMB', type: SpellType.Zone, dmg: 0, mana: 20, cd: 5, radius: 60, duration: 2, tickRate: 0.5, stun: 2, color: '#66bb44' },
       { name: 'Spirit Wolf', key: 'Q', type: SpellType.Ultimate, ultCharge: 0, mana: 30, cd: 10, color: '#88aa55' },
       { name: "Nature's Wrath", key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#33aa22', mana: 0, cd: 0 },

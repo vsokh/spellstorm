@@ -1285,7 +1285,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       wolf.type = '_wolf';
       wolf.hp = 8;
       wolf.maxHp = 8;
-      wolf._lifespan = 15;
+      wolf._lifespan = 12;
       if (p.packLeader) {
         wolf.hp = 16;
         wolf.maxHp = 16;
