@@ -89,7 +89,8 @@ describe('damageEnemy()', () => {
       const p = createTestPlayer(0, 'berserker');
       p._furyActive = true;
       state.players = [p];
-      const e = createTestEnemy({ hp: 20, maxHp: 20 });
+      // Place enemy far from player to avoid proximity bonus
+      const e = createTestEnemy({ hp: 20, maxHp: 20, x: 900, y: 100 });
       state.enemies.clear(); state.enemies.push(e);
 
       damageEnemy(state, e, 4, 0);
@@ -119,7 +120,8 @@ describe('damageEnemy()', () => {
       const p = createTestPlayer(0, 'berserker');
       p._rageDmgMul = 2;
       state.players = [p];
-      const e = createTestEnemy({ hp: 20, maxHp: 20 });
+      // Place enemy far from player to avoid proximity bonus
+      const e = createTestEnemy({ hp: 20, maxHp: 20, x: 900, y: 100 });
       state.enemies.clear(); state.enemies.push(e);
 
       damageEnemy(state, e, 3, 0);
@@ -201,30 +203,30 @@ describe('damageEnemy()', () => {
     });
   });
 
-  describe('stormcaller passive (every 5th hit stuns)', () => {
-    it('stuns enemy on every 5th hit', () => {
+  describe('stormcaller passive (every 4th hit stuns)', () => {
+    it('stuns enemy on every 4th hit', () => {
       const p = createTestPlayer(0, 'stormcaller');
-      p.hitCounter = 4; // next hit is 5th
+      p.hitCounter = 3; // next hit is 4th
       state.players = [p];
       const e = createTestEnemy({ hp: 20, maxHp: 20 });
       state.enemies.clear(); state.enemies.push(e);
 
       damageEnemy(state, e, 1, 0);
 
-      expect(p.hitCounter).toBe(5);
+      expect(p.hitCounter).toBe(4);
       expect(e.stunTimer).toBeGreaterThan(0);
     });
 
-    it('does not stun on non-5th hit', () => {
+    it('does not stun on non-4th hit', () => {
       const p = createTestPlayer(0, 'stormcaller');
-      p.hitCounter = 2;
+      p.hitCounter = 1;
       state.players = [p];
       const e = createTestEnemy({ hp: 20, maxHp: 20 });
       state.enemies.clear(); state.enemies.push(e);
 
       damageEnemy(state, e, 1, 0);
 
-      expect(p.hitCounter).toBe(3);
+      expect(p.hitCounter).toBe(2);
       expect(e.stunTimer).toBe(0);
     });
   });

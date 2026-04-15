@@ -1,6 +1,6 @@
 import { GameState } from '../state';
 import { GamePhase, NetworkMode, SfxName } from '../types';
-import { UPGRADE_POOL, upgradeChoiceCount } from '../constants';
+import { UPGRADE_POOL, upgradeChoiceCount, CLASSES } from '../constants';
 import { sfx } from '../audio';
 import { sendMessage } from '../network';
 
@@ -26,6 +26,8 @@ export function generateUpgradeIndices(clsKey: string, taken: Map<number, number
     if (up.stackable && up.maxStacks && (taken.get(i) || 0) >= up.maxStacks) continue;
     // Skip if for another class
     if (up.forClass && up.forClass !== clsKey) continue;
+    // Skip if offer condition not met (e.g. positional bonus upgrades only for matching passives)
+    if (up.offerCondition && CLASSES[clsKey] && !up.offerCondition(CLASSES[clsKey].passive)) continue;
 
     if (up.forClass === clsKey) classIndices.push(i);
     else genericIndices.push(i);

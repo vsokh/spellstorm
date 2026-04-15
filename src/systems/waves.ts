@@ -175,6 +175,21 @@ export function updateSpells(state: GameState, dt: number): void {
             }
           }
         }
+        // Per-spell positional bonus
+        const spellDef = state.players[s.owner]?.cls.spells[s._slot];
+        if (spellDef?.positionBonus) {
+          const pb = spellDef.positionBonus;
+          if (pb.type === 'pillar') {
+            // Check if any pillar is within range of the target
+            for (const pl of state.pillars) {
+              if (dist(e.x, e.y, pl.x, pl.y) < (pb.pillarRange || 100)) {
+                hitDmg = Math.ceil(hitDmg * pb.mult);
+                spawnText(state, e.x, e.y - 35, 'COVER!', '#88cc44');
+                break;
+              }
+            }
+          }
+        }
         damageEnemy(state, e, hitDmg, s.owner);
 
         // Cross-spell synergy: track LMB hits for Combo

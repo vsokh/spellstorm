@@ -143,6 +143,48 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
     dmg = Math.round(dmg * (1 + Math.min(COMBAT.MOMENTUM_CAP, spd / COMBAT.MOMENTUM_DIVISOR)));
   }
 
+  // Positional bonuses
+  if (p) {
+    const passive = p.cls.passive;
+    // Backstab: check if spell hit from behind the enemy
+    if (passive.backstab) {
+      // Enemy facing direction: use velocity if moving, otherwise face toward target player
+      const eFacing = (e.vx !== 0 || e.vy !== 0)
+        ? Math.atan2(e.vy, e.vx)
+        : Math.atan2(p.y - e.y, p.x - e.x);
+      // Angle from enemy to the attacking player
+      const angleToPlayer = Math.atan2(p.y - e.y, p.x - e.x);
+      // If player is behind the enemy (within BACKSTAB_ANGLE of the enemy's back)
+      const angleDiff = Math.abs(wrapAngle(angleToPlayer - eFacing));
+      if (angleDiff > Math.PI - COMBAT.BACKSTAB_ANGLE) {
+        const backstabMult = passive.backstab + (p.assassinMark * 0.3);
+        dmg = Math.ceil(dmg * backstabMult);
+        spawnText(state, e.x, e.y - 35, 'BACKSTAB!', '#ff4488');
+      }
+    }
+    // Proximity bonus: close-range damage multiplier
+    if (passive.proximityBonus) {
+      const proxRange = passive.proximityBonus.range + (p.closeQuarters * 20);
+      const d = dist(p.x, p.y, e.x, e.y);
+      if (d < proxRange) {
+        dmg = Math.ceil(dmg * passive.proximityBonus.dmgMult);
+        spawnText(state, e.x, e.y - 35, 'CLOSE!', '#ff8844');
+      }
+    }
+    // Flanking: hitting from perpendicular angle
+    if (passive.flanking) {
+      const eFacing = (e.vx !== 0 || e.vy !== 0)
+        ? Math.atan2(e.vy, e.vx)
+        : Math.atan2(p.y - e.y, p.x - e.x);
+      const angleToPlayer = Math.atan2(p.y - e.y, p.x - e.x);
+      const angleDiff = Math.abs(wrapAngle(angleToPlayer - eFacing));
+      if (Math.abs(angleDiff - Math.PI / 2) < passive.flanking.angleTolerance) {
+        dmg = Math.ceil(dmg * passive.flanking.dmgMult);
+        spawnText(state, e.x, e.y - 35, 'FLANK!', '#44aaff');
+      }
+    }
+  }
+
   // Cap total damage to prevent runaway multiplicative burst
   const maxDmg = rawDmg * COMBAT.DAMAGE_CAP;
   if (dmg > maxDmg) dmg = maxDmg;

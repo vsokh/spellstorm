@@ -318,6 +318,7 @@ function normalizeSpellDef(input: SpellDefInput): SpellDef {
     tetherTickRate: input.tetherTickRate,
     tetherDuration: input.tetherDuration,
     tetherReward: input.tetherReward ? { ...input.tetherReward } : undefined,
+    positionBonus: input.positionBonus,
   };
 }
 
@@ -452,6 +453,9 @@ export function createPlayer(idx: number, clsKey: string): Player {
     frozenTouch: false,
     seekerMines: false,
     burstFire: false,
+    _proximityAuraTick: 0,
+    assassinMark: 0,
+    closeQuarters: 0,
     _baseSpellDmg: cls.spells.map(s => s.dmg),
     _hyperAcc: {},
     _snapTimer: 0,

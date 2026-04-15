@@ -142,6 +142,12 @@ export interface SpellDef {
     dmgBurst?: number;
     healBurst?: number;
   };
+  positionBonus?: {
+    type: 'backstab' | 'proximity' | 'flanking' | 'pillar';
+    mult: number;
+    range?: number;
+    pillarRange?: number;
+  };
 }
 
 /** Partial spell definition as written in CLASSES constants (many fields optional) */
@@ -157,6 +163,16 @@ export type SpellDefInput = Partial<SpellDef> & {
 export interface ClassPassive {
   name: string;
   desc: string;
+  backstab?: number;          // Bonus damage multiplier for hitting from behind (1.3-2.0)
+  proximityBonus?: {
+    range: number;            // Maximum range for bonus (60-120 units)
+    dmgMult: number;          // Damage multiplier (1.2-1.5)
+    aura?: number;            // Passive damage per second to enemies in range
+  };
+  flanking?: {
+    angleTolerance: number;   // Radians of arc that counts as "flank" (0.3-0.8)
+    dmgMult: number;          // Damage multiplier (1.3-1.8)
+  };
 }
 
 // ── Stance switching ──
@@ -388,6 +404,11 @@ export interface Player {
   frozenTouch: boolean;
   seekerMines: boolean;
   burstFire: boolean;
+
+  // Positional bonus state
+  _proximityAuraTick: number;   // timer for proximity aura damage ticks
+  assassinMark: number;         // +0.3x backstab bonus per stack
+  closeQuarters: number;        // +20 proximity range per stack, +1 armor per stack
 
   // Base spell damage before upgrades (for soft cap calculation)
   _baseSpellDmg: number[];
@@ -712,6 +733,8 @@ export interface UpgradeDef {
   isEvolution?: boolean;
   /** If true, this is a cursed upgrade — benefit + drawback */
   isCursed?: boolean;
+  /** Optional condition: only offer if the class passive has a matching property */
+  offerCondition?: (passive: ClassPassive) => boolean;
 }
 
 // ── Network message types ──

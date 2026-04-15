@@ -2578,6 +2578,19 @@ export function drawWizard(ctx: CanvasRenderingContext2D, state: GameState): voi
     ctx.font = '9px Courier New';
     ctx.textAlign = 'center';
     ctx.fillText(`P${p.idx + 1} ${cls.name}`, p.x, p.y - WIZARD_SIZE - 7);
+
+    // Proximity range ring (faint circle showing aura range)
+    if (p.cls.passive.proximityBonus) {
+      const proxRange = p.cls.passive.proximityBonus.range + (p.closeQuarters * 20);
+      const pulse = 0.08 + 0.04 * Math.sin(state.time * 3);
+      ctx.strokeStyle = `rgba(255,136,68,${pulse})`;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, proxRange, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
   }
 }
 
@@ -3808,6 +3821,32 @@ export function drawEnemies(ctx: CanvasRenderingContext2D, state: GameState): vo
     }
 
     if (atkTransformApplied) ctx.restore();
+
+    // Backstab indicator: small triangle showing enemy's "back" when a player with backstab is present
+    {
+      let hasBackstab = false;
+      for (const pl of state.players) {
+        if (pl.alive && pl.cls.passive.backstab) { hasBackstab = true; break; }
+      }
+      if (hasBackstab) {
+        // Enemy facing direction from velocity, or toward target
+        const eFacing = (e.vx !== 0 || e.vy !== 0)
+          ? Math.atan2(e.vy, e.vx)
+          : ea; // ea is angle toward target player
+        const backAngle = eFacing + Math.PI; // the back direction
+        const triDist = et.size + 6;
+        const triX = e.x + Math.cos(backAngle) * triDist;
+        const triY = e.y + Math.sin(backAngle) * triDist;
+        const triSize = 4;
+        ctx.fillStyle = 'rgba(255,68,136,0.35)';
+        ctx.beginPath();
+        ctx.moveTo(triX + Math.cos(backAngle) * triSize, triY + Math.sin(backAngle) * triSize);
+        ctx.lineTo(triX + Math.cos(backAngle + 2.4) * triSize, triY + Math.sin(backAngle + 2.4) * triSize);
+        ctx.lineTo(triX + Math.cos(backAngle - 2.4) * triSize, triY + Math.sin(backAngle - 2.4) * triSize);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
 
     // Health bar (batched)
     if (e.hp < e.maxHp) {

@@ -52,8 +52,8 @@ function snapshotSpells(p: Player) {
 
 describe('Augment apply() audit — all augments', () => {
   it(`sanity: UPGRADE_POOL has the expected augment count`, () => {
-    // 70 generic + 42 class-specific + 10 evolution + 5 cursed = 127
-    expect(UPGRADE_POOL.length).toBe(127);
+    // 70 generic + 42 class-specific + 2 positional + 2 tether/mark + 10 evolution + 5 cursed = 131
+    expect(UPGRADE_POOL.length).toBe(131);
   });
 
   // ── DAMAGE (idx 0-5) ──
@@ -1160,115 +1160,115 @@ describe('Augment apply() audit — all augments', () => {
   //     EVOLUTION UPGRADES (idx 112-121)
   // ══════════════════════════════════════
 
-  describe('[112] Spell Mastery (evo of Spell Power)', () => {
+  describe('[114] Spell Mastery (evo of Spell Power)', () => {
     it('caps damage and reduces cooldowns', () => {
-      const p = freshPlayer(112);
+      const p = freshPlayer(114);
       // Simulate parent maxed
       p.takenUpgrades.set(0, 5);
       const beforeCd = p.cls.spells.map(s => s.cd);
-      UPGRADE_POOL[112].apply(p, 1);
+      UPGRADE_POOL[114].apply(p, 1);
       for (let i = 0; i < p.cls.spells.length; i++) {
         expect(p.cls.spells[i].cd).toBeCloseTo(beforeCd[i] * 0.7, 5);
       }
     });
   });
 
-  describe('[113] Primary Overload (evo of Primary Boost)', () => {
+  describe('[115] Primary Overload (evo of Primary Boost)', () => {
     it('caps primary bonus and adds explosion', () => {
-      const p = freshPlayer(113);
+      const p = freshPlayer(115);
       p.takenUpgrades.set(1, 4);
-      UPGRADE_POOL[113].apply(p, 1);
+      UPGRADE_POOL[115].apply(p, 1);
       expect(p.cls.spells[0].explode).toBeGreaterThan(0);
     });
   });
 
-  describe('[114] Lethal Precision (evo of Critical Strike)', () => {
+  describe('[116] Lethal Precision (evo of Critical Strike)', () => {
     it('adds +25% crit and sets critMul to 2.5', () => {
-      const p = freshPlayer(114);
+      const p = freshPlayer(116);
       p.takenUpgrades.set(4, 3);
       const beforeCrit = p.critChance;
-      UPGRADE_POOL[114].apply(p, 1);
+      UPGRADE_POOL[116].apply(p, 1);
       expect(p.critChance).toBe(beforeCrit + 0.25);
       expect(p.critMul).toBe(2.5);
     });
   });
 
-  describe('[115] Void Lance (evo of Piercing)', () => {
+  describe('[117] Void Lance (evo of Piercing)', () => {
     it('adds massive pierce and +3 primary dmg', () => {
-      const p = freshPlayer(115);
+      const p = freshPlayer(117);
       p.takenUpgrades.set(6, 4);
       const beforeDmg = p.cls.spells[0].dmg;
-      UPGRADE_POOL[115].apply(p, 1);
+      UPGRADE_POOL[117].apply(p, 1);
       expect(p.pierce).toBeGreaterThanOrEqual(99);
       expect(p.cls.spells[0].dmg).toBe(beforeDmg + 3);
     });
   });
 
-  describe('[116] Chain Annihilation (evo of Chain Hit)', () => {
+  describe('[118] Chain Annihilation (evo of Chain Hit)', () => {
     it('adds +3 chain jumps and sets chainFullDmg', () => {
-      const p = freshPlayer(116);
+      const p = freshPlayer(118);
       p.takenUpgrades.set(10, 3);
       const beforeChain = p.chainHit;
-      UPGRADE_POOL[116].apply(p, 1);
+      UPGRADE_POOL[118].apply(p, 1);
       expect(p.chainHit).toBe(beforeChain + 3);
       expect(p.chainFullDmg).toBe(true);
     });
   });
 
-  describe('[117] Regeneration (evo of Vitality)', () => {
+  describe('[119] Regeneration (evo of Vitality)', () => {
     it('adds +5 maxHp, heals, and sets hpRegen', () => {
-      const p = freshPlayer(117);
+      const p = freshPlayer(119);
       p.takenUpgrades.set(23, 5);
       const beforeHp = p.maxHp;
-      UPGRADE_POOL[117].apply(p, 1);
+      UPGRADE_POOL[119].apply(p, 1);
       expect(p.maxHp).toBe(beforeHp + 5);
       expect(p.hp).toBe(p.maxHp);
       expect(p.hpRegen).toBeGreaterThan(0);
     });
   });
 
-  describe('[118] Fortress (evo of Armor)', () => {
+  describe('[120] Fortress (evo of Armor)', () => {
     it('adds +3 armor and +3 thorns', () => {
-      const p = freshPlayer(118);
+      const p = freshPlayer(120);
       p.takenUpgrades.set(24, 4);
       const beforeArmor = p.armor;
       const beforeThorns = p.thorns;
-      UPGRADE_POOL[118].apply(p, 1);
+      UPGRADE_POOL[120].apply(p, 1);
       expect(p.armor).toBe(beforeArmor + 3);
       expect(p.thorns).toBe(beforeThorns + 3);
     });
   });
 
-  describe('[119] Shadow Step (evo of Dodge)', () => {
+  describe('[121] Shadow Step (evo of Dodge)', () => {
     it('adds +30% dodge and +25% move speed', () => {
-      const p = freshPlayer(119);
+      const p = freshPlayer(121);
       p.takenUpgrades.set(29, 3);
       const beforeDodge = p.dodgeChance;
       const beforeSpeed = p.moveSpeed;
-      UPGRADE_POOL[119].apply(p, 1);
+      UPGRADE_POOL[121].apply(p, 1);
       expect(p.dodgeChance).toBe(beforeDodge + 0.30);
       expect(p.moveSpeed).toBeCloseTo(beforeSpeed * 1.25, 1);
     });
   });
 
-  describe('[120] Storm Lord (evo of Chain Lightning, stormcaller)', () => {
+  describe('[122] Storm Lord (evo of Chain Lightning, stormcaller)', () => {
     it('adds +5 chainLightning and +2 primary dmg', () => {
       const p = createTestPlayer(0, 'stormcaller');
       p.takenUpgrades.set(71, 3);
       const beforeChain = p.chainLightning;
       const beforeDmg = p.cls.spells[0].dmg;
-      UPGRADE_POOL[120].apply(p, 1);
+      UPGRADE_POOL[122].apply(p, 1);
       expect(p.chainLightning).toBe(beforeChain + 5);
       expect(p.cls.spells[0].dmg).toBe(beforeDmg + 2);
     });
   });
 
-  describe('[121] Lich King (evo of Raise Dead, necromancer)', () => {
+  describe('[123] Lich King (evo of Raise Dead, necromancer)', () => {
     it('adds +50% raiseDead chance', () => {
       const p = createTestPlayer(0, 'necromancer');
       p.takenUpgrades.set(77, 3);
       const beforeRaise = p.raiseDead;
-      UPGRADE_POOL[121].apply(p, 1);
+      UPGRADE_POOL[123].apply(p, 1);
       expect(p.raiseDead).toBe(beforeRaise + 0.50);
     });
   });
@@ -1277,12 +1277,12 @@ describe('Augment apply() audit — all augments', () => {
   //     CURSED UPGRADES (idx 122-126)
   // ══════════════════════════════════════
 
-  describe('[122] Reckless Haste (cursed)', () => {
+  describe('[124] Reckless Haste (cursed)', () => {
     it('reduces CDs by 40% AND increases damageTakenMul by 50%', () => {
-      const p = freshPlayer(122);
+      const p = freshPlayer(124);
       const beforeCd = p.cls.spells.map(s => s.cd);
       const beforeMul = p.damageTakenMul;
-      UPGRADE_POOL[122].apply(p, 1);
+      UPGRADE_POOL[124].apply(p, 1);
       for (let i = 0; i < p.cls.spells.length; i++) {
         expect(p.cls.spells[i].cd).toBeCloseTo(beforeCd[i] * 0.6, 5);
       }
@@ -1290,43 +1290,43 @@ describe('Augment apply() audit — all augments', () => {
     });
   });
 
-  describe('[123] Blood Pact (cursed)', () => {
+  describe('[125] Blood Pact (cursed)', () => {
     it('adds lifeSteal AND reduces maxHp by 3', () => {
-      const p = freshPlayer(123);
+      const p = freshPlayer(125);
       const beforeHp = p.maxHp;
-      UPGRADE_POOL[123].apply(p, 1);
+      UPGRADE_POOL[125].apply(p, 1);
       expect(p.lifeSteal).toBeGreaterThan(0);
       expect(p.maxHp).toBe(Math.max(1, beforeHp - 3));
     });
   });
 
-  describe('[124] Unstable Power (cursed)', () => {
+  describe('[126] Unstable Power (cursed)', () => {
     it('adds +8 primary dmg AND sets selfDmgChance', () => {
-      const p = freshPlayer(124);
+      const p = freshPlayer(126);
       const beforeDmg = p.cls.spells[0].dmg;
-      UPGRADE_POOL[124].apply(p, 1);
+      UPGRADE_POOL[126].apply(p, 1);
       expect(p.cls.spells[0].dmg).toBe(beforeDmg + 8);
       expect(p.selfDmgChance).toBe(0.05);
     });
   });
 
-  describe('[125] Berserker Pact (cursed)', () => {
+  describe('[127] Berserker Pact (cursed)', () => {
     it('adds critChance AND reduces armor by 2', () => {
-      const p = freshPlayer(125);
+      const p = freshPlayer(127);
       const beforeArmor = p.armor;
-      UPGRADE_POOL[125].apply(p, 1);
+      UPGRADE_POOL[127].apply(p, 1);
       expect(p.critChance).toBeGreaterThan(0);
       expect(p.armor).toBe(beforeArmor - 2);
     });
   });
 
-  describe('[126] Soul Bargain (cursed)', () => {
+  describe('[128] Soul Bargain (cursed)', () => {
     it('adds mana regen + reduces costs AND reduces maxHp by 4', () => {
-      const p = freshPlayer(126);
+      const p = freshPlayer(128);
       const beforeRegen = p.manaRegen;
       const beforeMana = p.cls.spells.map(s => s.mana);
       const beforeHp = p.maxHp;
-      UPGRADE_POOL[126].apply(p, 1);
+      UPGRADE_POOL[128].apply(p, 1);
       expect(p.manaRegen).toBeCloseTo(beforeRegen * 1.6, 5);
       for (let i = 0; i < p.cls.spells.length; i++) {
         expect(p.cls.spells[i].mana).toBeCloseTo(beforeMana[i] * 0.5, 5);
@@ -1522,11 +1522,11 @@ describe('Evolution upgrade prerequisites', () => {
 // ═══════════════════════════════════════════════════════
 
 describe('Cursed upgrade drawbacks', () => {
-  describe('[122] Reckless Haste — benefit + drawback', () => {
+  describe('[124] Reckless Haste — benefit + drawback', () => {
     it('BENEFIT: cooldowns are reduced', () => {
-      const p = freshPlayer(122);
+      const p = freshPlayer(124);
       const beforeCd = p.cls.spells.map(s => s.cd);
-      UPGRADE_POOL[122].apply(p, 1);
+      UPGRADE_POOL[124].apply(p, 1);
       for (let i = 0; i < p.cls.spells.length; i++) {
         if (beforeCd[i] > 0) {
           expect(p.cls.spells[i].cd).toBeLessThan(beforeCd[i]);
@@ -1538,64 +1538,64 @@ describe('Cursed upgrade drawbacks', () => {
     });
 
     it('DRAWBACK: damageTakenMul is increased', () => {
-      const p = freshPlayer(122);
-      UPGRADE_POOL[122].apply(p, 1);
+      const p = freshPlayer(124);
+      UPGRADE_POOL[124].apply(p, 1);
       expect(p.damageTakenMul).toBeGreaterThan(1);
     });
   });
 
-  describe('[123] Blood Pact — benefit + drawback', () => {
+  describe('[125] Blood Pact — benefit + drawback', () => {
     it('BENEFIT: lifeSteal is increased', () => {
-      const p = freshPlayer(123);
-      UPGRADE_POOL[123].apply(p, 1);
+      const p = freshPlayer(125);
+      UPGRADE_POOL[125].apply(p, 1);
       expect(p.lifeSteal).toBeGreaterThan(0);
     });
 
     it('DRAWBACK: maxHp is reduced by 3', () => {
-      const p = freshPlayer(123);
+      const p = freshPlayer(125);
       const beforeHp = p.maxHp;
-      UPGRADE_POOL[123].apply(p, 1);
+      UPGRADE_POOL[125].apply(p, 1);
       expect(p.maxHp).toBe(Math.max(1, beforeHp - 3));
       expect(p.hp).toBeLessThanOrEqual(p.maxHp);
     });
   });
 
-  describe('[124] Unstable Power — benefit + drawback', () => {
+  describe('[126] Unstable Power — benefit + drawback', () => {
     it('BENEFIT: primary damage is increased by 8', () => {
-      const p = freshPlayer(124);
+      const p = freshPlayer(126);
       const beforeDmg = p.cls.spells[0].dmg;
-      UPGRADE_POOL[124].apply(p, 1);
+      UPGRADE_POOL[126].apply(p, 1);
       expect(p.cls.spells[0].dmg).toBe(beforeDmg + 8);
     });
 
     it('DRAWBACK: selfDmgChance is set', () => {
-      const p = freshPlayer(124);
-      UPGRADE_POOL[124].apply(p, 1);
+      const p = freshPlayer(126);
+      UPGRADE_POOL[126].apply(p, 1);
       expect(p.selfDmgChance).toBeGreaterThan(0);
     });
   });
 
-  describe('[125] Berserker Pact — benefit + drawback', () => {
+  describe('[127] Berserker Pact — benefit + drawback', () => {
     it('BENEFIT: critChance is increased', () => {
-      const p = freshPlayer(125);
-      UPGRADE_POOL[125].apply(p, 1);
+      const p = freshPlayer(127);
+      UPGRADE_POOL[127].apply(p, 1);
       expect(p.critChance).toBeGreaterThan(0);
     });
 
     it('DRAWBACK: armor is reduced by 2', () => {
-      const p = freshPlayer(125);
+      const p = freshPlayer(127);
       const beforeArmor = p.armor;
-      UPGRADE_POOL[125].apply(p, 1);
+      UPGRADE_POOL[127].apply(p, 1);
       expect(p.armor).toBe(beforeArmor - 2);
     });
   });
 
-  describe('[126] Soul Bargain — benefit + drawback', () => {
+  describe('[128] Soul Bargain — benefit + drawback', () => {
     it('BENEFIT: mana regen increased and costs halved', () => {
-      const p = freshPlayer(126);
+      const p = freshPlayer(128);
       const beforeRegen = p.manaRegen;
       const beforeMana = p.cls.spells.map(s => s.mana);
-      UPGRADE_POOL[126].apply(p, 1);
+      UPGRADE_POOL[128].apply(p, 1);
       expect(p.manaRegen).toBeGreaterThan(beforeRegen);
       for (let i = 0; i < p.cls.spells.length; i++) {
         expect(p.cls.spells[i].mana).toBeLessThanOrEqual(beforeMana[i]);
@@ -1603,9 +1603,9 @@ describe('Cursed upgrade drawbacks', () => {
     });
 
     it('DRAWBACK: maxHp is reduced by 4', () => {
-      const p = freshPlayer(126);
+      const p = freshPlayer(128);
       const beforeHp = p.maxHp;
-      UPGRADE_POOL[126].apply(p, 1);
+      UPGRADE_POOL[128].apply(p, 1);
       expect(p.maxHp).toBe(Math.max(1, beforeHp - 4));
       expect(p.hp).toBeLessThanOrEqual(p.maxHp);
     });
