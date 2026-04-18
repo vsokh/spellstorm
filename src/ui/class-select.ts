@@ -64,6 +64,9 @@ const EFFECT_DEFS: { key: keyof SpellDefInput; label: string; cssClass: string }
   { key: 'pierce', label: 'Pierce', cssClass: 'tag-pierce' },
   { key: 'heal', label: 'Heal', cssClass: 'tag-heal' },
   { key: 'zap', label: 'Chain', cssClass: 'tag-chain' },
+  { key: 'channel', label: 'Channel', cssClass: 'tag-channel' },
+  { key: 'applyMark', label: 'Mark', cssClass: 'tag-mark' },
+  { key: 'detonateMark', label: 'Detonate', cssClass: 'tag-detonate' },
 ];
 
 export function buildSpellEffects(spell: SpellDefInput): string {
@@ -88,11 +91,18 @@ export function generateSpellDescription(spell: SpellDefInput, classKey?: string
     case 'ally_shield':
       return `Shields your ally for ${spell.duration || 0}s.`;
     case 'blink':
-      return `Dash forward.`;
+      return spell.range ? `Dash ${spell.range} units forward.` : `Dash forward.`;
     case 'rewind':
       return 'Rewind to your position from 3s ago.';
     case 'beam':
-      parts.push(`Channels a beam dealing ${spell.dmg || 0} dmg`);
+      if (spell.channel) {
+        const scale = spell.channelScale && spell.channelScale > 1
+          ? `, building up to ${spell.channelScale}x at full channel`
+          : '';
+        parts.push(`Channels a sustained beam for ${spell.channel}s dealing ${spell.dmg || 0} dmg/tick${scale}`);
+      } else {
+        parts.push(`Fires a beam dealing ${spell.dmg || 0} dmg`);
+      }
       break;
     case 'cone':
       parts.push(`Releases a cone blast dealing ${spell.dmg || 0} dmg`);
@@ -163,6 +173,13 @@ export function generateSpellDescription(spell: SpellDefInput, classKey?: string
   if (spell.pierce) effects.push('pierces enemies');
   if (spell.homing && spell.type !== 'projectile' && spell.type !== 'homing') effects.push('tracks targets');
   if (spell.zap) effects.push('chains to nearby enemies');
+  if (spell.applyMark) {
+    const stacks = spell.applyMark.maxStacks || 1;
+    effects.push(`applies ${spell.applyMark.name} marks (up to ${stacks} stacks)`);
+  }
+  if (spell.detonateMark) {
+    effects.push(`detonates ${spell.detonateMark.name} marks for +${spell.detonateMark.dmgPerStack} dmg per stack`);
+  }
 
   // Duration for zones
   if (spell.duration && spell.type === 'zone') {
@@ -173,7 +190,19 @@ export function generateSpellDescription(spell: SpellDefInput, classKey?: string
     parts.push('that ' + effects.join(', '));
   }
 
-  return parts.join(' ') + '.';
+  // Channel notes (movement slow and break threshold) as a trailing sentence
+  const notes: string[] = [];
+  if (spell.channelSlow !== undefined && spell.channelSlow < 1) {
+    const pct = Math.round((1 - spell.channelSlow) * 100);
+    notes.push(`slows you ${pct}% while channeling`);
+  }
+  if (spell.channelBreak && spell.channelBreak > 0) {
+    notes.push(`breaks at ${spell.channelBreak}+ damage`);
+  }
+
+  let out = parts.join(' ') + '.';
+  if (notes.length > 0) out += ' ' + notes.join(', ').replace(/^./, c => c.toUpperCase()) + '.';
+  return out;
 }
 
 function buildSpellStats(spell: SpellDefInput): string {

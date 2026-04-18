@@ -437,6 +437,9 @@ input[type=text]:focus {
 .cd-effect-tag.tag-pierce { background: rgba(180, 180, 220, 0.15); color: #bbbbdd; border-color: rgba(180, 180, 220, 0.15); }
 .cd-effect-tag.tag-heal { background: rgba(60, 220, 100, 0.15); color: #66dd77; border-color: rgba(60, 220, 100, 0.15); }
 .cd-effect-tag.tag-chain { background: rgba(180, 100, 255, 0.15); color: #bb88ff; border-color: rgba(180, 100, 255, 0.15); }
+.cd-effect-tag.tag-channel { background: rgba(140, 220, 255, 0.15); color: #88ddff; border-color: rgba(140, 220, 255, 0.15); }
+.cd-effect-tag.tag-mark { background: rgba(255, 200, 70, 0.15); color: #ffcc66; border-color: rgba(255, 200, 70, 0.15); }
+.cd-effect-tag.tag-detonate { background: rgba(255, 140, 50, 0.18); color: #ffaa66; border-color: rgba(255, 140, 50, 0.18); }
 
 .cd-ult-note {
   font-size: 9px;
