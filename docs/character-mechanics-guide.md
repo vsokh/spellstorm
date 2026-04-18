@@ -47,8 +47,8 @@ Some classes are designed to replace standard mana with unique resource systems 
 |----------|---------|
 | **Channeled Casting** | **Lightning** (LMB) — sustained beam, 1.5s channel, movement slowed 50%. Damage builds from 1x to 2.5x at full channel. Breaks if you take 3+ damage in a single hit. |
 | **Auto-Detonate** | Beam applies static on hit (up to 3 stacks). When the beam hits an enemy already at max stacks, the marks auto-detonate for bonus damage and the stacks clear — beam rebuilds from scratch. Rhythm: build (3 hits) → pop → build → pop. |
-| **Cluster Clear** | **Discharge** (Q) — instant 180-radius AoE around the caster. Detonates static marks on every enemy in range for +3 dmg and +0.5s stun per stack. No damage to unmarked enemies — it's pure cash-in. |
-| **Reposition** | **Storm Step** (RMB) — short-range blink (180 units, 2.5s cd) to break line of sight or escape a cluster. |
+| **Defense Field** | **Discharge** (RMB) — hold to channel a 180-radius static dome around yourself for up to 2.5s. On activation stuns all enemies in range for 1.5s and detonates static marks (+3 dmg, +0.5s stun per stack). While held, destroys incoming enemy projectiles; movement slowed to 60%. Breaks if you take 5+ damage in a single hit. 22 mana, 5s cd. |
+| **Reposition** | **Storm Step** (Q) — short-range blink (180 units, 2.5s cd) to break line of sight or escape a cluster. |
 | **Ultimate** | **Thunder God** (Space) — 5s transformation. Lightning becomes instant (no channel needed), every hit auto-detonates, Storm Step cooldown removed, move speed +50%. |
 
 **Passive — Feedback Loop:** Each auto-detonation during a channel refunds 0.3s of Storm Step cooldown and adds +5% damage to the current channel (stacks up to +50%). Sustained focus on priority targets snowballs, and your teleport stays ready.

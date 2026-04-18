@@ -1757,7 +1757,7 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
     // Thunder God: 5s transformation — Lightning becomes instant, auto-detonates
     // on every hit, Storm Step cd removed, move speed +50%.
     p._thunderGod = 5;
-    p.cd[1] = 0;
+    p.cd[2] = 0;
     spawnParticles(state, p.x, p.y, '#ffcc44', 40, 1.5);
     spawnShockwave(state, p.x, p.y, 160, '#ffcc44');
     shake(state, 4);

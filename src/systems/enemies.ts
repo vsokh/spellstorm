@@ -47,7 +47,7 @@ export function updateEProj(state: GameState, dt: number): void {
     // Stormcaller Discharge field: destroy any enemy projectile that enters the shield radius
     for (const pl of state.players) {
       if (!pl.alive || pl._dischargeShield <= 0) continue;
-      const shieldR = pl.cls.spells[2]?.range || 180;
+      const shieldR = pl.cls.spells[1]?.range || 180;
       if (dist(p.x, p.y, pl.x, pl.y) < shieldR + p.radius) {
         spawnParticles(state, p.x, p.y, '#cc88ff', 6, 0.5);
         hit = true;

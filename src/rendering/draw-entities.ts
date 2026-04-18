@@ -2512,7 +2512,7 @@ export function drawWizard(ctx: CanvasRenderingContext2D, state: GameState): voi
     if (p._dischargeShield > 0) {
       const maxDur = 0.5;
       const life = Math.min(1, p._dischargeShield / maxDur);
-      const shieldR = p.cls.spells[2]?.range || 180;
+      const shieldR = p.cls.spells[1]?.range || 180;
       const pulse = 0.7 + 0.3 * Math.sin(state.time * 18);
 
       // Translucent fill (radial gradient — fainter at center, brighter at rim)

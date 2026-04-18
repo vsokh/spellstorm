@@ -200,7 +200,7 @@ export function updatePlayers(state: GameState, dt: number): void {
     // Thunder God ultimate: tick down buff timer + keep Storm Step off cooldown
     if (p._thunderGod > 0) {
       p._thunderGod = Math.max(0, p._thunderGod - dt);
-      p.cd[1] = 0;
+      p.cd[2] = 0;
     }
     // Discharge shield: tick down active-field timer
     if (p._dischargeShield > 0) p._dischargeShield = Math.max(0, p._dischargeShield - dt);
@@ -314,7 +314,7 @@ export function updatePlayers(state: GameState, dt: number): void {
                     }
                     detonateMarks(state, e, autoDet, p.idx, chDef.color);
                     if (p.clsKey === 'stormcaller') {
-                      p.cd[1] = Math.max(0, (p.cd[1] || 0) - 0.3);
+                      p.cd[2] = Math.max(0, (p.cd[2] || 0) - 0.3);
                       p._channelDetStacks = Math.min(10, (p._channelDetStacks || 0) + 1);
                     }
                   } else {
