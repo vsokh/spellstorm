@@ -1612,7 +1612,6 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       p.x = nx; p.y = ny;
       p.angle = Math.atan2(best.y - p.y, best.x - p.x);
       p.iframes = TIMING.IFRAME_LEAP;
-      p._lastShadowStep = state.time;
       spawnParticles(state, best.x, best.y, def.color, 18, 1);
       netSfx(state, SfxName.Blink);
       shake(state, 4);
@@ -1631,6 +1630,9 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         damageEnemy(state, best, leapDmg, p.idx);
         if (def.stun) best.stunTimer = (best.stunTimer || 0) + def.stun;
       }
+      // Set the timestamp AFTER damage so the Shadow Step's own kill doesn't reset its cd.
+      // Only follow-up LMB / passive kills within 1.5s trigger Kill Rush.
+      p._lastShadowStep = state.time;
       return;
     }
     // Berserker leap slam (free-aim)
@@ -1755,6 +1757,9 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       // Phantom Veil: 2s stealth, heals over duration, +30% ms, next attack auto-crits
       p._stealth = def.duration || 2;
       p._critPending = true;
+      // Snapshot current position — enemies drift toward this while the player is veiled.
+      p._stealthLastX = p.x;
+      p._stealthLastY = p.y;
       // Heal is applied over the stealth duration in physics tick
       spawnParticles(state, p.x, p.y, '#cc3355', 20, 0.8);
       spawnShockwave(state, p.x, p.y, 50, 'rgba(68,17,34,.5)');

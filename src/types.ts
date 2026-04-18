@@ -452,6 +452,8 @@ export interface Player {
   _stealth: number;            // remaining stealth duration (0 = not stealthed)
   _critPending: boolean;       // next damaging attack auto-crits (2x)
   _stealthShield: number;      // remaining brief-shield duration from stealth-kill
+  _stealthLastX: number;       // position where stealth started (enemies drift here while veiled)
+  _stealthLastY: number;
   _bladeFlurry: number;        // remaining duration of Thousand Cuts flurry
   _bladeFlurryTick: number;    // tick accumulator for flurry strikes
 

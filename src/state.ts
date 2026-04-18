@@ -484,6 +484,8 @@ export function createPlayer(idx: number, clsKey: string): Player {
     _stealth: 0,
     _critPending: false,
     _stealthShield: 0,
+    _stealthLastX: 0,
+    _stealthLastY: 0,
     _bladeFlurry: 0,
     _bladeFlurryTick: 0,
     _fortified: false,

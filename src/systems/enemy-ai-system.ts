@@ -22,14 +22,29 @@ export function enemyAI(state: GameState, dt: number): void {
     let target = state.players[e.target];
     if (!isVisible(target)) {
       const visible = state.players.find(p => isVisible(p));
-      if (!visible) {
-        // No visible player — idle (decelerate, don't chase the stealthed target)
-        e.vx *= 0.85;
-        e.vy *= 0.85;
+      if (visible) {
+        target = visible;
+        e.target = target.idx;
+      } else {
+        // Target stealthed. Chase the last-seen position snapshot until we reach it.
+        const lost = state.players[e.target] || state.players[0];
+        const lx = lost?._stealthLastX ?? e.x;
+        const ly = lost?._stealthLastY ?? e.y;
+        const ldx = lx - e.x;
+        const ldy = ly - e.y;
+        const ld = Math.sqrt(ldx * ldx + ldy * ldy);
+        if (ld > 24) {
+          const enrageMul = et.enrage ? 1 + (1 - e.hp / e.maxHp) * ENEMY_AI.ENRAGE_MULT : 1;
+          const spd = et.speed * spdMul * slow * enrageMul;
+          e.vx = (ldx / ld) * spd;
+          e.vy = (ldy / ld) * spd;
+        } else {
+          // Reached last-known position — stand and look around
+          e.vx *= 0.85;
+          e.vy *= 0.85;
+        }
         continue;
       }
-      target = visible;
-      e.target = target.idx;
     }
 
     // Occasional retarget to closer visible player
