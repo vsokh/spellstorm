@@ -17,7 +17,7 @@ import {
   CD_FLOORS,
 } from '../constants';
 import { Enemy, EnemyView, GamePhase, NetworkMode, PickupType, SfxName, SpellType } from '../types';
-import { castSpell, castChargedSpell, castSpellSilent, castUltimate, damageEnemy, switchStance } from './combat';
+import { castSpell, castChargedSpell, castSpellSilent, castUltimate, damageEnemy, switchStance, applyMarkToEnemy } from './combat';
 
 /** Callback set by main.ts to break circular dep with upgrades module */
 export let onChestPickup: ((state: GameState) => void) | null = null;
@@ -252,38 +252,34 @@ export function updatePlayers(state: GameState, dt: number): void {
           || (chSlot === 2 && input.ability)
           || (chSlot === 3 && input.ult);
 
-        // Channel ticks: deal damage at intervals during sustained channels
-        if (chDef.channelTicks && chDef.channelTicks > 0) {
-          const tickInterval = chDef.channel / chDef.channelTicks;
-          const prevTicks = Math.floor(((p.channelTimer || 0) - dt) / tickInterval);
-          const currTicks = Math.floor((p.channelTimer || 0) / tickInterval);
-          if (currTicks > prevTicks) {
-            const progress = Math.min(1, (p.channelTimer || 0) / chDef.channel);
-            const scaledDmg = chDef.dmg * (1 + ((chDef.channelScale || 1) - 1) * progress);
-            if (chDef.type === SpellType.Beam) {
-              const beam = state.beams.acquire();
-              if (beam) {
-                beam.x = p.x; beam.y = p.y;
-                beam.angle = p.channelAngle ?? p.angle;
-                beam.range = chDef.range || 200;
-                beam.width = (chDef.width || 3) * (1 + progress * 0.5);
-                beam.color = chDef.color;
-                beam.life = tickInterval * 0.9;
-                const cos = Math.cos(beam.angle);
-                const sin = Math.sin(beam.angle);
-                const step = 20;
-                for (let d = 0; d < beam.range; d += step) {
-                  const bx = p.x + cos * d;
-                  const by = p.y + sin * d;
-                  const nearby = state.enemyGrid.queryArea(bx, by, step);
-                  for (const ei of nearby) {
-                    const e = state.enemies.at(ei);
-                    if (!e.alive) continue;
-                    if ((e.x - bx) ** 2 + (e.y - by) ** 2 < step * step) {
-                      damageEnemy(state, e, Math.ceil(scaledDmg), p.idx);
-                    }
-                  }
-                }
+        // Continuous beam channels: render beam + damage every frame (iframes gate rate)
+        if (chDef.type === SpellType.Beam) {
+          const progress = Math.min(1, (p.channelTimer || 0) / chDef.channel);
+          const scaledDmg = chDef.dmg * (1 + ((chDef.channelScale || 1) - 1) * progress);
+          const ang = p.channelAngle ?? p.angle;
+          const range = chDef.range || 200;
+          const beam = state.beams.acquire();
+          if (beam) {
+            beam.x = p.x; beam.y = p.y;
+            beam.angle = ang;
+            beam.range = range;
+            beam.width = (chDef.width || 3) * (1 + progress * 0.5);
+            beam.color = chDef.color;
+            beam.life = dt * 2;
+          }
+          const cos = Math.cos(ang);
+          const sin = Math.sin(ang);
+          const step = 20;
+          for (let d = 0; d < range; d += step) {
+            const bx = p.x + cos * d;
+            const by = p.y + sin * d;
+            const nearby = state.enemyGrid.queryArea(bx, by, step);
+            for (const ei of nearby) {
+              const e = state.enemies.at(ei);
+              if (!e.alive) continue;
+              if ((e.x - bx) ** 2 + (e.y - by) ** 2 < step * step) {
+                damageEnemy(state, e, Math.ceil(scaledDmg), p.idx);
+                if (chDef.applyMark) applyMarkToEnemy(e, chDef.applyMark, p.idx);
               }
             }
           }
@@ -293,8 +289,8 @@ export function updatePlayers(state: GameState, dt: number): void {
         if (!slotHeld || (p.channelTimer || 0) >= chDef.channel) {
           const progress = Math.min(1, (p.channelTimer || 0) / chDef.channel);
 
-          // Non-tick channels (charge-and-release): fire the spell on completion with scaled damage
-          if (!chDef.channelTicks) {
+          // Non-Beam channels (charge-and-release): fire the spell on completion with scaled damage
+          if (chDef.type !== SpellType.Beam) {
             const scaledDmg = chDef.dmg * (1 + ((chDef.channelScale || 1) - 1) * progress);
             const origDmg = chDef.dmg;
             const origMana = chDef.mana;
