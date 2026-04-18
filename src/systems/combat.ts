@@ -44,7 +44,7 @@ import {
   BOSS_WAVE_XP,
 } from '../constants';
 import { createFriendlyEnemy } from './dungeon';
-import { dispatchCastUltimate, dispatchCastQAbility, dispatchDamageEnemy, dispatchKill } from '../classes/hooks';
+import { dispatchCastUltimate, dispatchCastQAbility, dispatchCastRMBAbility, dispatchDamageEnemy, dispatchKill } from '../classes/hooks';
 import '../classes/registry';
 import { dispatchSpell } from './spell-handlers';
 import './spell-handlers-builtin';
@@ -1131,6 +1131,10 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
   // All per-class Q overrides live in class hooks (castQAbility).
   if (idx === 2 && dispatchCastQAbility(state, p, def, angle)) return;
 
+  // ── CLASS-SPECIFIC RMB ABILITIES ──
+  // Per-class RMB overrides (e.g. Necromancer Raise Skeleton).
+  if (idx === 1 && dispatchCastRMBAbility(state, p, def, angle)) return;
+
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
   const sx = p.x + cos * WIZARD_SIZE * 1.5;
@@ -1198,6 +1202,18 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
           if (def.drain) {
             p.hp = Math.min(p.maxHp, p.hp + def.drain);
             spawnText(state, p.x, p.y - 20, `+${def.drain}`, '#44ff88');
+            // Necromancer Drain Ray: splash half of drain amount to nearby allied skeletons.
+            if (p.clsKey === 'necromancer') {
+              const skelHeal = def.drain * 0.5;
+              for (const ally of state.enemies) {
+                if (!ally.alive || !ally._friendly || ally._owner !== p.idx) continue;
+                if (ally.type !== '_skeleton') continue;
+                if (dist(p.x, p.y, ally.x, ally.y) > 150) continue;
+                if (ally.hp >= ally.maxHp) continue;
+                ally.hp = Math.min(ally.maxHp, ally.hp + skelHeal);
+                spawnParticles(state, ally.x, ally.y, '#77ffaa', 2, 0.3);
+              }
+            }
           }
           if (def.applyMark) applyMarkToEnemy(state, e, def.applyMark, p.idx);
           if (def.detonateMark) detonateMarks(state, e, def.detonateMark, p.idx, def.color);

@@ -16,6 +16,9 @@ export interface ClassHooks {
   /** Called when slot 2 (Q) is cast. Return true to fully replace default spell dispatch. */
   castQAbility?: (state: GameState, p: Player, def: import('../types').SpellDef, angle: number) => boolean | void;
 
+  /** Called when slot 1 (RMB) is cast. Return true to fully replace default spell dispatch. */
+  castRMBAbility?: (state: GameState, p: Player, def: import('../types').SpellDef, angle: number) => boolean | void;
+
   /** Called after each successful damageEnemy. Hook for class on-hit effects (lifesteal, crit-pending, ult charge). */
   onDamageEnemy?: (state: GameState, p: Player, e: Enemy, dmg: number) => void;
 
@@ -51,6 +54,13 @@ export function dispatchCastQAbility(state: GameState, p: Player, def: import('.
   const h = REGISTRY[p.clsKey];
   if (!h?.castQAbility) return false;
   return h.castQAbility(state, p, def, angle) === true;
+}
+
+/** Dispatch helper for RMB ability cast. Returns true if a hook fully handled the cast. */
+export function dispatchCastRMBAbility(state: GameState, p: Player, def: import('../types').SpellDef, angle: number): boolean {
+  const h = REGISTRY[p.clsKey];
+  if (!h?.castRMBAbility) return false;
+  return h.castRMBAbility(state, p, def, angle) === true;
 }
 
 /** Run onTick for the active class, if registered. */

@@ -2977,6 +2977,154 @@ function drawImp(ctx: CanvasRenderingContext2D, x: number, y: number, size: numb
   }
 }
 
+// ── Draw a friendly skeleton summon (necromancer minion) ──
+function drawFriendlySkeleton(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, target: { x: number; y: number } | null, time: number, isBoneWarrior: boolean): void {
+  const angle = target ? Math.atan2(target.y - y, target.x - x) : 0;
+  const isMoving = target !== null;
+  const walkCycle = time * 8;
+  const bob = Math.abs(Math.sin(walkCycle)) * size * 0.08;
+
+  ctx.save();
+  ctx.translate(x, y + (isMoving ? -bob : 0));
+  ctx.rotate(angle);
+
+  const bone = isBoneWarrior ? '#eeddbb' : '#ddccaa';
+  const shadow = isBoneWarrior ? '#998866' : '#aa9977';
+  const glow = '#77ffaa';
+
+  // Necromantic aura (soft green pulse)
+  const pulse = 0.35 + Math.sin(time * 3) * 0.1;
+  ctx.fillStyle = radGrad(ctx, 0, 0, size * 0.2, 0, 0, size * 1.6, [
+    [0, rgba(85, 204, 136, 0.18 * pulse)],
+    [0.7, rgba(40, 136, 68, 0.06 * pulse)],
+    [1, 'transparent'],
+  ]);
+  ctx.beginPath(); ctx.arc(0, 0, size * 1.6, 0, Math.PI * 2); ctx.fill();
+
+  // Legs (walking animation) — sideways view so rotation aligns with movement
+  ctx.strokeStyle = bone;
+  ctx.lineWidth = isBoneWarrior ? 2.2 : 1.8;
+  for (const sign of [-1, 1]) {
+    const phase = walkCycle + (sign < 0 ? Math.PI : 0);
+    const footY = size * 0.7 + (isMoving ? Math.max(0, Math.sin(phase)) * size * 0.3 : 0);
+    const footX = (isMoving ? Math.cos(phase) * size * 0.25 : 0);
+    ctx.beginPath();
+    ctx.moveTo(sign * size * 0.15, size * 0.1);
+    ctx.lineTo(sign * size * 0.15 + footX * 0.4, size * 0.45);
+    ctx.lineTo(sign * size * 0.18 + footX, footY);
+    ctx.stroke();
+  }
+
+  // Ribcage body
+  ctx.fillStyle = bone;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, size * 0.45, size * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = shadow;
+  ctx.lineWidth = 1.2;
+  for (let i = 0; i < 3; i++) {
+    const ribY = -size * 0.15 + i * size * 0.2;
+    ctx.beginPath();
+    ctx.ellipse(0, ribY, size * 0.35, size * 0.07, 0, 0, Math.PI);
+    ctx.stroke();
+  }
+  // Spine
+  ctx.beginPath();
+  ctx.moveTo(0, -size * 0.3);
+  ctx.lineTo(0, size * 0.35);
+  ctx.stroke();
+
+  // Arms — one holds a bone sword in front, one hangs
+  ctx.strokeStyle = bone;
+  ctx.lineWidth = isBoneWarrior ? 2.2 : 1.8;
+  const armSwing = isMoving ? Math.sin(walkCycle + Math.PI) * 0.2 : 0;
+  // Weapon arm (forward)
+  ctx.beginPath();
+  ctx.moveTo(size * 0.15, -size * 0.2);
+  ctx.lineTo(size * 0.5 + armSwing * size * 0.1, 0);
+  ctx.lineTo(size * 0.75, -size * 0.15);
+  ctx.stroke();
+  // Sword/bone weapon
+  ctx.strokeStyle = isBoneWarrior ? '#ffeecc' : '#ccbb99';
+  ctx.lineWidth = isBoneWarrior ? 2.5 : 1.8;
+  ctx.beginPath();
+  ctx.moveTo(size * 0.75, -size * 0.15);
+  ctx.lineTo(size * (isBoneWarrior ? 1.3 : 1.05), -size * 0.55);
+  ctx.stroke();
+  // Cross-guard
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(size * 0.65, -size * 0.2);
+  ctx.lineTo(size * 0.85, -size * 0.1);
+  ctx.stroke();
+
+  // Trailing arm
+  ctx.strokeStyle = bone;
+  ctx.lineWidth = isBoneWarrior ? 2.2 : 1.8;
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.15, -size * 0.2);
+  ctx.lineTo(-size * 0.4 - armSwing * size * 0.15, size * 0.2);
+  ctx.lineTo(-size * 0.35, size * 0.4);
+  ctx.stroke();
+
+  // Skull
+  const skullSize = isBoneWarrior ? size * 0.55 : size * 0.5;
+  ctx.fillStyle = bone;
+  ctx.beginPath();
+  ctx.arc(0, -size * 0.55, skullSize, 0, Math.PI * 2);
+  ctx.fill();
+  // Skull shadow edge
+  ctx.strokeStyle = shadow;
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.arc(0, -size * 0.55, skullSize, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Jaw (slightly open, wobble)
+  const jawWob = Math.sin(time * 4) * size * 0.04;
+  ctx.fillStyle = shadow;
+  ctx.beginPath();
+  ctx.moveTo(-skullSize * 0.55, -size * 0.35 + jawWob);
+  ctx.lineTo(skullSize * 0.55, -size * 0.35 + jawWob);
+  ctx.lineTo(skullSize * 0.35, -size * 0.2 + jawWob);
+  ctx.lineTo(-skullSize * 0.35, -size * 0.2 + jawWob);
+  ctx.closePath();
+  ctx.fill();
+
+  // Eye sockets (glowing green necromantic)
+  for (const side of [-1, 1]) {
+    const ex = side * skullSize * 0.4;
+    const ey = -size * 0.6;
+    ctx.fillStyle = '#221a0f';
+    ctx.beginPath(); ctx.arc(ex, ey, skullSize * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = radGrad(ctx, ex, ey, 0, ex, ey, skullSize * 0.32, [
+      [0, glow],
+      [0.4, 'rgba(119,255,170,0.5)'],
+      [1, 'transparent'],
+    ]);
+    ctx.beginPath(); ctx.arc(ex, ey, skullSize * 0.32, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Bone warrior: pauldrons (small shoulder spikes)
+  if (isBoneWarrior) {
+    ctx.fillStyle = shadow;
+    ctx.beginPath();
+    ctx.moveTo(size * 0.3, -size * 0.3);
+    ctx.lineTo(size * 0.55, -size * 0.5);
+    ctx.lineTo(size * 0.45, -size * 0.2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.3, -size * 0.3);
+    ctx.lineTo(-size * 0.55, -size * 0.5);
+    ctx.lineTo(-size * 0.45, -size * 0.2);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
 // ── Type-specific enemy body rendering ──
 function drawEnemyBody(ctx: CanvasRenderingContext2D, e: { x: number; y: number; type: string; hp?: number; maxHp?: number }, et: { size: number; color: string; boss?: boolean; phase?: boolean }, eyeAngle: number, time: number): void {
   const { x, y } = e;
@@ -3733,6 +3881,7 @@ export function drawEnemies(ctx: CanvasRenderingContext2D, state: GameState): vo
       const isMegaTurret = e.hp >= 20;
       const isWolf = e.type === '_wolf';
       const isImp = e.type === '_imp';
+      const isSkeleton = e.type === '_skeleton';
 
       if (isWolf) {
         let nearest = null;
@@ -3745,6 +3894,16 @@ export function drawEnemies(ctx: CanvasRenderingContext2D, state: GameState): vo
         drawWolf(ctx, e.x, e.y, et.size, nearest, state.time);
       } else if (isImp) {
         drawImp(ctx, e.x, e.y, et.size, state.time);
+      } else if (isSkeleton) {
+        let nearest = null;
+        let nd = Infinity;
+        for (const e2 of state.enemies) {
+          if (!e2.alive || e2._friendly) continue;
+          const d = Math.sqrt((e2.x - e.x) ** 2 + (e2.y - e.y) ** 2);
+          if (d < nd) { nd = d; nearest = e2; }
+        }
+        const isBoneWarrior = e.maxHp >= 9;
+        drawFriendlySkeleton(ctx, e.x, e.y, et.size, nearest, state.time, isBoneWarrior);
       } else {
         // Check if any zone overlaps with turret (for muzzle flash)
         let zoneActive = false;

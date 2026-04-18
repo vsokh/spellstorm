@@ -17,6 +17,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
   _ally: { name: 'Skeleton', hp: 4, speed: 80, size: 9, color: '#55cc55', dmg: 2, xp: 0, gold: 0, ai: EnemyAI.Chase, atkR: 20, atkCd: 0.8 },
   _wolf: { name: 'Wolf', hp: 8, speed: 120, size: 10, color: '#88aa66', dmg: 2, xp: 0, gold: 0, ai: EnemyAI.Chase, atkR: 20, atkCd: 0.6 },
   _imp: { name: 'Imp', hp: 5, speed: 90, size: 8, color: '#cc4466', dmg: 1, xp: 0, gold: 0, ai: EnemyAI.Ranged, atkR: 150, atkCd: 1.0, projSpd: 300, projCol: '#ff5577' },
+  _skeleton: { name: 'Bone Warrior', hp: 6, speed: 95, size: 10, color: '#ddccaa', dmg: 3, xp: 0, gold: 0, ai: EnemyAI.Chase, atkR: 22, atkCd: 0.7 },
   bomber: { name: 'Bomber', hp: 4, speed: 45, size: 12, color: '#cc6622', dmg: 1, xp: 7, gold: 2, ai: EnemyAI.Chase, atkR: 20, atkCd: 1.2, explodeOnDeath: 60 },
   teleporter: { name: 'Teleporter', hp: 3, speed: 70, size: 9, color: '#aa33cc', dmg: 2, xp: 10, gold: 3, ai: EnemyAI.Chase, atkR: 18, atkCd: 0.9, teleport: true },
   splitter: { name: 'Splitter', hp: 5, speed: 60, size: 13, color: '#448844', dmg: 1, xp: 5, gold: 2, ai: EnemyAI.Chase, atkR: 22, atkCd: 1.0, splitInto: 'splitling' },

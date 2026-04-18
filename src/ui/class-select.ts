@@ -32,7 +32,7 @@ export const ULTIMATE_DESCRIPTIONS: Record<string, string> = {
   cryomancer: 'Freeze all enemies in place and deal burst damage to each.',
   stormcaller: 'Transform for 5s: Lightning becomes instant and every hit auto-detonates static. Storm Step cooldown removed, move speed +50%.',
   arcanist: 'Launch a spiral of 20 homing arcane missiles.',
-  necromancer: 'Summon 6 skeletal allies to fight by your side.',
+  necromancer: 'Raise 8 Bone Warriors with boosted damage to fight alongside you for 15s.',
   chronomancer: 'Freeze all enemies in time while you move at increased speed.',
   knight: 'Become invulnerable for 3 seconds and reflect all damage.',
   berserker: 'Enter a blood frenzy: double damage and speed for 5 seconds, but take double damage.',
@@ -156,6 +156,8 @@ export function generateSpellDescription(spell: SpellDefInput, classKey?: string
         parts.push('Summons a demonic imp that attacks nearby enemies');
       } else if (spell.name === 'Phantom Veil') {
         parts.push(`Vanishes for ${spell.duration || 2}s, healing ${spell.heal || 4} HP with +30% speed. Next attack auto-crits.`);
+      } else if (spell.name === 'Raise Skeleton') {
+        parts.push('Raises a skeleton at the cursor (cap 6). Skeletons hunt Death-Marked targets for bonus damage.');
       } else {
         parts.push('Summons a companion to fight for you');
       }
