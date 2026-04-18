@@ -245,6 +245,8 @@ export function updatePlayers(state: GameState, dt: number): void {
         p.channelAngle = undefined;
       } else {
         p.channelTimer = (p.channelTimer || 0) + dt;
+        // Track current aim so the channeled beam follows the mouse
+        if (!isNaN(input.angle)) p.channelAngle = input.angle;
 
         // Determine if the cast key is still held
         const slotHeld = (chSlot === 0 && input.shoot)
