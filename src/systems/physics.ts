@@ -270,6 +270,8 @@ export function updatePlayers(state: GameState, dt: number): void {
         // anything that walks in gets pinned the moment it crosses the boundary.
         if (chDef.type === SpellType.Nova && p.clsKey === 'stormcaller') {
           p._dischargeShield = Math.max(p._dischargeShield, 0.5);
+          // Static Charge drain: 20/sec while channeling
+          p.mana = Math.max(0, p.mana - 20 * dt);
           const tickInterval = 0.2;
           const prevTicks = Math.floor(((p.channelTimer || 0) - dt) / tickInterval);
           const currTicks = Math.floor((p.channelTimer || 0) / tickInterval);
@@ -321,6 +323,10 @@ export function updatePlayers(state: GameState, dt: number): void {
               if (e.iframes > 0) continue;
               if ((e.x - bx) ** 2 + (e.y - by) ** 2 < step * step) {
                 damageEnemy(state, e, Math.ceil(scaledDmg), p.idx);
+                // Static Charge: Stormcaller beam hits build charge (mana-as-charge)
+                if (p.clsKey === 'stormcaller') {
+                  p.mana = Math.min(p.maxMana, p.mana + 4);
+                }
                 if (chDef.applyMark) {
                   const maxStk = chDef.applyMark.maxStacks ?? 1;
                   const atMax = e._markName === chDef.applyMark.name && e._markStacks >= maxStk;
@@ -335,6 +341,7 @@ export function updatePlayers(state: GameState, dt: number): void {
                     if (p.clsKey === 'stormcaller') {
                       p.cd[2] = Math.max(0, (p.cd[2] || 0) - 0.3);
                       p._channelDetStacks = Math.min(10, (p._channelDetStacks || 0) + 1);
+                      p.mana = Math.min(p.maxMana, p.mana + 10);
                     }
                   } else {
                     applyMarkToEnemy(state, e, chDef.applyMark, p.idx);
@@ -357,6 +364,9 @@ export function updatePlayers(state: GameState, dt: number): void {
                 if (!ce.alive || ce.iframes > 0) continue;
                 if ((ce.x - src.x) ** 2 + (ce.y - src.y) ** 2 < 150 * 150) {
                   damageEnemy(state, ce, Math.ceil(scaledDmg), p.idx);
+                  if (p.clsKey === 'stormcaller') {
+                    p.mana = Math.min(p.maxMana, p.mana + 4);
+                  }
                   if (chDef.applyMark) {
                     const maxStk = chDef.applyMark.maxStacks ?? 1;
                     const atMax = ce._markName === chDef.applyMark.name && ce._markStacks >= maxStk;
@@ -369,8 +379,9 @@ export function updatePlayers(state: GameState, dt: number): void {
                       }
                       detonateMarks(state, ce, autoDet, p.idx, chDef.color);
                       if (p.clsKey === 'stormcaller') {
-                        p.cd[1] = Math.max(0, (p.cd[1] || 0) - 0.3);
+                        p.cd[2] = Math.max(0, (p.cd[2] || 0) - 0.3);
                         p._channelDetStacks = Math.min(10, (p._channelDetStacks || 0) + 1);
+                        p.mana = Math.min(p.maxMana, p.mana + 10);
                       }
                     } else {
                       applyMarkToEnemy(state, ce, chDef.applyMark, p.idx);
@@ -393,8 +404,9 @@ export function updatePlayers(state: GameState, dt: number): void {
           }
         }
 
-        // Channel completion or key release
-        if (!slotHeld || (p.channelTimer || 0) >= chDef.channel) {
+        // Channel completion or key release (Discharge also ends when Static Charge runs out)
+        const chargeEmpty = chDef.type === SpellType.Nova && p.clsKey === 'stormcaller' && p.mana <= 0;
+        if (!slotHeld || (p.channelTimer || 0) >= chDef.channel || chargeEmpty) {
           const progress = Math.min(1, (p.channelTimer || 0) / chDef.channel);
 
           // Non-Beam non-Nova channels (charge-and-release): fire the spell on completion

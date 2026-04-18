@@ -51,6 +51,8 @@ Some classes are designed to replace standard mana with unique resource systems 
 | **Reposition** | **Storm Step** (Q) — short-range blink (180 units, 2.5s cd) to break line of sight or escape a cluster. |
 | **Ultimate** | **Thunder God** (Space) — 5s transformation. Lightning becomes instant (no channel needed), every hit auto-detonates, Storm Step cooldown removed, move speed +50%. |
 
+**Resource — Static Charge (0–100):** Stormcaller doesn't use mana. The purple bar is Static Charge, the fuel for Discharge and Storm Step. Lightning is free and **generates** charge: **+4 per beam hit** (~40/sec while beaming) and **+10 per auto-detonation**. Baseline passive regen is only 2/sec — the beam is your real generator. **Discharge** costs **50 on activation** and drains **20/sec** while channeling (so a full 2.5s hold needs exactly 100 charge). **Storm Step** costs **25**. **Thunder God** is gated by the separate ult meter as usual.
+
 **Passive — Feedback Loop:** Each auto-detonation during a channel refunds 0.3s of Storm Step cooldown and adds +5% damage to the current channel (stacks up to +50%). Sustained focus on priority targets snowballs, and your teleport stays ready.
 
 **Tip:** The core loop is beam → auto-pop → Storm Step → beam again. If you get surrounded, press Q Discharge to cash in every enemy you've been marking, then Storm Step away. In co-op, pair Discharge with an ally's AoE setup — your marks paint the cluster, Q finishes it. Hold Thunder God for dense waves where the instant-detonate + free teleport lets you melt a whole screen.

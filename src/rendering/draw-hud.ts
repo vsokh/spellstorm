@@ -45,7 +45,7 @@ export function updateHUD(state: GameState): void {
     hudP1.innerHTML = `<span style="color:${p.cls.color}">${p.cls.name}</span>${fury}
       <div>
         <div class="bar-o"><div class="bar-i" style="width:${hpRatio * 100}%;background:${hpColor}"></div></div>
-        <div class="bar-o" style="margin-top:4px"><div class="bar-i" style="width:${(p.mana / p.maxMana) * 100}%;background:#4488ff"></div></div>
+        <div class="bar-o" style="margin-top:4px"><div class="bar-i" style="width:${(p.mana / p.maxMana) * 100}%;background:${p.clsKey === 'stormcaller' ? '#cc88ff' : '#4488ff'}"></div></div>
         <div class="bar-o" style="margin-top:3px"><div class="bar-i" style="width:${p.ultCharge}%;background:${ultColor}"></div></div>
         <div style="margin-top:4px;display:flex;align-items:center;gap:6px">
           <span class="xp-lv">Lv${p.level}</span>
