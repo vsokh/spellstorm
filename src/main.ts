@@ -20,6 +20,7 @@ import {
   WIZARD_SIZE,
   DEFAULT_MOVE_SPEED,
   WALL_THICKNESS,
+  DEV_DISABLE_AUGMENTS,
 } from './constants';
 import { sfx } from './audio';
 import { SfxName } from './types';
@@ -106,22 +107,31 @@ initPerfOverlay(canvas);
 initFullscreen();
 
 // Wire chest pickup handler to break circular dependency physics -> upgrades
-setChestPickupHandler((s: GameState) => showUpgradeScreen(s));
+if (DEV_DISABLE_AUGMENTS) {
+  // Dev mode: level up still grants stats (handled in physics), but no upgrade screen.
+  setChestPickupHandler(() => { /* no-op */ });
+} else {
+  setChestPickupHandler((s: GameState) => showUpgradeScreen(s));
+}
 
 // Initialize shop event listeners
-initShop(state);
+if (!DEV_DISABLE_AUGMENTS) initShop(state);
 
 // Initialize pause system
 initPause(state);
 
-// Wire up shop button
+// Wire up shop button (hide entirely in dev mode)
 const shopBtn = document.getElementById('shop-btn');
 if (shopBtn) {
-  shopBtn.addEventListener('click', () => {
-    if (!state.waveActive && state.wave < MAX_WAVES && !state.shopOpen) {
-      openShop(state);
-    }
-  });
+  if (DEV_DISABLE_AUGMENTS) {
+    shopBtn.style.display = 'none';
+  } else {
+    shopBtn.addEventListener('click', () => {
+      if (!state.waveActive && state.wave < MAX_WAVES && !state.shopOpen) {
+        openShop(state);
+      }
+    });
+  }
 }
 
 // ═══════════════════════════════════
