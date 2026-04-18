@@ -68,7 +68,7 @@ combo: steps 3, timeout 1.5,
 ### Shadow Step — RMB (Leap, `targetLock: true`)
 
 ```
-dmg 14, aoeR 0, range 200, mana 12, cd 3
+dmg 14, aoeR 0, range 140, mana 12, cd 3
 ```
 
 - **Single-target by default.** `aoeR === 0` makes the combat handler damage

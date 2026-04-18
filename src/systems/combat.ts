@@ -1420,10 +1420,22 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     }
     netSfx(state, SfxName.Zap);
   } else if (def.type === SpellType.Cone) {
-    // Visual particles
-    for (let a = -def.angle / 2; a <= def.angle / 2; a += 0.15) {
-      for (let d = 30; d < def.range; d += 20) {
-        spawnParticles(state, p.x + Math.cos(angle + a) * d, p.y + Math.sin(angle + a) * d, def.color, 1, 0.4);
+    // Visual: narrow cones (Bladecaller thrust) render as a beam flash; wide cones use particle spray.
+    if (def.angle < 0.5) {
+      const thrust = state.beams.acquire();
+      if (thrust) {
+        thrust.x = p.x; thrust.y = p.y; thrust.angle = angle; thrust.range = def.range;
+        thrust.width = 4; thrust.color = def.color; thrust.life = 0.12;
+      }
+      // A couple of streak particles along the line for juice
+      for (let d = 20; d < def.range; d += 18) {
+        spawnParticles(state, p.x + Math.cos(angle) * d, p.y + Math.sin(angle) * d, def.color, 2, 0.25);
+      }
+    } else {
+      for (let a = -def.angle / 2; a <= def.angle / 2; a += 0.15) {
+        for (let d = 30; d < def.range; d += 20) {
+          spawnParticles(state, p.x + Math.cos(angle + a) * d, p.y + Math.sin(angle + a) * d, def.color, 1, 0.4);
+        }
       }
     }
     // Damage enemies in cone

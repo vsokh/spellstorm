@@ -21,8 +21,14 @@ export function enemyAI(state: GameState, dt: number): void {
     const isVisible = (pl: any) => pl && pl.alive && !(pl._stealth > 0);
     let target = state.players[e.target];
     if (!isVisible(target)) {
-      target = state.players.find(p => isVisible(p)) || state.players.find(p => p.alive) || state.players[0];
-      if (!target) continue;
+      const visible = state.players.find(p => isVisible(p));
+      if (!visible) {
+        // No visible player — idle (decelerate, don't chase the stealthed target)
+        e.vx *= 0.85;
+        e.vy *= 0.85;
+        continue;
+      }
+      target = visible;
       e.target = target.idx;
     }
 

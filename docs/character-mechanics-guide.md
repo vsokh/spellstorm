@@ -149,7 +149,7 @@ Some classes are designed to replace standard mana with unique resource systems 
 | Mechanic | Details |
 |----------|---------|
 | **Blade Thrust** | **LMB** — narrow 3-hit thrust combo (dmg 4, cone angle 0.18 rad / ~10°, range 70, timeout 1.5s). Damage scales 1.0 → 1.3 → 2.8; step 3 bleeds and pops a small AOE. Reads as a fencing thrust line. |
-| **Shadow Step** | **RMB, target-locked, single-target** — picks the enemy nearest the cursor within 200 units and teleports behind them for a guaranteed backstab (dmg 14 × 2.5 passive = 35). Fizzles (no mana spend) if no enemy is in range. An augment can enable AOE cleave. |
+| **Shadow Step** | **RMB, target-locked, single-target** — picks the enemy nearest the cursor within 140 units and teleports behind them for a guaranteed backstab (dmg 14 × 2.5 passive = 35). Fizzles (no mana spend) if no enemy is in range. An augment can enable AOE cleave. |
 | **Phantom Veil** | **Q** — 2s stealth; enemies stop targeting you, you heal ~4 HP over the duration and gain +30% move speed. Your next attack auto-crits for 2x. Breaks on taking damage. |
 | **Thousand Cuts** | **Space (ult)** — 2.5s Blood Frenzy. Teleport-dashes to the nearest enemy every 0.2s and strikes for 12 dmg auto-crit with bonus lifesteal. 12+ visible dashes across the duration. +30% move speed. |
 
