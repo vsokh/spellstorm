@@ -1422,6 +1422,27 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
   } else if (def.type === SpellType.Nova) {
     spawnShockwave(state, p.x, p.y, def.range, def.color);
     spawnParticles(state, p.x, p.y, def.color, 20);
+    // Stormcaller Discharge: radiating lightning bolts from the caster
+    if (p.clsKey === 'stormcaller') {
+      spawnShockwave(state, p.x, p.y, def.range * 0.4, '#ffffff');
+      const boltCount = 8;
+      for (let i = 0; i < boltCount; i++) {
+        const ba = (i / boltCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.35;
+        const bolt = state.beams.acquire();
+        if (bolt) {
+          bolt.x = p.x; bolt.y = p.y;
+          bolt.angle = ba;
+          bolt.range = def.range;
+          bolt.width = 3 + Math.random() * 2;
+          bolt.color = '#ffcc44';
+          bolt.life = 0.22;
+        }
+      }
+      spawnParticles(state, p.x, p.y, '#ffffff', 14, 1.1);
+      flashScreen(state, 0.15, '255,220,100');
+      shake(state, 4);
+      netSfx(state, SfxName.Zap);
+    }
     let novaHealed = 0;
     for (const e of state.enemies) {
       if (!e.alive) continue;
