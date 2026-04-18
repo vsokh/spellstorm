@@ -466,8 +466,10 @@ export function updatePlayers(state: GameState, dt: number): void {
           p._chargeLevel = Math.min(1, p._chargeLevel + dt / lmbDef.chargeTime);
         }
       }
-      if (!input.shoot && p._chargeSlot === 0) {
-        // Released — fire charged spell if we have mana
+      // Auto-fire when charge fills, OR when released
+      const autoFire = p._chargeSlot === 0 && p._chargeLevel >= 1 && input.shoot;
+      const released = !input.shoot && p._chargeSlot === 0;
+      if (autoFire || released) {
         if (p.cd[0] <= 0 && p.mana >= lmbDef.mana) {
           castChargedSpell(state, p, 0, input.angle, p._chargeLevel);
           p._animCastFlash = TIMING.ANIM_CAST;
@@ -517,7 +519,9 @@ export function updatePlayers(state: GameState, dt: number): void {
           p._chargeLevel = Math.min(1, p._chargeLevel + dt / rmbDef.chargeTime);
         }
       }
-      if (!input.shoot2 && p._chargeSlot === 1) {
+      const autoFire2 = p._chargeSlot === 1 && p._chargeLevel >= 1 && input.shoot2;
+      const released2 = !input.shoot2 && p._chargeSlot === 1;
+      if (autoFire2 || released2) {
         if (p.cd[1] <= 0 && p.mana >= rmbDef.mana) {
           castChargedSpell(state, p, 1, input.angle, p._chargeLevel);
           p._animCastFlash = TIMING.ANIM_CAST;
