@@ -275,12 +275,14 @@ export function updatePlayers(state: GameState, dt: number): void {
           const currTicks = Math.floor((p.channelTimer || 0) / tickInterval);
           if (currTicks > prevTicks) {
             const shieldR = chDef.range || 180;
+            const tickDmg = 2;
             const cand = state.enemyGrid.queryArea(p.x, p.y, shieldR);
             for (const ei of cand) {
               const e = state.enemies.at(ei);
               if (!e.alive) continue;
               if ((e.x - p.x) ** 2 + (e.y - p.y) ** 2 < shieldR * shieldR) {
                 e.stunTimer = Math.max(e.stunTimer || 0, 0.3);
+                damageEnemy(state, e, tickDmg, p.idx);
                 spawnParticles(state, e.x, e.y, '#cc88ff', 2, 0.4);
               }
             }
