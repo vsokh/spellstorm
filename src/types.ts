@@ -379,6 +379,8 @@ export interface Player {
   overcharge: boolean;
   stormShield: boolean;
   _stormTimer: number;
+  _thunderGod: number;
+  _channelDetStacks: number;
   blinkExplode: boolean;
   spellMirror: number;
   raiseDead: number;

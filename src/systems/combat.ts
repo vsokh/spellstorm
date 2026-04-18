@@ -1771,90 +1771,14 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
     }
     spawnShockwave(state, p.x, p.y, ROOM_WIDTH, 'rgba(100,200,255,.3)');
   } else if (p.clsKey === 'stormcaller') {
-    // Chain Lightning: chain from nearest enemy to 7 more
-    _aliveEnemies.length = 0;
-    for (const e2 of state.enemies) {
-      if (e2.alive) _aliveEnemies.push(e2);
-    }
-    if (_aliveEnemies.length > 0) {
-      // Find nearest enemy to start the chain
-      let current: EnemyView | null = null;
-      let minD = Infinity;
-      for (const e of _aliveEnemies) {
-        const d = dist(p.x, p.y, e.x, e.y);
-        if (d < minD) { minD = d; current = e; }
-      }
-      const chainTargets: EnemyView[] = [];
-      const hitSet = new Set<EnemyView>();
-      if (current) {
-        chainTargets.push(current);
-        hitSet.add(current);
-      }
-      // Chain to 7 more targets
-      for (let i = 0; i < ULTIMATE.CHAIN_TARGETS && current; i++) {
-        let next: EnemyView | null = null;
-        let nextD = Infinity;
-        // Try to find an un-hit enemy within range
-        for (const e of _aliveEnemies) {
-          if (!e.alive) continue;
-          if (hitSet.has(e)) continue;
-          const d = dist(current.x, current.y, e.x, e.y);
-          if (d < ULTIMATE.CHAIN_RANGE && d < nextD) { nextD = d; next = e; }
-        }
-        // If no un-hit enemies, wrap around to already-hit ones
-        if (!next) {
-          for (const e of _aliveEnemies) {
-            if (!e.alive || e === current) continue;
-            const d = dist(current.x, current.y, e.x, e.y);
-            if (d < ULTIMATE.CHAIN_RANGE && d < nextD) { nextD = d; next = e; }
-          }
-        }
-        if (next) {
-          chainTargets.push(next);
-          hitSet.add(next);
-          current = next;
-        } else {
-          break;
-        }
-      }
-      // Apply damage and draw beams between chain targets
-      const chainDmg = Math.round(ULTIMATE.CHAIN_DMG_MULT * pw);
-      // Draw beam from player to first target
-      if (chainTargets.length > 0) {
-        const first = chainTargets[0];
-        const ultBeam = state.beams.acquire();
-        if (ultBeam) {
-          ultBeam.x = p.x; ultBeam.y = p.y;
-          ultBeam.angle = Math.atan2(first.y - p.y, first.x - p.x);
-          ultBeam.range = dist(p.x, p.y, first.x, first.y);
-          ultBeam.width = 4; ultBeam.color = '#ffcc44'; ultBeam.life = ULTIMATE.CHAIN_BEAM_LIFE;
-        }
-      }
-      for (let i = 0; i < chainTargets.length; i++) {
-        const target = chainTargets[i];
-        ((idx: number, t: EnemyView) => {
-          setTimeout(() => {
-            if (t.alive) {
-              damageEnemy(state, t, chainDmg, p.idx);
-              spawnParticles(state, t.x, t.y, '#ffcc44', 6, ULTIMATE.CHAIN_PARTICLE_SCALE);
-              netSfx(state, SfxName.Zap);
-              shake(state, 2);
-            }
-            // Draw beam to next target
-            if (idx < chainTargets.length - 1) {
-              const next = chainTargets[idx + 1];
-              const nextBeam = state.beams.acquire();
-              if (nextBeam) {
-                nextBeam.x = t.x; nextBeam.y = t.y;
-                nextBeam.angle = Math.atan2(next.y - t.y, next.x - t.x);
-                nextBeam.range = dist(t.x, t.y, next.x, next.y);
-                nextBeam.width = 4; nextBeam.color = '#ffcc44'; nextBeam.life = ULTIMATE.CHAIN_BEAM_LIFE;
-              }
-            }
-          }, idx * ULTIMATE.CHAIN_DELAY_STEP);
-        })(i, target);
-      }
-    }
+    // Thunder God: 5s transformation — Lightning becomes instant, auto-detonates
+    // on every hit, Storm Step cd removed, move speed +50%.
+    p._thunderGod = 5;
+    p.cd[1] = 0;
+    spawnParticles(state, p.x, p.y, '#ffcc44', 40, 1.5);
+    spawnShockwave(state, p.x, p.y, 160, '#ffcc44');
+    shake(state, 4);
+    netSfx(state, SfxName.Zap);
   } else if (p.clsKey === 'arcanist') {
     // Arcane Storm: spiral of 20 homing missiles
     for (let i = 0; i < 20; i++) {

@@ -41,17 +41,19 @@ Some classes are designed to replace standard mana with unique resource systems 
 ### Channeled Casting Classes
 
 #### Stormcaller
-*Channeled lightning striker who teleports between beam casts.*
+*Channeled lightning striker who builds up static and pops it in a continuous rhythm.*
 
 | Mechanic | Details |
 |----------|---------|
-| **Channeled Casting** | **Lightning** (LMB) — sustained beam, 1.5s channel, movement slowed 50%. Damage builds from 1x to 2.5x at full channel. Applies static marks on every hit. Breaks if you take 3+ damage in a single hit. |
-| **Mark and Detonate** | **Lightning** applies static marks during the beam. **Thunder** (Q) detonates them in an AoE for burst damage per stack plus a stun. |
-| **Reposition** | **Storm Step** (RMB) — short-range blink (180 units, 2.5s cd) to break line of sight and set up a new channel angle. |
+| **Channeled Casting** | **Lightning** (LMB) — sustained beam, 1.5s channel, movement slowed 50%. Damage builds from 1x to 2.5x at full channel. Breaks if you take 3+ damage in a single hit. |
+| **Auto-Detonate** | Beam applies static on hit (up to 3 stacks). When the beam hits an enemy already at max stacks, the marks auto-detonate for bonus damage and the stacks clear — beam rebuilds from scratch. Rhythm: build (3 hits) → pop → build → pop. |
+| **Cluster Clear** | **Discharge** (Q) — instant 180-radius AoE around the caster. Detonates static marks on every enemy in range for +3 dmg and +0.5s stun per stack. No damage to unmarked enemies — it's pure cash-in. |
+| **Reposition** | **Storm Step** (RMB) — short-range blink (180 units, 2.5s cd) to break line of sight or escape a cluster. |
+| **Ultimate** | **Thunder God** (Space) — 5s transformation. Lightning becomes instant (no channel needed), every hit auto-detonates, Storm Step cooldown removed, move speed +50%. |
 
-**Passive — Overload:** Completing a full 1.5s channel detonates static marks on all beam-path targets and refunds 1s of Storm Step cooldown. Full commits cash in marks and tighten the reposition loop.
+**Passive — Feedback Loop:** Each auto-detonation during a channel refunds 0.3s of Storm Step cooldown and adds +5% damage to the current channel (stacks up to +50%). Sustained focus on priority targets snowballs, and your teleport stays ready.
 
-**Tip:** The core loop is channel → teleport → channel. Hold Lightning through the full 1.5s for the Overload payoff, then Storm Step to a new angle while Thunder is available to burst-clear dense packs. Releasing early skips Overload — only break the channel if you're about to be interrupted.
+**Tip:** The core loop is beam → auto-pop → Storm Step → beam again. If you get surrounded, press Q Discharge to cash in every enemy you've been marking, then Storm Step away. In co-op, pair Discharge with an ally's AoE setup — your marks paint the cluster, Q finishes it. Hold Thunder God for dense waves where the instant-detonate + free teleport lets you melt a whole screen.
 
 ---
 

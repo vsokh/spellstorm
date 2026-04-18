@@ -186,6 +186,8 @@ export class Upgrades {
   chainLightning: number = 0;
   overcharge: boolean = false;
   stormShield: boolean = false;
+  _thunderGod: number = 0;
+  _channelDetStacks: number = 0;
   blinkExplode: boolean = false;
   spellMirror: number = 0;
   raiseDead: number = 0;

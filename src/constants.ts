@@ -394,12 +394,12 @@ export const CLASSES: Record<string, ClassDefInput> = {
     name: 'Stormcaller', color: '#bb66ff', glow: '#9944dd',
     desc: 'Channeled lightning. Teleport & detonate.',
     hp: 7, moveSpeed: 190, maxMana: 100, manaRegen: 14,
-    passive: { name: 'Overload', desc: 'Full channel detonates static on beam targets and refunds 1s of Storm Step cd' },
+    passive: { name: 'Feedback Loop', desc: 'Auto-detonations refund 0.3s of Storm Step cd and build +5% channel damage (caps at +50%)' },
     spells: [
       { name: 'Lightning', key: 'LMB', type: SpellType.Beam, dmg: 1, range: 320, mana: 7, cd: 0.28, width: 3, color: '#cc88ff', trail: '#aa55ff', channel: 1.5, channelSlow: 0.5, channelScale: 2.5, channelBreak: 3, applyMark: { name: 'static', duration: 4.0, maxStacks: 3, visual: '#cc88ff' } },
       { name: 'Storm Step', key: 'RMB', type: SpellType.Blink, range: 180, mana: 20, cd: 2.5, color: '#bb66ff' },
-      { name: 'Thunder', key: 'Q', type: SpellType.AoeDelayed, dmg: 3, mana: 28, cd: 7, delay: 0.5, radius: 65, stun: 1, color: '#ffcc44', detonateMark: { name: 'static', dmgPerStack: 2.0, aoeOnDetonate: 65, effectOnDetonate: { stun: 0.5 } } },
-      { name: 'Storm Fury', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#ffcc44', mana: 0, cd: 0 },
+      { name: 'Discharge', key: 'Q', type: SpellType.Nova, dmg: 0, mana: 25, cd: 7, range: 180, color: '#ffcc44', detonateMark: { name: 'static', dmgPerStack: 3.0, effectOnDetonate: { stun: 0.5 } } },
+      { name: 'Thunder God', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#ffcc44', mana: 0, cd: 0 },
     ],
   },
   arcanist: {

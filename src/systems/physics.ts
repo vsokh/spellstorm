@@ -108,13 +108,15 @@ export function updatePlayers(state: GameState, dt: number): void {
         ms *= chargeDef.chargeSlow;
       }
     }
-    // Channel slow: reduce speed while channeling
-    if (p.channeling && p.channelSlot !== undefined) {
+    // Channel slow: reduce speed while channeling (Thunder God bypasses)
+    if (p.channeling && p.channelSlot !== undefined && p._thunderGod <= 0) {
       const chDef = p.cls.spells[p.channelSlot];
       if (chDef && chDef.channelSlow !== undefined) {
         ms *= chDef.channelSlow;
       }
     }
+    // Thunder God: +50% move speed
+    if (p._thunderGod > 0) ms *= 1.5;
     let mvx = (input.mx || 0) * ms;
     let mvy = (input.my || 0) * ms;
     // Normalize diagonal
@@ -195,6 +197,12 @@ export function updatePlayers(state: GameState, dt: number): void {
       }
     }
 
+    // Thunder God ultimate: tick down buff timer + keep Storm Step off cooldown
+    if (p._thunderGod > 0) {
+      p._thunderGod = Math.max(0, p._thunderGod - dt);
+      p.cd[1] = 0;
+    }
+
     // Storm Shield: lightning strikes random nearby enemy every 1s
     if (p.stormShield) {
       p._stormTimer = (p._stormTimer || 0) + dt;
@@ -256,8 +264,10 @@ export function updatePlayers(state: GameState, dt: number): void {
 
         // Continuous beam channels: render beam + damage every frame (iframes gate rate)
         if (chDef.type === SpellType.Beam) {
-          const progress = Math.min(1, (p.channelTimer || 0) / chDef.channel);
-          const scaledDmg = chDef.dmg * (1 + ((chDef.channelScale || 1) - 1) * progress);
+          const inThunderGod = p._thunderGod > 0;
+          const progress = inThunderGod ? 1 : Math.min(1, (p.channelTimer || 0) / chDef.channel);
+          const fbBonus = Math.min(0.5, (p._channelDetStacks || 0) * 0.05);
+          const scaledDmg = chDef.dmg * (1 + ((chDef.channelScale || 1) - 1) * progress) * (1 + fbBonus);
           const ang = p.channelAngle ?? p.angle;
           const range = chDef.range || 200;
           const beam = state.beams.acquire();
@@ -284,7 +294,25 @@ export function updatePlayers(state: GameState, dt: number): void {
               if (e.iframes > 0) continue;
               if ((e.x - bx) ** 2 + (e.y - by) ** 2 < step * step) {
                 damageEnemy(state, e, Math.ceil(scaledDmg), p.idx);
-                if (chDef.applyMark) applyMarkToEnemy(state, e, chDef.applyMark, p.idx);
+                if (chDef.applyMark) {
+                  const maxStk = chDef.applyMark.maxStacks ?? 1;
+                  const atMax = e._markName === chDef.applyMark.name && e._markStacks >= maxStk;
+                  if (atMax || inThunderGod) {
+                    const autoDet = { name: chDef.applyMark.name, dmgPerStack: 1.5 };
+                    if (inThunderGod) {
+                      e._markName = chDef.applyMark.name;
+                      e._markStacks = maxStk;
+                      e._markTimer = chDef.applyMark.duration;
+                    }
+                    detonateMarks(state, e, autoDet, p.idx, chDef.color);
+                    if (p.clsKey === 'stormcaller') {
+                      p.cd[1] = Math.max(0, (p.cd[1] || 0) - 0.3);
+                      p._channelDetStacks = Math.min(10, (p._channelDetStacks || 0) + 1);
+                    }
+                  } else {
+                    applyMarkToEnemy(state, e, chDef.applyMark, p.idx);
+                  }
+                }
                 hitThisFrame.add(ei);
               }
             }
@@ -302,7 +330,25 @@ export function updatePlayers(state: GameState, dt: number): void {
                 if (!ce.alive || ce.iframes > 0) continue;
                 if ((ce.x - src.x) ** 2 + (ce.y - src.y) ** 2 < 150 * 150) {
                   damageEnemy(state, ce, Math.ceil(scaledDmg), p.idx);
-                  if (chDef.applyMark) applyMarkToEnemy(state, ce, chDef.applyMark, p.idx);
+                  if (chDef.applyMark) {
+                    const maxStk = chDef.applyMark.maxStacks ?? 1;
+                    const atMax = ce._markName === chDef.applyMark.name && ce._markStacks >= maxStk;
+                    if (atMax || inThunderGod) {
+                      const autoDet = { name: chDef.applyMark.name, dmgPerStack: 1.5 };
+                      if (inThunderGod) {
+                        ce._markName = chDef.applyMark.name;
+                        ce._markStacks = maxStk;
+                        ce._markTimer = chDef.applyMark.duration;
+                      }
+                      detonateMarks(state, ce, autoDet, p.idx, chDef.color);
+                      if (p.clsKey === 'stormcaller') {
+                        p.cd[1] = Math.max(0, (p.cd[1] || 0) - 0.3);
+                        p._channelDetStacks = Math.min(10, (p._channelDetStacks || 0) + 1);
+                      }
+                    } else {
+                      applyMarkToEnemy(state, ce, chDef.applyMark, p.idx);
+                    }
+                  }
                   hitThisFrame.add(cIdx);
                   const arc = state.beams.acquire();
                   if (arc) {
@@ -323,7 +369,6 @@ export function updatePlayers(state: GameState, dt: number): void {
         // Channel completion or key release
         if (!slotHeld || (p.channelTimer || 0) >= chDef.channel) {
           const progress = Math.min(1, (p.channelTimer || 0) / chDef.channel);
-          const fullChannel = (p.channelTimer || 0) >= chDef.channel;
 
           // Non-Beam channels (charge-and-release): fire the spell on completion with scaled damage
           if (chDef.type !== SpellType.Beam) {
@@ -338,33 +383,8 @@ export function updatePlayers(state: GameState, dt: number): void {
             (chDef as any).mana = origMana;
           }
 
-          // Overload passive (Stormcaller): full-channel completion detonates static
-          // marks on beam-path enemies and refunds 1s of Storm Step cooldown.
-          if (fullChannel && p.clsKey === 'stormcaller' && chDef.type === SpellType.Beam) {
-            const ang = p.channelAngle ?? p.angle;
-            const cos = Math.cos(ang);
-            const sin = Math.sin(ang);
-            const step = 20;
-            const range = chDef.range || 200;
-            const overloadDet = { name: 'static', dmgPerStack: 1.5 };
-            const detonated = new Set<number>();
-            for (let d = 0; d < range; d += step) {
-              const bx = p.x + cos * d;
-              const by = p.y + sin * d;
-              const nearby = state.enemyGrid.queryArea(bx, by, step);
-              for (const ei of nearby) {
-                if (detonated.has(ei)) continue;
-                const e = state.enemies.at(ei);
-                if (!e.alive) continue;
-                if (e._markName !== 'static' || e._markStacks <= 0) continue;
-                if ((e.x - bx) ** 2 + (e.y - by) ** 2 < step * step) {
-                  detonateMarks(state, e, overloadDet, p.idx, chDef.color);
-                  detonated.add(ei);
-                }
-              }
-            }
-            p.cd[1] = Math.max(0, (p.cd[1] || 0) - 1);
-          }
+          // Reset Feedback Loop damage stacks when the channel ends
+          p._channelDetStacks = 0;
 
           // Set cooldown (deferred from channel start)
           let cd = chDef.cd;

@@ -30,7 +30,7 @@ export const SPELL_TYPE_LABELS: Record<string, string> = {
 export const ULTIMATE_DESCRIPTIONS: Record<string, string> = {
   pyromancer: 'Rain 8 meteors across the battlefield, leaving lingering burn zones.',
   cryomancer: 'Freeze all enemies in place and deal burst damage to each.',
-  stormcaller: 'Unleash chain lightning that bounces between up to 8 enemies, dealing heavy damage.',
+  stormcaller: 'Transform for 5s: Lightning becomes instant and every hit auto-detonates static. Storm Step cooldown removed, move speed +50%.',
   arcanist: 'Launch a spiral of 20 homing arcane missiles.',
   necromancer: 'Summon 6 skeletal allies to fight by your side.',
   chronomancer: 'Freeze all enemies in time while you move at increased speed.',
