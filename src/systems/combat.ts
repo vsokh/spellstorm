@@ -1547,8 +1547,9 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       const te = state.enemies.at(bestIdx);
       spawnText(state, te.x, te.y - 20, 'TETHERED', def.color);
     } else {
-      // No enemy in range — fizzle, refund 50% mana
-      p.mana = Math.min(p.maxMana, p.mana + def.mana * 0.5);
+      // No enemy in range — full fizzle: refund mana and clear cooldown.
+      p.mana = Math.min(p.maxMana, p.mana + def.mana);
+      p.cd[idx] = 0;
       spawnText(state, p.x, p.y - 20, 'NO TARGET', '#888888');
     }
   }

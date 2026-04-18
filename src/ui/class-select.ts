@@ -372,6 +372,19 @@ export function showSelect(state: GameState): void {
   buildGrid(state);
 }
 
+interface RoleGroup { name: string; color: string; classes: string[] }
+
+const ROLE_GROUPS: RoleGroup[] = [
+  { name: 'Tanks',         color: '#6699cc', classes: ['knight', 'warden'] },
+  { name: 'Fighters',      color: '#cc7744', classes: ['berserker', 'hexblade'] },
+  { name: 'Assassins',     color: '#aa3355', classes: ['bladecaller', 'monk'] },
+  { name: 'Marksmen',      color: '#88cc44', classes: ['ranger', 'cannoneer'] },
+  { name: 'Mages — Burst', color: '#cc55bb', classes: ['pyromancer', 'arcanist', 'stormcaller', 'warlock', 'invoker'] },
+  { name: 'Mages — Control', color: '#55bbcc', classes: ['cryomancer', 'chronomancer', 'graviturge', 'voidweaver'] },
+  { name: 'Summoners',     color: '#55cc88', classes: ['necromancer', 'druid', 'engineer', 'tidecaller', 'architect'] },
+  { name: 'Supports',      color: '#ddcc66', classes: ['paladin', 'soulbinder'] },
+];
+
 function buildGrid(state: GameState): void {
   const grid = document.getElementById('class-grid');
   if (!grid) return;
@@ -380,15 +393,16 @@ function buildGrid(state: GameState): void {
   // Stop any prior animation before rebuilding
   stopCardAnimation();
 
-  CLASS_ORDER.forEach((k, i) => {
+  const allyKey = state.mode === NetworkMode.Guest ? state.hostClassKey
+    : state.mode === NetworkMode.Host ? state.guestClassKey
+    : null;
+
+  const makeCard = (k: string) => {
+    const i = CLASS_ORDER.indexOf(k);
     const c = CLASSES[k];
     const card = document.createElement('div');
     card.className = 'class-card' + (i === state.selectedClassIndex ? ' selected' : '');
 
-    // Check synergy with ally's picked class
-    const allyKey = state.mode === NetworkMode.Guest ? state.hostClassKey
-      : state.mode === NetworkMode.Host ? state.guestClassKey
-      : null;
     let synTag = '';
     if (allyKey) {
       const syn = getSynergy(k, allyKey);
@@ -396,18 +410,14 @@ function buildGrid(state: GameState): void {
         synTag = `<div class="cdesc" style="margin-top:3px;font-size:9px;color:${syn.color};font-weight:bold">SYNERGY: ${syn.name}</div>`;
       }
     }
-
-    // Class name + synergy tag via innerHTML, canvas added programmatically
     card.innerHTML = `<div class="cname" style="color:${c.color}">${c.name}</div>` + synTag;
 
-    // Create animated character canvas
     const canvas = document.createElement('canvas');
     canvas.className = 'class-char-canvas';
     canvas.width = 200;
     canvas.height = 160;
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      // Insert canvas after the class name (before synergy tag if present)
       const cname = card.querySelector('.cname');
       if (cname && cname.nextSibling) {
         card.insertBefore(canvas, cname.nextSibling);
@@ -421,8 +431,28 @@ function buildGrid(state: GameState): void {
       state.selectedClassIndex = i;
       buildGrid(state);
     };
-    grid.appendChild(card);
-  });
+    return card;
+  };
+
+  for (const group of ROLE_GROUPS) {
+    const section = document.createElement('div');
+    section.className = 'role-section';
+    section.style.setProperty('--role-color', group.color);
+
+    const header = document.createElement('div');
+    header.className = 'role-header';
+    header.innerHTML = `<span class="role-bar"></span><span class="role-name">${group.name}</span><span class="role-count">${group.classes.length}</span>`;
+    section.appendChild(header);
+
+    const cards = document.createElement('div');
+    cards.className = 'role-cards';
+    for (const k of group.classes) {
+      if (!CLASSES[k]) continue;
+      cards.appendChild(makeCard(k));
+    }
+    section.appendChild(cards);
+    grid.appendChild(section);
+  }
 
   startCardAnimation();
   updateDetailPanel(state);

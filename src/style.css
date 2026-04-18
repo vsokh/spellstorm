@@ -457,9 +457,47 @@ input[type=text]:focus {
 }
 
 .class-grid {
-  display: flex; gap: 8px; flex-wrap: wrap;
-  justify-content: center; margin-bottom: 16px;
-  max-width: 900px;
+  display: flex; flex-direction: column; gap: 14px;
+  margin-bottom: 16px;
+  max-width: 980px;
+  width: 100%;
+}
+
+.role-section {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 6px 10px 10px;
+  border-left: 3px solid var(--role-color, #555);
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--role-color) 8%, transparent) 0%,
+    transparent 60%);
+  border-radius: 4px;
+}
+.role-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 2px 0 0 2px;
+}
+.role-header .role-bar {
+  width: 18px; height: 2px;
+  background: var(--role-color);
+  display: inline-block;
+  box-shadow: 0 0 6px var(--role-color);
+}
+.role-header .role-name {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--role-color);
+}
+.role-header .role-count {
+  font-size: 10px;
+  color: #554466;
+  opacity: 0.7;
+}
+.role-cards {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: flex-start;
 }
 
 .class-card {
