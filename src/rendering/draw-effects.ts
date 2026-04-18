@@ -220,6 +220,35 @@ export function drawTethers(ctx: CanvasRenderingContext2D, state: GameState): vo
     ctx.beginPath();
     ctx.arc(target.x, target.y, 8, 0, Math.PI * 2);
     ctx.fill();
+
+    // Necromancer Drain Tether: secondary life-flow links to owned skeletons.
+    if ((p as any).clsKey === 'necromancer' && (def.tetherHeal || 0) > 0) {
+      for (const ally of state.enemies) {
+        if (!ally.alive || !ally._friendly || ally._owner !== (p as any).idx) continue;
+        if (ally.type !== '_skeleton') continue;
+        const adx = ally.x - p.x;
+        const ady = ally.y - p.y;
+        const ad = Math.sqrt(adx * adx + ady * ady);
+        if (ad > 200) continue;
+        // Soft outer line
+        ctx.globalAlpha = 0.18 * pulse;
+        ctx.strokeStyle = '#77ffaa';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(ally.x, ally.y); ctx.stroke();
+        // Core line
+        ctx.globalAlpha = 0.45 * pulse;
+        ctx.strokeStyle = '#ccffdd';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(ally.x, ally.y); ctx.stroke();
+        // Travelling life dot (player → ally flow)
+        const frac = (t * 0.8) % 1.0;
+        const dotX = p.x + adx * frac;
+        const dotY = p.y + ady * frac;
+        ctx.globalAlpha = 0.9 * pulse;
+        ctx.fillStyle = '#ccffdd';
+        ctx.beginPath(); ctx.arc(dotX, dotY, 2, 0, Math.PI * 2); ctx.fill();
+      }
+    }
   }
   ctx.globalAlpha = 1;
 }

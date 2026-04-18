@@ -1,4 +1,4 @@
-import { GameState, spawnParticles, spawnShockwave, spawnText } from '../state';
+import { GameState, dist, spawnParticles, spawnShockwave, spawnText } from '../state';
 
 /**
  * Updates active tether connections each frame.
@@ -26,8 +26,8 @@ export function updateTethers(state: GameState, dt: number): void {
     // Distance check — break if out of range
     const dx = target.x - p.x;
     const dy = target.y - p.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > tetherRange) {
+    const tdist = Math.sqrt(dx * dx + dy * dy);
+    if (tdist > tetherRange) {
       spawnText(state, p.x, p.y - 20, 'TETHER BROKE', '#ff6666');
       breakTether(p);
       continue;
@@ -58,6 +58,18 @@ export function updateTethers(state: GameState, dt: number): void {
       const heal = def.tetherHeal || 0;
       if (heal > 0) {
         p.hp = Math.min(p.maxHp, p.hp + heal);
+        // Necromancer: splash half the heal to owned skeletons within 200 units.
+        if (p.clsKey === 'necromancer') {
+          const skelHeal = heal * 0.5;
+          for (const ally of state.enemies) {
+            if (!ally.alive || !ally._friendly || ally._owner !== p.idx) continue;
+            if (ally.type !== '_skeleton') continue;
+            if (dist(p.x, p.y, ally.x, ally.y) > 200) continue;
+            if (ally.hp >= ally.maxHp) continue;
+            ally.hp = Math.min(ally.maxHp, ally.hp + skelHeal);
+            spawnParticles(state, ally.x, ally.y, '#77ffaa', 2, 0.3);
+          }
+        }
       }
 
       // Vampirism interaction: tether healing boosted by 25% of vampirism

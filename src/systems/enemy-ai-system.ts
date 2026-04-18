@@ -19,7 +19,7 @@ export function enemyAI(state: GameState, dt: number): void {
 
     // Target selection — skip stealthed players
     const isVisible = (pl: any) => pl && pl.alive && !(pl._stealth > 0);
-    let target = state.players[e.target];
+    let target: any = state.players[e.target];
     if (!isVisible(target)) {
       const visible = state.players.find(p => isVisible(p));
       if (visible) {
@@ -62,6 +62,24 @@ export function enemyAI(state: GameState, dt: number): void {
         e.target = p.idx;
         target = p;
         break;
+      }
+    }
+
+    // Chase AI: redirect movement toward a nearby friendly skeleton if it's
+    // closer than the player (enemies get distracted by the army).
+    if (et.ai === EnemyAI.Chase) {
+      let bestF: any = null;
+      let bestD = Infinity;
+      for (const f of state.enemies) {
+        if (!f.alive || !f._friendly || f.type !== '_skeleton') continue;
+        const d = dist(e.x, e.y, f.x, f.y);
+        if (d < bestD) { bestD = d; bestF = f; }
+      }
+      if (bestF) {
+        const playerD = dist(e.x, e.y, target.x, target.y);
+        if (bestD < playerD * 0.9 && bestD < 150) {
+          target = bestF;
+        }
       }
     }
 

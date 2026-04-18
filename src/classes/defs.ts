@@ -58,7 +58,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Skull Bolt', key: 'LMB', type: SpellType.Homing, dmg: 1, speed: 340, radius: 7, mana: 4, cd: 0.3, life: 1.5, homing: 1.8, color: '#99ddaa', trail: '#55aa77',
         applyMark: { name: 'death', duration: 5.0, maxStacks: 1, visual: '#77ffaa' } },
       { name: 'Raise Skeleton', key: 'RMB', type: SpellType.Ultimate, ultCharge: 0, mana: 18, cd: 1.2, color: '#77ccaa' },
-      { name: 'Drain Ray', key: 'Q', type: SpellType.Beam, dmg: 1.8, range: 240, mana: 10, cd: 0.35, width: 5, drain: 1.5, color: '#55cc88', trail: '#338866' },
+      { name: 'Drain Tether', key: 'Q', type: SpellType.Tether, dmg: 0, mana: 18, cd: 5, color: '#55cc88', trail: '#338866', tetherRange: 220, tetherDmg: 2, tetherHeal: 1.5, tetherTickRate: 0.3, tetherDuration: 4 },
       { name: 'Army of Dead', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#228844', mana: 0, cd: 0 },
     ],
   },
