@@ -441,6 +441,7 @@ export function drawAoe(ctx: CanvasRenderingContext2D, state: GameState): void {
     const pr = m.age / m.delay;
     const isFire = m.color.includes('ff22');
     const isLightning = m.color.includes('ffcc');
+    const isArrow = m.color.includes('ee66');
 
     // Warning ring
     ctx.globalAlpha = 0.15 + pr * 0.25;
@@ -503,6 +504,48 @@ export function drawAoe(ctx: CanvasRenderingContext2D, state: GameState): void {
         ctx.beginPath();
         ctx.moveTo(m.x, m.y);
         ctx.lineTo(m.x + Math.cos(a) * m.radius * pr * 0.8, m.y + Math.sin(a) * m.radius * pr * 0.8);
+        ctx.stroke();
+      }
+    } else if (isArrow) {
+      // Plunging Arrow: target shadow on ground + arrow streaking down from sky
+      ctx.fillStyle = 'rgba(0,0,0,.2)';
+      ctx.beginPath();
+      ctx.ellipse(m.x, m.y, m.radius * 0.35 * pr, m.radius * 0.18 * pr, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Arrow body approaching from above (appears a bit after start)
+      const fallStart = 0.15;
+      if (pr > fallStart) {
+        const fp = (pr - fallStart) / (1 - fallStart); // 0→1 over fall
+        const aY = m.y - 180 * (1 - fp);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = '#bbee66';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(m.x, aY - 14);
+        ctx.lineTo(m.x, aY + 6);
+        ctx.stroke();
+        // Arrowhead
+        ctx.fillStyle = '#ddff88';
+        ctx.beginPath();
+        ctx.moveTo(m.x, aY + 10);
+        ctx.lineTo(m.x - 5, aY);
+        ctx.lineTo(m.x + 5, aY);
+        ctx.closePath();
+        ctx.fill();
+        // Fletching
+        ctx.strokeStyle = '#77aa33';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(m.x - 4, aY - 14);
+        ctx.lineTo(m.x + 4, aY - 14);
+        ctx.stroke();
+        // Whistle-streak behind it
+        ctx.strokeStyle = 'rgba(187,238,102,.4)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(m.x, aY - 20);
+        ctx.lineTo(m.x, aY - 60);
         ctx.stroke();
       }
     }

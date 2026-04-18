@@ -146,7 +146,11 @@ export function generateSpellDescription(spell: SpellDefInput, classKey?: string
       }
       break;
     case 'aoe_delayed':
-      parts.push(`Strikes an area after a short delay dealing ${spell.dmg || 0} dmg`);
+      if (spell.name === 'Plunging Arrow') {
+        parts.push(`An arrow plunges from above dealing ${spell.dmg || 0} dmg in a wide blast`);
+      } else {
+        parts.push(`Strikes an area after a short delay dealing ${spell.dmg || 0} dmg`);
+      }
       break;
     case 'ultimate':
       // Summon-type spells (Spirit Wolf, Summon Imp) use ultimate type but have mana cost

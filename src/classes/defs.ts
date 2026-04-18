@@ -121,7 +121,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
       { name: 'Power Shot', key: 'LMB', type: SpellType.Projectile, dmg: 1, speed: 620, radius: 5, mana: 4, cd: 0.4, life: 1.8, pierce: 2, color: '#88cc44', trail: '#668833',
         chargeTime: 0.45, chargeSlow: 0.7, chargeMinDmg: 1, chargeMaxDmg: 4, chargePierce: 2, positionBonus: { type: 'pillar', mult: 1.5, pillarRange: 100 } },
       { name: 'Roll', key: 'RMB', type: SpellType.Ultimate, ultCharge: 0, mana: 12, cd: 2.5, color: '#aadd77' },
-      { name: 'Explosive Arrow', key: 'Q', type: SpellType.Projectile, dmg: 2, speed: 520, radius: 7, mana: 20, cd: 4, life: 1.6, explode: 70, color: '#bbee66', trail: '#77aa33' },
+      { name: 'Plunging Arrow', key: 'Q', type: SpellType.AoeDelayed, dmg: 4, mana: 20, cd: 4, delay: 0.45, radius: 65, color: '#bbee66' },
       { name: 'Arrow Storm', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#88cc44', mana: 0, cd: 0 },
     ],
   },
