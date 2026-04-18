@@ -817,10 +817,13 @@ describe('Augment apply() audit — all augments', () => {
   });
 
   describe('[77] Overcharge (stormcaller)', () => {
-    it('sets overcharge to true', () => {
+    it('raises Lightning channel scale to 4x', () => {
       const p = createTestPlayer(0, 'stormcaller');
+      const before = p.cls.spells[0].channelScale;
       UPGRADE_POOL[77].apply(p, 1);
       expect(p.overcharge).toBe(true);
+      expect(p.cls.spells[0].channelScale).toBe(4);
+      expect(p.cls.spells[0].channelScale).toBeGreaterThan(before || 0);
     });
   });
 
@@ -1647,7 +1650,7 @@ describe('Augment gameplay integration audit', () => {
     'iceArmor',         // [[75]] Ice Armor — melee attackers get frozen
 
     // Stormcaller class-specific
-    'overcharge',       // [[77]] Overcharge — every 3rd spell deals 3x
+    'overcharge',       // [[77]] Overcharge — channel scale 2.5x → 4x
 
     // Arcanist class-specific
     'blinkExplode',     // [[80]] Phase Shift — blink leaves explosion

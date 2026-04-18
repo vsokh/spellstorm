@@ -394,7 +394,7 @@ export const CLASSES: Record<string, ClassDefInput> = {
     name: 'Stormcaller', color: '#bb66ff', glow: '#9944dd',
     desc: 'Channeled lightning. Teleport & detonate.',
     hp: 7, moveSpeed: 190, maxMana: 100, manaRegen: 14,
-    passive: { name: 'Static', desc: 'Every 4th hit stuns the target for 0.5s' },
+    passive: { name: 'Overload', desc: 'Full channel detonates static on beam targets and refunds 1s of Storm Step cd' },
     spells: [
       { name: 'Lightning', key: 'LMB', type: SpellType.Beam, dmg: 1, range: 320, mana: 7, cd: 0.28, width: 3, color: '#cc88ff', trail: '#aa55ff', channel: 1.5, channelSlow: 0.5, channelScale: 2.5, channelBreak: 3, applyMark: { name: 'static', duration: 4.0, maxStacks: 3, visual: '#cc88ff' } },
       { name: 'Storm Step', key: 'RMB', type: SpellType.Blink, range: 180, mana: 20, cd: 2.5, color: '#bb66ff' },
@@ -881,10 +881,10 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p: Player) => { p.armor = (p.armor || 0) + 3; p.iceArmor = true; } },
 
   // ── Stormcaller ──
-  { name: 'Chain Lightning', desc: 'Lightning beam bounces to 2 more enemies', forClass: 'stormcaller', color: '#bb66ff', stackable: true, maxStacks: 3,
+  { name: 'Chain Lightning', desc: 'Lightning beam arcs to +2 nearby enemies each tick', forClass: 'stormcaller', color: '#bb66ff', stackable: true, maxStacks: 3,
     apply: (p, stacks) => { p.chainLightning = (p.chainLightning || 0) + flatScaling(2, stacks); } },
-  { name: 'Overcharge', desc: 'Every 3rd spell deals 3x damage', forClass: 'stormcaller', color: '#bb66ff',
-    apply: (p: Player) => { p.overcharge = true; } },
+  { name: 'Overcharge', desc: 'Lightning channel builds up to 4x damage (from 2.5x)', forClass: 'stormcaller', color: '#bb66ff',
+    apply: (p: Player) => { p.overcharge = true; const s = p.cls.spells[0]; if (s.channelScale !== undefined) s.channelScale = 4; } },
   { name: 'Storm Shield', desc: 'Lightning randomly strikes enemies at close range (1 dmg/s)', forClass: 'stormcaller', color: '#bb66ff',
     apply: (p: Player) => { p.stormShield = true; } },
 

@@ -17,7 +17,7 @@ import {
   CD_FLOORS,
 } from '../constants';
 import { Enemy, EnemyView, GamePhase, NetworkMode, PickupType, SfxName, SpellType } from '../types';
-import { castSpell, castChargedSpell, castSpellSilent, castUltimate, damageEnemy, switchStance, applyMarkToEnemy } from './combat';
+import { castSpell, castChargedSpell, castSpellSilent, castUltimate, damageEnemy, switchStance, applyMarkToEnemy, detonateMarks } from './combat';
 
 /** Callback set by main.ts to break circular dep with upgrades module */
 export let onChestPickup: ((state: GameState) => void) | null = null;
@@ -270,16 +270,49 @@ export function updatePlayers(state: GameState, dt: number): void {
           const cos = Math.cos(ang);
           const sin = Math.sin(ang);
           const step = 20;
+          const hitThisFrame = new Set<number>();
           for (let d = 0; d < range; d += step) {
             const bx = p.x + cos * d;
             const by = p.y + sin * d;
             const nearby = state.enemyGrid.queryArea(bx, by, step);
             for (const ei of nearby) {
+              if (hitThisFrame.has(ei)) continue;
               const e = state.enemies.at(ei);
               if (!e.alive) continue;
+              if (e.iframes > 0) continue;
               if ((e.x - bx) ** 2 + (e.y - by) ** 2 < step * step) {
                 damageEnemy(state, e, Math.ceil(scaledDmg), p.idx);
                 if (chDef.applyMark) applyMarkToEnemy(e, chDef.applyMark, p.idx);
+                hitThisFrame.add(ei);
+              }
+            }
+          }
+          // Chain Lightning: arc from each primary hit to nearby unhit enemies
+          if (p.chainLightning > 0 && hitThisFrame.size > 0) {
+            for (const srcIdx of Array.from(hitThisFrame)) {
+              const src = state.enemies.at(srcIdx);
+              let arcsLeft = p.chainLightning;
+              const cand = state.enemyGrid.queryArea(src.x, src.y, 150);
+              for (const cIdx of cand) {
+                if (arcsLeft <= 0) break;
+                if (hitThisFrame.has(cIdx)) continue;
+                const ce = state.enemies.at(cIdx);
+                if (!ce.alive || ce.iframes > 0) continue;
+                if ((ce.x - src.x) ** 2 + (ce.y - src.y) ** 2 < 150 * 150) {
+                  damageEnemy(state, ce, Math.ceil(scaledDmg), p.idx);
+                  if (chDef.applyMark) applyMarkToEnemy(ce, chDef.applyMark, p.idx);
+                  hitThisFrame.add(cIdx);
+                  const arc = state.beams.acquire();
+                  if (arc) {
+                    arc.x = src.x; arc.y = src.y;
+                    arc.angle = Math.atan2(ce.y - src.y, ce.x - src.x);
+                    arc.range = Math.sqrt((ce.x - src.x) ** 2 + (ce.y - src.y) ** 2);
+                    arc.width = 2;
+                    arc.color = chDef.color;
+                    arc.life = 0.12;
+                  }
+                  arcsLeft--;
+                }
               }
             }
           }
@@ -288,6 +321,7 @@ export function updatePlayers(state: GameState, dt: number): void {
         // Channel completion or key release
         if (!slotHeld || (p.channelTimer || 0) >= chDef.channel) {
           const progress = Math.min(1, (p.channelTimer || 0) / chDef.channel);
+          const fullChannel = (p.channelTimer || 0) >= chDef.channel;
 
           // Non-Beam channels (charge-and-release): fire the spell on completion with scaled damage
           if (chDef.type !== SpellType.Beam) {
@@ -300,6 +334,34 @@ export function updatePlayers(state: GameState, dt: number): void {
             castSpell(state, p, chSlot, p.channelAngle ?? p.angle);
             (chDef as any).dmg = origDmg;
             (chDef as any).mana = origMana;
+          }
+
+          // Overload passive (Stormcaller): full-channel completion detonates static
+          // marks on beam-path enemies and refunds 1s of Storm Step cooldown.
+          if (fullChannel && p.clsKey === 'stormcaller' && chDef.type === SpellType.Beam) {
+            const ang = p.channelAngle ?? p.angle;
+            const cos = Math.cos(ang);
+            const sin = Math.sin(ang);
+            const step = 20;
+            const range = chDef.range || 200;
+            const overloadDet = { name: 'static', dmgPerStack: 1.5 };
+            const detonated = new Set<number>();
+            for (let d = 0; d < range; d += step) {
+              const bx = p.x + cos * d;
+              const by = p.y + sin * d;
+              const nearby = state.enemyGrid.queryArea(bx, by, step);
+              for (const ei of nearby) {
+                if (detonated.has(ei)) continue;
+                const e = state.enemies.at(ei);
+                if (!e.alive) continue;
+                if (e._markName !== 'static' || e._markStacks <= 0) continue;
+                if ((e.x - bx) ** 2 + (e.y - by) ** 2 < step * step) {
+                  detonateMarks(state, e, overloadDet, p.idx, chDef.color);
+                  detonated.add(ei);
+                }
+              }
+            }
+            p.cd[1] = Math.max(0, (p.cd[1] || 0) - 1);
           }
 
           // Set cooldown (deferred from channel start)

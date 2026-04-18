@@ -41,16 +41,17 @@ Some classes are designed to replace standard mana with unique resource systems 
 ### Channeled Casting Classes
 
 #### Stormcaller
-*Lightning striker with channeled beams and chain-reaction detonations.*
+*Channeled lightning striker who teleports between beam casts.*
 
 | Mechanic | Details |
 |----------|---------|
-| **Channeled Casting** | **Lightning** (LMB) — 1.5s channel, movement slowed 50%. Damage scales up to 2.5x at full channel. Breaks if you take 3+ damage in a single hit. |
-| **Mark and Detonate** | **Ball Zap** (RMB) applies static marks. **Thunder** (Q) detonates them for burst damage per stack plus a stun. |
+| **Channeled Casting** | **Lightning** (LMB) — sustained beam, 1.5s channel, movement slowed 50%. Damage builds from 1x to 2.5x at full channel. Applies static marks on every hit. Breaks if you take 3+ damage in a single hit. |
+| **Mark and Detonate** | **Lightning** applies static marks during the beam. **Thunder** (Q) detonates them in an AoE for burst damage per stack plus a stun. |
+| **Reposition** | **Storm Step** (RMB) — short-range blink (180 units, 2.5s cd) to break line of sight and set up a new channel angle. |
 
-**Passive — Static:** Every 4th hit stuns the target briefly.
+**Passive — Overload:** Completing a full 1.5s channel detonates static marks on all beam-path targets and refunds 1s of Storm Step cooldown. Full commits cash in marks and tighten the reposition loop.
 
-**Tip:** Find a safe angle, hold your Lightning beam for maximum damage, then follow up with Ball Zap to mark survivors and Thunder to detonate. The channel rewards you for committing to a position rather than constantly moving.
+**Tip:** The core loop is channel → teleport → channel. Hold Lightning through the full 1.5s for the Overload payoff, then Storm Step to a new angle while Thunder is available to burst-clear dense packs. Releasing early skips Overload — only break the channel if you're about to be interrupted.
 
 ---
 

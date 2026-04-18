@@ -221,15 +221,6 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
     if (p.ultCharge >= (p.ultOverflow ? COMBAT.ULT_THRESHOLD_OVERFLOW : COMBAT.ULT_THRESHOLD)) p.ultReady = true;
   }
 
-  // Passive: Stormcaller static (every 4th hit stuns)
-  if (p && p.clsKey === 'stormcaller') {
-    p.hitCounter = (p.hitCounter || 0) + 1;
-    if (p.hitCounter % 4 === 0) {
-      e.stunTimer = (e.stunTimer || 0) + COMBAT.COMBO_STUN_DURATION;
-      spawnText(state, e.x, e.y - 15, 'STUN', '#ffcc44');
-    }
-  }
-
   // Passive: Cryomancer frostbite (+1 dmg if slowed)
   if (p && p.clsKey === 'cryomancer' && e.slowTimer > 0) {
     e.hp -= 1;

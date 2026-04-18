@@ -203,34 +203,6 @@ describe('damageEnemy()', () => {
     });
   });
 
-  describe('stormcaller passive (every 4th hit stuns)', () => {
-    it('stuns enemy on every 4th hit', () => {
-      const p = createTestPlayer(0, 'stormcaller');
-      p.hitCounter = 3; // next hit is 4th
-      state.players = [p];
-      const e = createTestEnemy({ hp: 20, maxHp: 20 });
-      state.enemies.clear(); state.enemies.push(e);
-
-      damageEnemy(state, e, 1, 0);
-
-      expect(p.hitCounter).toBe(4);
-      expect(e.stunTimer).toBeGreaterThan(0);
-    });
-
-    it('does not stun on non-4th hit', () => {
-      const p = createTestPlayer(0, 'stormcaller');
-      p.hitCounter = 1;
-      state.players = [p];
-      const e = createTestEnemy({ hp: 20, maxHp: 20 });
-      state.enemies.clear(); state.enemies.push(e);
-
-      damageEnemy(state, e, 1, 0);
-
-      expect(p.hitCounter).toBe(2);
-      expect(e.stunTimer).toBe(0);
-    });
-  });
-
   describe('cryomancer passive (+1 dmg if slowed)', () => {
     it('deals +1 extra damage when enemy is slowed', () => {
       const p = createTestPlayer(0, 'cryomancer');
