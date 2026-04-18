@@ -326,6 +326,7 @@ function normalizeSpellDef(input: SpellDefInput): SpellDef {
     channelBreak: input.channelBreak,
     applyMark: input.applyMark ? { ...input.applyMark } : undefined,
     detonateMark: input.detonateMark ? { ...input.detonateMark } : undefined,
+    targetLock: input.targetLock,
   };
 }
 
@@ -480,6 +481,11 @@ export function createPlayer(idx: number, clsKey: string): Player {
     _holyShield: 0,
     _lastShadowStep: 0,
     _rushSpeed: 0,
+    _stealth: 0,
+    _critPending: false,
+    _stealthShield: 0,
+    _bladeFlurry: 0,
+    _bladeFlurryTick: 0,
     _fortified: false,
     _facingDR: false,
     _wardenDR: 0,

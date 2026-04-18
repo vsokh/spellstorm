@@ -144,15 +144,18 @@ Some classes are designed to replace standard mana with unique resource systems 
 ---
 
 #### Bladecaller
-*Kill-chaining assassin who dashes through enemies and builds momentum with each kill.*
+*Vampiric fencer. Target-locked shadow steps, stealth resets, lifesteal sustain. Squishy but obscene on connect.*
 
 | Mechanic | Details |
 |----------|---------|
-| **Combo Chain** | **Blade Chain** (LMB) — 4-hit chain with a 1.8s timeout. Damage escalates dramatically across four strikes, and the final hit explodes in an area burst with a stun. The longest combo chain in the game. |
+| **Blade Thrust** | **LMB** — narrow 3-hit thrust combo (dmg 4, cone angle 0.3, timeout 1.5s). Damage scales 1.0 → 1.3 → 2.8 across three strikes; step 3 bleeds and pops a small AOE. Fencing feel: single-target punches that commit to a line. |
+| **Shadow Step** | **RMB, target-locked** — picks the enemy nearest the cursor within 200 units and teleports behind them for a guaranteed backstab (dmg 10 × 2.5 passive = 25). Fizzles (no mana spend) if no enemy is in range. |
+| **Phantom Veil** | **Q** — 2s stealth; enemies stop targeting you, you heal ~4 HP over the duration and gain +30% move speed. Your next attack auto-crits for 2x. Breaks on taking damage. |
+| **Thousand Cuts** | **Space (ult)** — 2.5s Blood Frenzy. Auto-strikes the 3 nearest enemies every 0.25s for 12 dmg each (auto-crit), with bonus lifesteal. +30% move speed during. |
 
-**Passive — Kill Rush:** Kills within 1.5s of using Shadow Step (RMB) reset its cooldown. Each kill grants stacking movement speed for 3s (up to 3 stacks). Double damage when attacking from behind.
+**Passive — Crimson Edge:** 15% lifesteal baseline on all damage. Backstabs deal 2.5x and lifesteal an additional 40%. Killing a Phantom-Veil-crit target grants a brief absorption shield that blocks the next hit entirely. Kills within 1.5s of Shadow Step reset its cooldown (kept from prior kit).
 
-**Tip:** The Bladecaller is a chain-reaction class. Dash into a pack with Shadow Step, start your 4-hit combo, and if something dies, your dash resets. The optimal pattern is a zigzag through enemies — dash, combo, kill, dash again. If you fail to kill on a dive, you are stranded with no escape, so pick your engages carefully.
+**Tip:** Every connect should heal you back up. The loop is Shadow Step (instant backstab + 40% lifesteal) → Blade Thrust combo (bleed + AOE at step 3) → kill → SS cd resets → next target. Phantom Veil is your panic button *and* a setup for a guaranteed crit burst — vanish, heal, flank, one-shot. HP 6 means you die if you whiff.
 
 ---
 

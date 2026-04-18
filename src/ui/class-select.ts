@@ -43,7 +43,7 @@ export const ULTIMATE_DESCRIPTIONS: Record<string, string> = {
   monk: 'Deliver 20 rapid melee strikes in a cone with knockback.',
   engineer: 'Deploy a powerful Mega Turret with 20 HP that fires for 12 seconds.',
   graviturge: 'Create a gravity vortex that pulls enemies inward, crushing them with gravitational force.',
-  bladecaller: 'Unleash a flurry of blade strikes, dashing between enemies at blinding speed.',
+  bladecaller: 'Enter Blood Frenzy: auto-strike the 3 nearest enemies every 0.25s for 2.5s with guaranteed crits and vampiric lifesteal.',
   architect: 'Deploy a massive arcane construct that persists on the battlefield, damaging and slowing enemies.',
   hexblade: 'Curse all enemies with hex stacks that detonate in chain explosions.',
   warden: 'Become invulnerable and project a protective aura that shields nearby allies.',
@@ -124,7 +124,11 @@ export function generateSpellDescription(spell: SpellDefInput, classKey?: string
       }
       break;
     case 'leap':
-      parts.push(`Leaps and slams dealing ${spell.dmg || 0} dmg`);
+      if (spell.targetLock) {
+        parts.push(`Teleports behind the enemy nearest the cursor dealing ${spell.dmg || 0} dmg + backstab`);
+      } else {
+        parts.push(`Leaps and slams dealing ${spell.dmg || 0} dmg`);
+      }
       break;
     case 'barrage':
       parts.push(`Fires ${spell.count || 0} projectiles in a spread dealing ${spell.dmg || 0} dmg each`);
@@ -147,6 +151,8 @@ export function generateSpellDescription(spell: SpellDefInput, classKey?: string
         parts.push('Summons a spirit wolf that fights alongside you');
       } else if (spell.name === 'Summon Imp') {
         parts.push('Summons a demonic imp that attacks nearby enemies');
+      } else if (spell.name === 'Phantom Veil') {
+        parts.push(`Vanishes for ${spell.duration || 2}s, healing ${spell.heal || 4} HP with +30% speed. Next attack auto-crits.`);
       } else {
         parts.push('Summons a companion to fight for you');
       }

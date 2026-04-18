@@ -664,6 +664,58 @@ export function updatePlayers(state: GameState, dt: number): void {
       p.moveSpeed = Math.max(p.moveSpeed, DEFAULT_MOVE_SPEED * 1.1);
     }
 
+    // Bladecaller: Phantom Veil stealth tick + heal-over-time + ms boost
+    if (p.clsKey === 'bladecaller' && p._stealth > 0) {
+      p._stealth -= dt;
+      // Heal over stealth duration: 4 HP spread across 2s = 2 HP/s
+      const q = p.cls.spells[2];
+      const healTotal = q?.heal || 4;
+      const dur = q?.duration || 2;
+      p.hp = Math.min(p.maxHp, p.hp + (healTotal / dur) * dt);
+      // +30% move speed while veiled
+      const clsMs = p.cls.moveSpeed ?? DEFAULT_MOVE_SPEED;
+      p.moveSpeed = Math.max(p.moveSpeed, clsMs * 1.3);
+      if (p._stealth <= 0) {
+        p._stealth = 0;
+        // Crit-pending persists briefly past veil end so the first attack out of stealth still crits
+      }
+    }
+    // Stealth shield decay (brief shield from stealth-crit kill)
+    if (p._stealthShield > 0) p._stealthShield -= dt;
+
+    // Bladecaller: Thousand Cuts flurry
+    if (p.clsKey === 'bladecaller' && p._bladeFlurry > 0) {
+      p._bladeFlurry -= dt;
+      p._bladeFlurryTick -= dt;
+      const clsMs = p.cls.moveSpeed ?? DEFAULT_MOVE_SPEED;
+      p.moveSpeed = Math.max(p.moveSpeed, clsMs * 1.3);
+      if (p._bladeFlurryTick <= 0) {
+        p._bladeFlurryTick = 0.25;
+        // Strike 3 nearest non-friendly enemies
+        const candidates: { e: any; d: number }[] = [];
+        for (const e of state.enemies) {
+          if (!e.alive || e._friendly || e._deathTimer >= 0) continue;
+          candidates.push({ e, d: dist(p.x, p.y, e.x, e.y) });
+        }
+        candidates.sort((a, b) => a.d - b.d);
+        const hits = Math.min(3, candidates.length);
+        for (let i = 0; i < hits; i++) {
+          const t = candidates[i].e;
+          const dmg = Math.round(6 * (p.ultPower || 1)) * 2; // 2x auto-crit
+          damageEnemy(state, t, dmg, p.idx);
+          spawnParticles(state, t.x, t.y, '#cc3355', 6, 0.4);
+          // Bonus lifesteal during flurry (20% on top of baseline)
+          const heal = Math.ceil(dmg * 0.2);
+          p.hp = Math.min(p.maxHp, p.hp + heal);
+        }
+        if (hits > 0) netSfx(state, SfxName.Hit);
+      }
+      if (p._bladeFlurry <= 0) {
+        p._bladeFlurry = 0;
+        p._bladeFlurryTick = 0;
+      }
+    }
+
     // Architect: fortification near own zones — 20% DR flag + bonus mana regen
     if (p.clsKey === 'architect') {
       p._fortified = false;

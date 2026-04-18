@@ -137,6 +137,14 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
     dmg *= (p.critMul || 2);
     spawnText(state, e.x, e.y - 25, 'CRIT!', '#ffcc44');
   }
+  // Bladecaller Phantom Veil guaranteed crit on next attack
+  let bladecallerVeilCrit = false;
+  if (p && p._critPending) {
+    dmg *= 2;
+    bladecallerVeilCrit = true;
+    p._critPending = false;
+    spawnText(state, e.x, e.y - 25, 'VEIL CRIT!', '#cc3355');
+  }
   // Momentum bonus
   if (p && p.momentum) {
     const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
@@ -160,6 +168,11 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
         const backstabMult = passive.backstab + (p.assassinMark * 0.3);
         dmg = Math.ceil(dmg * backstabMult);
         spawnText(state, e.x, e.y - 35, 'BACKSTAB!', '#ff4488');
+        // Bladecaller Crimson Edge: backstabs lifesteal 40%
+        if (p.clsKey === 'bladecaller') {
+          const bsHeal = Math.ceil(dmg * 0.4);
+          p.hp = Math.min(p.maxHp, p.hp + bsHeal);
+        }
       }
     }
     // Proximity bonus: close-range damage multiplier
@@ -303,6 +316,12 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
     if (heal > 0) p.hp = Math.min(p.maxHp, p.hp + heal);
   }
 
+  // Bladecaller Crimson Edge baseline 15% lifesteal (stacks with upgrade lifeSteal)
+  if (p && p.clsKey === 'bladecaller') {
+    const cheal = Math.max(1, Math.floor(dmg * 0.15));
+    p.hp = Math.min(p.maxHp, p.hp + cheal);
+  }
+
   // Berserker fury lifesteal: 5% heal when fury active
   if (p && p._furyActive) {
     const furyHeal = Math.floor(dmg * COMBAT.FURY_LIFESTEAL);
@@ -398,6 +417,12 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
           spawnText(state, p.x, p.y - 15, 'RESET!', '#cc3355');
         }
         p._rushSpeed = state.time + 3;
+        // Stealth-crit kill grants a brief absorb shield
+        if (bladecallerVeilCrit) {
+          p._stealthShield = 1.5;
+          spawnText(state, p.x, p.y - 30, 'CRIMSON SHIELD', '#cc3355');
+          spawnParticles(state, p.x, p.y, '#cc3355', 12, 0.6);
+        }
       }
 
       // Passive: Soulbinder — ally heals on marked kill
@@ -614,6 +639,15 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
 export function damagePlayer(state: GameState, p: Player, rawDmg: number, attacker?: Enemy): void {
   if (p.iframes > 0) return;
 
+  // Bladecaller stealth-kill shield: block the next hit entirely
+  if (p._stealthShield > 0) {
+    p._stealthShield = 0;
+    p.iframes = TIMING.IFRAME_BLOCK;
+    spawnText(state, p.x, p.y - 20, 'VEIL SHIELD', '#cc3355');
+    spawnParticles(state, p.x, p.y, '#cc3355', 10);
+    return;
+  }
+
   // Ward Stone shield: block hit entirely
   if (state.shopShieldHits > 0) {
     state.shopShieldHits--;
@@ -655,6 +689,12 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
   spawnParticles(state, p.x, p.y, '#ff4444', 8);
   netSfx(state, SfxName.Hit);
   spawnText(state, p.x, p.y - 20, `-${dmg}`, '#ff4444');
+
+  // Break Bladecaller stealth on damage
+  if (p._stealth > 0) {
+    p._stealth = 0;
+    p._critPending = false;
+  }
 
   // Channel break: interrupt channel if damage exceeds threshold
   if (p.channeling && p.channelSlot !== undefined) {
@@ -1531,7 +1571,51 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       p.cd[2] = 0;
     }
   } else if (def.type === SpellType.Leap) {
-    // Berserker leap slam
+    // Target-locked leap (Bladecaller Shadow Step): find enemy nearest cursor within range,
+    // teleport to a point behind them, auto-backstab.
+    if (def.targetLock) {
+      const mw = toWorld(state, state.mouseX, state.mouseY);
+      let best: EnemyView | null = null;
+      let bestD = Infinity;
+      for (const e of state.enemies) {
+        if (!e.alive || e._friendly || e._deathTimer >= 0) continue;
+        if (dist(p.x, p.y, e.x, e.y) > def.range) continue;
+        const d = dist(mw.x, mw.y, e.x, e.y);
+        if (d < bestD) { bestD = d; best = e; }
+      }
+      if (!best) {
+        // No valid target — fizzle, refund mana+cd
+        p.mana = Math.min(p.maxMana, p.mana + def.mana);
+        p.cd[idx] = 0;
+        spawnText(state, p.x, p.y - 20, 'NO TARGET', '#888888');
+        return;
+      }
+      // Position behind enemy (opposite player → enemy vector)
+      const dx = best.x - p.x, dy = best.y - p.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const behindDist = ENEMIES[best.type].size + WIZARD_SIZE + 4;
+      const nx = clamp(best.x + (dx / d) * behindDist, WIZARD_SIZE, ROOM_WIDTH - WIZARD_SIZE);
+      const ny = clamp(best.y + (dy / d) * behindDist, WIZARD_SIZE, ROOM_HEIGHT - WIZARD_SIZE);
+      spawnParticles(state, p.x, p.y, def.color, 10);
+      p.x = nx; p.y = ny;
+      p.angle = Math.atan2(best.y - p.y, best.x - p.x);
+      p.iframes = TIMING.IFRAME_LEAP;
+      p._lastShadowStep = state.time;
+      spawnShockwave(state, best.x, best.y, def.aoeR, def.color);
+      spawnParticles(state, best.x, best.y, def.color, 18, 1);
+      netSfx(state, SfxName.Blink);
+      shake(state, 4);
+      const leapDmg = getEffectiveSpellDmg(p, idx);
+      for (const e of state.enemies) {
+        if (!e.alive) continue;
+        if (dist(best.x, best.y, e.x, e.y) < def.aoeR + ENEMIES[e.type].size) {
+          damageEnemy(state, e, leapDmg, p.idx);
+          if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
+        }
+      }
+      return;
+    }
+    // Berserker leap slam (free-aim)
     const nx = clamp(p.x + cos * def.range, WIZARD_SIZE, ROOM_WIDTH - WIZARD_SIZE);
     const ny = clamp(p.y + sin * def.range, WIZARD_SIZE, ROOM_HEIGHT - WIZARD_SIZE);
     spawnParticles(state, p.x, p.y, def.color, 8);
@@ -1649,6 +1733,15 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         spawnParticles(state, wolf2.x, wolf2.y, '#88aa66', 10);
       }
       netSfx(state, SfxName.Pickup);
+    } else if (p.clsKey === 'bladecaller') {
+      // Phantom Veil: 2s stealth, heals over duration, +30% ms, next attack auto-crits
+      p._stealth = def.duration || 2;
+      p._critPending = true;
+      // Heal is applied over the stealth duration in physics tick
+      spawnParticles(state, p.x, p.y, '#cc3355', 20, 0.8);
+      spawnShockwave(state, p.x, p.y, 50, 'rgba(68,17,34,.5)');
+      netSfx(state, SfxName.Blink);
+      spawnText(state, p.x, p.y - 20, 'VEILED', '#cc3355');
     } else if (p.clsKey === 'warlock') {
       // Summon Imp: small ranged demon ally
       let canSpawn = true;
@@ -1968,30 +2061,17 @@ export function castUltimate(state: GameState, p: Player, angle: number): void {
     spawnShockwave(state, tx, ty, ULTIMATE.GRAVITY_PULL_RANGE, 'rgba(100,50,180,.3)');
     spawnParticles(state, tx, ty, '#6644aa', 20, 1.0);
   } else if (p.clsKey === 'bladecaller') {
-    // Thousand Cuts: dash to 12 random enemies dealing damage
-    _aliveEnemies.length = 0;
-    for (const e2 of state.enemies) {
-      if (e2.alive && !e2._friendly) _aliveEnemies.push(e2);
-    }
-    const cutDmg = Math.round(ULTIMATE.THOUSAND_CUTS_DMG * pw);
-    p.iframes = ULTIMATE.THOUSAND_CUTS_HITS * 0.1 + 0.5;
-    const targets = _aliveEnemies.slice();
-    for (let i = 0; i < ULTIMATE.THOUSAND_CUTS_HITS; i++) {
-      ((idx: number) => {
-        setTimeout(() => {
-          if (targets.length === 0) return;
-          const t = targets[idx % targets.length];
-          if (!t.alive) return;
-          // Teleport player to target
-          p.x = t.x + rand(-15, 15);
-          p.y = t.y + rand(-15, 15);
-          damageEnemy(state, t, cutDmg, p.idx);
-          spawnParticles(state, t.x, t.y, '#cc3355', 4, 0.3);
-          netSfx(state, SfxName.Hit);
-          shake(state, 2);
-        }, idx * 100);
-      })(i);
-    }
+    // Thousand Cuts: 2.5s vampiric flurry — auto-strikes up to 3 nearest enemies every 0.25s.
+    // Each strike auto-crits (2x) and grants bonus lifesteal. Strike loop runs in physics.
+    p._bladeFlurry = 2.5;
+    p._bladeFlurryTick = 0;
+    p.iframes = Math.max(p.iframes, 0.4);
+    spawnShockwave(state, p.x, p.y, 80, 'rgba(204,51,85,.5)');
+    spawnParticles(state, p.x, p.y, '#cc3355', 30, 1.0);
+    flashScreen(state, 0.2, '204,51,85');
+    shake(state, 6);
+    netSfx(state, SfxName.Kill);
+    spawnText(state, p.x, p.y - 25, 'BLOOD FRENZY', '#cc3355');
   } else if (p.clsKey === 'architect') {
     // Mega Construct: massive zone at cursor position
     const tx = clamp(p.x + Math.cos(angle) * 100, 60, ROOM_WIDTH - 60);
