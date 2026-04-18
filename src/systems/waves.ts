@@ -220,7 +220,7 @@ export function updateSpells(state: GameState, dt: number): void {
           }
         }
         // Mark/Detonate system
-        if (s.applyMark) applyMarkToEnemy(e, s.applyMark, s.owner);
+        if (s.applyMark) applyMarkToEnemy(state, e, s.applyMark, s.owner);
         if (s.detonateMark) detonateMarks(state, e, s.detonateMark, s.owner, s.color);
         if (s.pierceLeft > 0) { s.pierceLeft--; continue; }
         // Shield Bounce: Knight's Shield Throw bounces to nearby enemies

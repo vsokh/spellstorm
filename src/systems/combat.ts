@@ -851,11 +851,13 @@ export function castSpellSilent(state: GameState, p: Player, idx: number, angle:
 
 /** Apply a mark to an enemy (stacks up to maxStacks, refreshes timer) */
 export function applyMarkToEnemy(
+  state: GameState,
   e: Enemy,
   mark: NonNullable<SpellDef['applyMark']>,
   ownerIdx: number
 ): void {
   const maxStk = mark.maxStacks ?? 1;
+  const wasUnderMax = e._markName !== mark.name || e._markStacks < maxStk;
   if (e._markName === mark.name) {
     if (e._markStacks < maxStk) e._markStacks++;
     e._markTimer = mark.duration;
@@ -864,6 +866,14 @@ export function applyMarkToEnemy(
     e._markStacks = 1;
     e._markTimer = mark.duration;
     e._markOwner = ownerIdx;
+  }
+  // Visual feedback: small particle burst on stack gain; bigger on reaching max
+  const col = mark.visual || '#ffaa44';
+  if (wasUnderMax && e._markStacks >= maxStk) {
+    spawnParticles(state, e.x, e.y, col, 8, 0.6);
+    spawnText(state, e.x, e.y - 40, 'MAX', col);
+  } else if (wasUnderMax) {
+    spawnParticles(state, e.x, e.y, col, 3, 0.4);
   }
 }
 
@@ -1350,7 +1360,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
             p.hp = Math.min(p.maxHp, p.hp + def.drain);
             spawnText(state, p.x, p.y - 20, `+${def.drain}`, '#44ff88');
           }
-          if (def.applyMark) applyMarkToEnemy(e, def.applyMark, p.idx);
+          if (def.applyMark) applyMarkToEnemy(state, e, def.applyMark, p.idx);
           if (def.detonateMark) detonateMarks(state, e, def.detonateMark, p.idx, def.color);
           if (!primaryTarget) primaryTarget = e;
           break;
@@ -1403,7 +1413,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         damageEnemy(state, e, Math.round(getEffectiveSpellDmg(p, idx) * echoDmgMul), p.idx);
         if (def.slow) e.slowTimer = (e.slowTimer || 0) + def.slow;
         if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
-        if (def.applyMark) applyMarkToEnemy(e, def.applyMark, p.idx);
+        if (def.applyMark) applyMarkToEnemy(state, e, def.applyMark, p.idx);
         if (def.detonateMark) detonateMarks(state, e, def.detonateMark, p.idx, def.color);
       }
     }
@@ -1420,7 +1430,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         if (def.slow) e.slowTimer = (e.slowTimer || 0) + def.slow;
         if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
         if (def.drain) novaHealed += def.drain;
-        if (def.applyMark) applyMarkToEnemy(e, def.applyMark, p.idx);
+        if (def.applyMark) applyMarkToEnemy(state, e, def.applyMark, p.idx);
         if (def.detonateMark) detonateMarks(state, e, def.detonateMark, p.idx, def.color);
       }
     }

@@ -282,7 +282,7 @@ export function updatePlayers(state: GameState, dt: number): void {
               if (e.iframes > 0) continue;
               if ((e.x - bx) ** 2 + (e.y - by) ** 2 < step * step) {
                 damageEnemy(state, e, Math.ceil(scaledDmg), p.idx);
-                if (chDef.applyMark) applyMarkToEnemy(e, chDef.applyMark, p.idx);
+                if (chDef.applyMark) applyMarkToEnemy(state, e, chDef.applyMark, p.idx);
                 hitThisFrame.add(ei);
               }
             }
@@ -300,7 +300,7 @@ export function updatePlayers(state: GameState, dt: number): void {
                 if (!ce.alive || ce.iframes > 0) continue;
                 if ((ce.x - src.x) ** 2 + (ce.y - src.y) ** 2 < 150 * 150) {
                   damageEnemy(state, ce, Math.ceil(scaledDmg), p.idx);
-                  if (chDef.applyMark) applyMarkToEnemy(ce, chDef.applyMark, p.idx);
+                  if (chDef.applyMark) applyMarkToEnemy(state, ce, chDef.applyMark, p.idx);
                   hitThisFrame.add(cIdx);
                   const arc = state.beams.acquire();
                   if (arc) {
