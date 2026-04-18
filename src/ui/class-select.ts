@@ -158,6 +158,8 @@ export function generateSpellDescription(spell: SpellDefInput, classKey?: string
         parts.push(`Vanishes for ${spell.duration || 2}s, healing ${spell.heal || 4} HP with +30% speed. Next attack auto-crits.`);
       } else if (spell.name === 'Raise Skeleton') {
         parts.push('Raises a skeleton at the cursor (cap 6). Skeletons hunt Death-Marked targets for bonus damage.');
+      } else if (spell.name === 'Roll') {
+        parts.push('Rolls in aim direction with brief invulnerability. Fast evasive reposition.');
       } else {
         parts.push('Summons a companion to fight for you');
       }
