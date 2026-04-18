@@ -132,6 +132,8 @@ export interface SpellDef {
       heal?: number;
     };
   };
+  // Leap target-lock (Bladecaller Shadow Step)
+  targetLock?: boolean;       // Leap auto-selects enemy nearest cursor, teleports behind
   // Tether fields
   tetherRange?: number;       // Max range before tether breaks (100-300 units)
   tetherDmg?: number;         // Damage per tick while tethered
@@ -449,6 +451,13 @@ export interface Player {
   // Bladecaller state
   _lastShadowStep: number;    // timestamp of last Shadow Step cast
   _rushSpeed: number;          // timestamp until speed boost expires
+  _stealth: number;            // remaining stealth duration (0 = not stealthed)
+  _critPending: boolean;       // next damaging attack auto-crits (2x)
+  _stealthShield: number;      // remaining brief-shield duration from stealth-kill
+  _stealthLastX: number;       // position where stealth started (enemies drift here while veiled)
+  _stealthLastY: number;
+  _bladeFlurry: number;        // remaining duration of Thousand Cuts flurry
+  _bladeFlurryTick: number;    // tick accumulator for flurry strikes
 
   // Architect state
   _fortified: boolean;         // near own zone DR flag
@@ -889,15 +898,18 @@ export interface NetStatePillarData {
 }
 
 export interface NetFxEvent {
-  t: 'p' | 't' | 'sw' | 's';  // particle, text, shockwave, sfx
+  t: 'p' | 't' | 'sw' | 's' | 'b';  // particle, text, shockwave, sfx, beam
   x: number;
   y: number;
   c: string;  // color
   n?: number;  // count (particles)
   s?: number;  // scale (particles)
   tx?: string; // text content
-  mr?: number; // maxR (shockwave)
+  mr?: number; // maxR (shockwave) / range (beam)
   sn?: string; // sfx name
+  a?: number;  // angle (beam)
+  w?: number;  // width (beam)
+  l?: number;  // life (beam)
 }
 
 export interface NetStateMessage {

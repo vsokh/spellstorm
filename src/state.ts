@@ -328,6 +328,7 @@ function normalizeSpellDef(input: SpellDefInput): SpellDef {
     channelBreak: input.channelBreak,
     applyMark: input.applyMark ? { ...input.applyMark } : undefined,
     detonateMark: input.detonateMark ? { ...input.detonateMark } : undefined,
+    targetLock: input.targetLock,
   };
 }
 
@@ -482,6 +483,13 @@ export function createPlayer(idx: number, clsKey: string): Player {
     _holyShield: 0,
     _lastShadowStep: 0,
     _rushSpeed: 0,
+    _stealth: 0,
+    _critPending: false,
+    _stealthShield: 0,
+    _stealthLastX: 0,
+    _stealthLastY: 0,
+    _bladeFlurry: 0,
+    _bladeFlurryTick: 0,
     _fortified: false,
     _facingDR: false,
     _wardenDR: 0,
@@ -609,6 +617,18 @@ export function spawnShockwave(
 
 export function shake(state: GameState, intensity: number): void {
   state.shakeIntensity = Math.max(state.shakeIntensity, intensity);
+}
+
+/** Acquire a local beam and, when hosting, queue it for guest replay. */
+export function spawnBeam(
+  state: GameState, x: number, y: number, angle: number,
+  range: number, width: number, color: string, life: number = 0.15
+): void {
+  const b = state.beams.acquire();
+  if (b) { b.x = x; b.y = y; b.angle = angle; b.range = range; b.width = width; b.color = color; b.life = life; }
+  if (state.mode === NetworkMode.Host) {
+    state.pendingFx.push({ t: 'b', x: ~~x, y: ~~y, c: color, a: angle, mr: range, w: width, l: life });
+  }
 }
 
 /** Play sfx locally and queue it for guest when hosting */

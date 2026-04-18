@@ -1,5 +1,5 @@
 import Peer, { DataConnection } from 'peerjs';
-import { GameState, shake, spawnParticles, spawnText, spawnShockwave } from './state';
+import { GameState, shake, spawnParticles, spawnText, spawnShockwave, spawnBeam } from './state';
 import {
   GamePhase,
   NetworkMode,
@@ -662,6 +662,9 @@ function applyState(state: GameState, msg: NetStateMessage): void {
           break;
         case 'sw':
           spawnShockwave(state, ev.x, ev.y, ev.mr || 60, ev.c);
+          break;
+        case 'b':
+          spawnBeam(state, ev.x, ev.y, ev.a || 0, ev.mr || 100, ev.w || 3, ev.c, ev.l || 0.15);
           break;
         case 's':
           sfx(ev.sn as SfxName);

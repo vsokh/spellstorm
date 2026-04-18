@@ -15,7 +15,10 @@ export function updateHUD(state: GameState): void {
   const spellCount = Math.min(4, p.cls.spells.length);
   for (let i = 0; i < spellCount; i++) {
     const sd = p.cls.spells[i];
-    if (sd.type === 'ultimate') {
+    // Ultimate-typed spells with ultCharge===0 are utility Q abilities (Phantom Veil, Summon Wolf,
+    // Summon Imp, Summon Elemental) — render them as regular slots, not the Space ult.
+    const isTrueUlt = sd.type === 'ultimate' && (sd.ultCharge || 0) >= 100;
+    if (isTrueUlt) {
       const ultOk = p.ultCharge >= 100;
       spH += `<div class="sp-icon" style="border-color:${ultOk ? '#ffcc44' : 'rgba(60,40,80,.3)'}">` +
         `${ultOk ? `<span style="color:#ffcc44;font-size:9px">Space</span>` : `<span class="cd-txt">${Math.round(p.ultCharge)}%</span>`}` +

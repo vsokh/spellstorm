@@ -17,18 +17,40 @@ export function enemyAI(state: GameState, dt: number): void {
     const slow = e.slowTimer > 0 ? ENEMY_AI.SLOW_MULT : 1;
     const spdMul = e._spdMul || 1;
 
-    // Target selection
+    // Target selection — skip stealthed players
+    const isVisible = (pl: any) => pl && pl.alive && !(pl._stealth > 0);
     let target = state.players[e.target];
-    if (!target || !target.alive) {
-      target = state.players.find(p => p.alive) || state.players[0];
-      if (!target) continue;
-      e.target = target.idx;
+    if (!isVisible(target)) {
+      const visible = state.players.find(p => isVisible(p));
+      if (visible) {
+        target = visible;
+        e.target = target.idx;
+      } else {
+        // Target stealthed. Chase the last-seen position snapshot until we reach it.
+        const lost = state.players[e.target] || state.players[0];
+        const lx = lost?._stealthLastX ?? e.x;
+        const ly = lost?._stealthLastY ?? e.y;
+        const ldx = lx - e.x;
+        const ldy = ly - e.y;
+        const ld = Math.sqrt(ldx * ldx + ldy * ldy);
+        if (ld > 24) {
+          const enrageMul = et.enrage ? 1 + (1 - e.hp / e.maxHp) * ENEMY_AI.ENRAGE_MULT : 1;
+          const spd = et.speed * spdMul * slow * enrageMul;
+          e.vx = (ldx / ld) * spd;
+          e.vy = (ldy / ld) * spd;
+        } else {
+          // Reached last-known position — stand and look around
+          e.vx *= 0.85;
+          e.vy *= 0.85;
+        }
+        continue;
+      }
     }
 
-    // Occasional retarget to closer player
+    // Occasional retarget to closer visible player
     if (Math.random() < dt * 0.5) {
       const other = state.players[1 - e.target];
-      if (other && other.alive && dist(e.x, e.y, other.x, other.y) < dist(e.x, e.y, target.x, target.y) * 0.7) {
+      if (isVisible(other) && dist(e.x, e.y, other.x, other.y) < dist(e.x, e.y, target.x, target.y) * 0.7) {
         e.target = other.idx;
         target = other;
       }

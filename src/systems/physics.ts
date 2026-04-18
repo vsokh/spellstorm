@@ -1,4 +1,4 @@
-import { GameState, dist, clamp, spawnParticles, spawnText, shake, netSfx } from '../state';
+import { GameState, dist, clamp, spawnParticles, spawnText, shake, netSfx, spawnBeam } from '../state';
 import { getInput } from '../input';
 import {
   WIZARD_SIZE,
@@ -223,13 +223,9 @@ export function updatePlayers(state: GameState, dt: number): void {
           const target = nearby[Math.floor(Math.random() * nearby.length)];
           damageEnemy(state, target, 1, p.idx);
           // Visual lightning bolt from player to target
-          const stormBeam = state.beams.acquire();
-          if (stormBeam) {
-            stormBeam.x = p.x; stormBeam.y = p.y;
-            stormBeam.angle = Math.atan2(target.y - p.y, target.x - p.x);
-            stormBeam.range = dist(p.x, p.y, target.x, target.y);
-            stormBeam.width = 2; stormBeam.color = '#bb66ff'; stormBeam.life = 0.15;
-          }
+          spawnBeam(state, p.x, p.y,
+            Math.atan2(target.y - p.y, target.x - p.x),
+            dist(p.x, p.y, target.x, target.y), 2, '#bb66ff', 0.15);
         }
       }
     }
@@ -300,15 +296,8 @@ export function updatePlayers(state: GameState, dt: number): void {
           const scaledDmg = chDef.dmg * (1 + ((chDef.channelScale || 1) - 1) * progress) * (1 + fbBonus);
           const ang = p.channelAngle ?? p.angle;
           const range = chDef.range || 200;
-          const beam = state.beams.acquire();
-          if (beam) {
-            beam.x = p.x; beam.y = p.y;
-            beam.angle = ang;
-            beam.range = range;
-            beam.width = (chDef.width || 3) * (1 + progress * 0.5);
-            beam.color = chDef.color;
-            beam.life = 0.15;
-          }
+          spawnBeam(state, p.x, p.y, ang, range,
+            (chDef.width || 3) * (1 + progress * 0.5), chDef.color, 0.15);
           const cos = Math.cos(ang);
           const sin = Math.sin(ang);
           const step = 20;
@@ -389,15 +378,10 @@ export function updatePlayers(state: GameState, dt: number): void {
                     }
                   }
                   hitThisFrame.add(cIdx);
-                  const arc = state.beams.acquire();
-                  if (arc) {
-                    arc.x = src.x; arc.y = src.y;
-                    arc.angle = Math.atan2(ce.y - src.y, ce.x - src.x);
-                    arc.range = Math.sqrt((ce.x - src.x) ** 2 + (ce.y - src.y) ** 2);
-                    arc.width = 2;
-                    arc.color = chDef.color;
-                    arc.life = 0.12;
-                  }
+                  spawnBeam(state, src.x, src.y,
+                    Math.atan2(ce.y - src.y, ce.x - src.x),
+                    Math.sqrt((ce.x - src.x) ** 2 + (ce.y - src.y) ** 2),
+                    2, chDef.color, 0.12);
                   arcsLeft--;
                 }
               }
@@ -599,6 +583,9 @@ export function updatePlayers(state: GameState, dt: number): void {
         }
       }
     }
+
+    // Stealth-shield timer decay (bladecaller Crimson Edge shield).
+    if (p._stealthShield > 0) p._stealthShield -= dt;
 
     // Warden DR decay
     if (p._wardenDR > 0) p._wardenDR -= dt;

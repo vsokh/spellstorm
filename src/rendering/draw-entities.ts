@@ -2349,6 +2349,9 @@ export function drawWizard(ctx: CanvasRenderingContext2D, state: GameState): voi
 
     if (p.iframes > 0 && Math.sin(state.time * 25) > 0) continue;
 
+    // ── Stealth (Bladecaller Phantom Veil): render as faint silhouette ──
+    const stealthAlpha = (p._stealth > 0) ? 0.22 : 1;
+
     // ── Compute animation offsets ──
     const idleBob = p._animMoving ? 0 : Math.sin(state.time * 2.5) * 2;
 
@@ -2375,6 +2378,7 @@ export function drawWizard(ctx: CanvasRenderingContext2D, state: GameState): voi
 
     // ── Draw body + weapon with lean/squash-stretch and idle bob ──
     ctx.save();
+    if (stealthAlpha < 1) ctx.globalAlpha = stealthAlpha;
     ctx.translate(p.x, p.y);
     ctx.rotate(lean);
     ctx.scale(scaleX, scaleY);

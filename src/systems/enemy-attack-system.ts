@@ -16,11 +16,13 @@ export function enemyAttack(state: GameState, dt: number): void {
 
     const et = ENEMIES[e.type];
 
-    // Need target for attack range/direction
+    // Need target for attack range/direction — skip stealthed players
+    const isVisible = (pl: any) => pl && pl.alive && !(pl._stealth > 0);
     let target = state.players[e.target];
-    if (!target || !target.alive) {
-      target = state.players.find(p => p.alive) || state.players[0];
-      if (!target) continue;
+    if (!isVisible(target)) {
+      const visible = state.players.find(p => isVisible(p));
+      if (!visible) continue; // nothing to hit while all players stealthed
+      target = visible;
     }
 
     const dx = target.x - e.x;

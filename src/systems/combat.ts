@@ -9,6 +9,7 @@ import {
   spawnParticles,
   spawnText,
   spawnShockwave,
+  spawnBeam,
   shake,
   flashScreen,
   netSfx,
@@ -141,6 +142,14 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
     dmg *= (p.critMul || 2);
     spawnText(state, e.x, e.y - 25, 'CRIT!', '#ffcc44');
   }
+  // Bladecaller Phantom Veil guaranteed crit on next attack
+  let bladecallerVeilCrit = false;
+  if (p && p._critPending) {
+    dmg *= 2;
+    bladecallerVeilCrit = true;
+    p._critPending = false;
+    spawnText(state, e.x, e.y - 25, 'VEIL CRIT!', '#cc3355');
+  }
   // Momentum bonus
   if (p && p.momentum) {
     const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
@@ -164,6 +173,11 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
         const backstabMult = passive.backstab + (p.assassinMark * 0.3);
         dmg = Math.ceil(dmg * backstabMult);
         spawnText(state, e.x, e.y - 35, 'BACKSTAB!', '#ff4488');
+        // Bladecaller Crimson Edge: backstabs lifesteal 40%
+        if (p.clsKey === 'bladecaller') {
+          const bsHeal = Math.ceil(dmg * 0.4);
+          p.hp = Math.min(p.maxHp, p.hp + bsHeal);
+        }
       }
     }
     // Proximity bonus: close-range damage multiplier
@@ -258,6 +272,12 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
     if (heal > 0) p.hp = Math.min(p.maxHp, p.hp + heal);
   }
 
+  // Bladecaller Crimson Edge baseline 15% lifesteal (stacks with upgrade lifeSteal)
+  if (p && p.clsKey === 'bladecaller') {
+    const cheal = Math.max(1, Math.floor(dmg * 0.15));
+    p.hp = Math.min(p.maxHp, p.hp + cheal);
+  }
+
   // Berserker fury lifesteal: 5% heal when fury active
   if (p && p._furyActive) {
     const furyHeal = Math.floor(dmg * COMBAT.FURY_LIFESTEAL);
@@ -342,6 +362,13 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
 
       // Per-class onKill hooks (necro soul harvest, bladecaller kill rush, voidweaver explode).
       dispatchKill(state, p, e);
+
+      // Bladecaller Crimson Edge: stealth-crit kill grants a brief absorb shield.
+      if (bladecallerVeilCrit && p.clsKey === 'bladecaller') {
+        p._stealthShield = 1.5;
+        spawnText(state, p.x, p.y - 30, 'CRIMSON SHIELD', '#cc3355');
+        spawnParticles(state, p.x, p.y, '#cc3355', 12, 0.6);
+      }
 
       // Cross-class passive: Soulbinder — non-soulbinder players heal on marked kill.
       if (p.clsKey !== 'soulbinder' && e._soulMark && e._soulMark > state.time) {
@@ -545,6 +572,15 @@ export function damageEnemy(state: GameState, e: Enemy, rawDmg: number, pIdx: nu
 export function damagePlayer(state: GameState, p: Player, rawDmg: number, attacker?: Enemy): void {
   if (p.iframes > 0) return;
 
+  // Bladecaller stealth-kill shield: block the next hit entirely
+  if (p._stealthShield > 0) {
+    p._stealthShield = 0;
+    p.iframes = TIMING.IFRAME_BLOCK;
+    spawnText(state, p.x, p.y - 20, 'VEIL SHIELD', '#cc3355');
+    spawnParticles(state, p.x, p.y, '#cc3355', 10);
+    return;
+  }
+
   // Ward Stone shield: block hit entirely
   if (state.shopShieldHits > 0) {
     state.shopShieldHits--;
@@ -586,6 +622,12 @@ export function damagePlayer(state: GameState, p: Player, rawDmg: number, attack
   spawnParticles(state, p.x, p.y, '#ff4444', 8);
   netSfx(state, SfxName.Hit);
   spawnText(state, p.x, p.y - 20, `-${dmg}`, '#ff4444');
+
+  // Break Bladecaller stealth on damage
+  if (p._stealth > 0) {
+    p._stealth = 0;
+    p._critPending = false;
+  }
 
   // Channel break: interrupt channel if damage exceeds threshold
   if (p.channeling && p.channelSlot !== undefined) {
@@ -1137,8 +1179,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     }
     netSfx(state, sType);
   } else if (def.type === SpellType.Beam) {
-    const beamFx = state.beams.acquire();
-    if (beamFx) { beamFx.x = p.x; beamFx.y = p.y; beamFx.angle = angle; beamFx.range = def.range; beamFx.width = def.width; beamFx.color = def.color; beamFx.life = 0.15; }
+    spawnBeam(state, p.x, p.y, angle, def.range, def.width, def.color, 0.15);
     // Beam hit detection
     const beamDmg = Math.round(getEffectiveSpellDmg(p, idx) * echoDmgMul);
     let primaryTarget: EnemyView | null = null;
@@ -1195,24 +1236,50 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     }
     netSfx(state, SfxName.Zap);
   } else if (def.type === SpellType.Cone) {
-    // Visual particles
-    for (let a = -def.angle / 2; a <= def.angle / 2; a += 0.15) {
-      for (let d = 30; d < def.range; d += 20) {
-        spawnParticles(state, p.x + Math.cos(angle + a) * d, p.y + Math.sin(angle + a) * d, def.color, 1, 0.4);
+    const coneDmg = Math.round(getEffectiveSpellDmg(p, idx) * echoDmgMul);
+    // Visual: narrow cones (Bladecaller thrust) render as a beam flash; wide cones use particle spray.
+    if (def.angle < 0.5) {
+      spawnBeam(state, p.x, p.y, angle, def.range, 4, def.color, 0.12);
+      for (let d = 20; d < def.range; d += 18) {
+        spawnParticles(state, p.x + Math.cos(angle) * d, p.y + Math.sin(angle) * d, def.color, 2, 0.25);
       }
-    }
-    // Damage enemies in cone
-    for (const e of state.enemies) {
-      if (!e.alive) continue;
-      const d = dist(p.x, p.y, e.x, e.y);
-      if (d > def.range) continue;
-      const a2 = Math.atan2(e.y - p.y, e.x - p.x);
-      if (Math.abs(wrapAngle(a2 - angle)) <= def.angle / 2) {
-        damageEnemy(state, e, Math.round(getEffectiveSpellDmg(p, idx) * echoDmgMul), p.idx);
-        if (def.slow) e.slowTimer = (e.slowTimer || 0) + def.slow;
-        if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
-        if (def.applyMark) applyMarkToEnemy(state, e, def.applyMark, p.idx);
-        if (def.detonateMark) detonateMarks(state, e, def.detonateMark, p.idx, def.color);
+      // Thrust hit detection: sample points along the line; hit any enemy the line passes through.
+      // Track hit enemies by id (or reference) so we only damage each once per thrust.
+      const hit = new Set<number>();
+      for (let d = 0; d < def.range; d += 5) {
+        const bx = p.x + cos * d;
+        const by = p.y + sin * d;
+        for (const e of state.enemies) {
+          if (!e.alive || hit.has(e.id)) continue;
+          if (dist(bx, by, e.x, e.y) < ENEMIES[e.type].size + 4) {
+            hit.add(e.id);
+            damageEnemy(state, e, coneDmg, p.idx);
+            if (def.slow) e.slowTimer = (e.slowTimer || 0) + def.slow;
+            if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
+            if (def.applyMark) applyMarkToEnemy(state, e, def.applyMark, p.idx);
+            if (def.detonateMark) detonateMarks(state, e, def.detonateMark, p.idx, def.color);
+          }
+        }
+      }
+    } else {
+      for (let a = -def.angle / 2; a <= def.angle / 2; a += 0.15) {
+        for (let d = 30; d < def.range; d += 20) {
+          spawnParticles(state, p.x + Math.cos(angle + a) * d, p.y + Math.sin(angle + a) * d, def.color, 1, 0.4);
+        }
+      }
+      // Angle-based cone hit detection for wide cones.
+      for (const e of state.enemies) {
+        if (!e.alive) continue;
+        const d = dist(p.x, p.y, e.x, e.y);
+        if (d > def.range) continue;
+        const a2 = Math.atan2(e.y - p.y, e.x - p.x);
+        if (Math.abs(wrapAngle(a2 - angle)) <= def.angle / 2) {
+          damageEnemy(state, e, coneDmg, p.idx);
+          if (def.slow) e.slowTimer = (e.slowTimer || 0) + def.slow;
+          if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
+          if (def.applyMark) applyMarkToEnemy(state, e, def.applyMark, p.idx);
+          if (def.detonateMark) detonateMarks(state, e, def.detonateMark, p.idx, def.color);
+        }
       }
     }
     netSfx(state, SfxName.Fire);
@@ -1337,7 +1404,59 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       p.cd[2] = 0;
     }
   } else if (def.type === SpellType.Leap) {
-    // Berserker leap slam
+    // Target-locked leap (Bladecaller Shadow Step): find enemy nearest cursor within range,
+    // teleport to a point behind them, auto-backstab.
+    if (def.targetLock) {
+      const mw = toWorld(state, state.mouseX, state.mouseY);
+      let best: EnemyView | null = null;
+      let bestD = Infinity;
+      for (const e of state.enemies) {
+        if (!e.alive || e._friendly || e._deathTimer >= 0) continue;
+        if (dist(p.x, p.y, e.x, e.y) > def.range) continue;
+        const d = dist(mw.x, mw.y, e.x, e.y);
+        if (d < bestD) { bestD = d; best = e; }
+      }
+      if (!best) {
+        // No valid target — fizzle, refund mana+cd
+        p.mana = Math.min(p.maxMana, p.mana + def.mana);
+        p.cd[idx] = 0;
+        spawnText(state, p.x, p.y - 20, 'NO TARGET', '#888888');
+        return;
+      }
+      // Position behind enemy (opposite player → enemy vector)
+      const dx = best.x - p.x, dy = best.y - p.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const behindDist = ENEMIES[best.type].size + WIZARD_SIZE + 4;
+      const nx = clamp(best.x + (dx / d) * behindDist, WIZARD_SIZE, ROOM_WIDTH - WIZARD_SIZE);
+      const ny = clamp(best.y + (dy / d) * behindDist, WIZARD_SIZE, ROOM_HEIGHT - WIZARD_SIZE);
+      spawnParticles(state, p.x, p.y, def.color, 10);
+      p.x = nx; p.y = ny;
+      p.angle = Math.atan2(best.y - p.y, best.x - p.x);
+      p.iframes = TIMING.IFRAME_LEAP;
+      spawnParticles(state, best.x, best.y, def.color, 18, 1);
+      netSfx(state, SfxName.Blink);
+      shake(state, 4);
+      const leapDmg = getEffectiveSpellDmg(p, idx);
+      // Single-target backstab by default; only hit area if aoeR > 0 (augment later)
+      if ((def.aoeR || 0) > 0) {
+        spawnShockwave(state, best.x, best.y, def.aoeR, def.color);
+        for (const e of state.enemies) {
+          if (!e.alive) continue;
+          if (dist(best.x, best.y, e.x, e.y) < def.aoeR + ENEMIES[e.type].size) {
+            damageEnemy(state, e, leapDmg, p.idx);
+            if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
+          }
+        }
+      } else {
+        damageEnemy(state, best, leapDmg, p.idx);
+        if (def.stun) best.stunTimer = (best.stunTimer || 0) + def.stun;
+      }
+      // Set the timestamp AFTER damage so the Shadow Step's own kill doesn't reset its cd.
+      // Only follow-up LMB / passive kills within 1.5s trigger Kill Rush.
+      p._lastShadowStep = state.time;
+      return;
+    }
+    // Berserker leap slam (free-aim)
     const nx = clamp(p.x + cos * def.range, WIZARD_SIZE, ROOM_WIDTH - WIZARD_SIZE);
     const ny = clamp(p.y + sin * def.range, WIZARD_SIZE, ROOM_HEIGHT - WIZARD_SIZE);
     spawnParticles(state, p.x, p.y, def.color, 8);
@@ -1429,7 +1548,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       spawnText(state, p.x, p.y - 20, 'NO TARGET', '#888888');
     }
   }
-  // Summon-style Q (druid spirit wolf, warlock imp, tidecaller elemental) are in class castQAbility hooks now.
+  // Summon-style Q (druid spirit wolf, warlock imp, tidecaller elemental, bladecaller Phantom Veil) are in class castQAbility hooks now.
 
   // Temporal Echo: fire a delayed copy at 50% damage
   if (p.temporalEcho && idx === 0 && (def.type === SpellType.Projectile || def.type === SpellType.Homing)) {
