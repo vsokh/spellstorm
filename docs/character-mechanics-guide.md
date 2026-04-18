@@ -55,7 +55,7 @@ Some classes are designed to replace standard mana with unique resource systems 
 
 **Passive — Feedback Loop:** Each auto-detonation during a channel refunds 0.3s of Storm Step cooldown and adds +5% damage to the current channel (stacks up to +50%). Sustained focus on priority targets snowballs, and your teleport stays ready.
 
-**Tip:** The core loop is beam → auto-pop → Storm Step → beam again. If you get surrounded, press Q Discharge to cash in every enemy you've been marking, then Storm Step away. In co-op, pair Discharge with an ally's AoE setup — your marks paint the cluster, Q finishes it. Hold Thunder God for dense waves where the instant-detonate + free teleport lets you melt a whole screen.
+**Tip:** The core loop is beam → auto-pop → Storm Step → beam again. If you get surrounded, hold RMB Discharge to pin the cluster (stun + DoT + projectile block) while you rebuild charge, then Storm Step out. In co-op, let your marks paint the cluster for an ally's AoE setup or cash them in yourself. Hold Thunder God for dense waves where the instant-detonate + free teleport lets you melt a whole screen. See `docs/stormcaller-design.md` for the full stat sheet.
 
 ---
 
@@ -248,7 +248,7 @@ Mark and Detonate appears as a secondary mechanic on some classes listed above. 
 | Class | Mark Spell | Detonate Spell | Detonation Effect |
 |-------|-----------|----------------|-------------------|
 | **Cryomancer** | Frost Ray (LMB) applies frost marks | Freeze Breath (RMB) detonates | Burst damage per stack + stun + spread |
-| **Stormcaller** | Ball Zap (RMB) applies static marks | Thunder (Q) detonates | Burst damage per stack + stun |
+| **Stormcaller** | Lightning (LMB) applies static marks | LMB auto-detonates at max stacks; Discharge (RMB) detonates everything in field | Auto: +1.5 dmg/stack; Discharge: +3 dmg/stack + 0.5s stun/stack |
 | **Paladin** | Smite (LMB) applies judgment marks | Consecrate (Q) detonates | Burst damage per stack + healing |
 | **Hexblade** | Various abilities apply hex marks | Passive detonation | Marked enemies take +25% damage; 3 stacks slow |
 
