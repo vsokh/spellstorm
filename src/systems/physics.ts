@@ -265,7 +265,7 @@ export function updatePlayers(state: GameState, dt: number): void {
             beam.range = range;
             beam.width = (chDef.width || 3) * (1 + progress * 0.5);
             beam.color = chDef.color;
-            beam.life = dt * 2;
+            beam.life = 0.15;
           }
           const cos = Math.cos(ang);
           const sin = Math.sin(ang);
