@@ -319,6 +319,13 @@ function normalizeSpellDef(input: SpellDefInput): SpellDef {
     tetherDuration: input.tetherDuration,
     tetherReward: input.tetherReward ? { ...input.tetherReward } : undefined,
     positionBonus: input.positionBonus,
+    channel: input.channel,
+    channelSlow: input.channelSlow,
+    channelScale: input.channelScale,
+    channelTicks: input.channelTicks,
+    channelBreak: input.channelBreak,
+    applyMark: input.applyMark ? { ...input.applyMark } : undefined,
+    detonateMark: input.detonateMark ? { ...input.detonateMark } : undefined,
   };
 }
 
