@@ -1420,6 +1420,7 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
     }
     netSfx(state, SfxName.Zap);
   } else if (def.type === SpellType.Cone) {
+    const coneDmg = Math.round(getEffectiveSpellDmg(p, idx) * echoDmgMul);
     // Visual: narrow cones (Bladecaller thrust) render as a beam flash; wide cones use particle spray.
     if (def.angle < 0.5) {
       const thrust = state.beams.acquire();
@@ -1427,9 +1428,26 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
         thrust.x = p.x; thrust.y = p.y; thrust.angle = angle; thrust.range = def.range;
         thrust.width = 4; thrust.color = def.color; thrust.life = 0.12;
       }
-      // A couple of streak particles along the line for juice
       for (let d = 20; d < def.range; d += 18) {
         spawnParticles(state, p.x + Math.cos(angle) * d, p.y + Math.sin(angle) * d, def.color, 2, 0.25);
+      }
+      // Thrust hit detection: sample points along the line; hit any enemy the line passes through.
+      // Track hit enemies by id (or reference) so we only damage each once per thrust.
+      const hit = new Set<number>();
+      for (let d = 0; d < def.range; d += 5) {
+        const bx = p.x + cos * d;
+        const by = p.y + sin * d;
+        for (const e of state.enemies) {
+          if (!e.alive || hit.has(e.id)) continue;
+          if (dist(bx, by, e.x, e.y) < ENEMIES[e.type].size + 4) {
+            hit.add(e.id);
+            damageEnemy(state, e, coneDmg, p.idx);
+            if (def.slow) e.slowTimer = (e.slowTimer || 0) + def.slow;
+            if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
+            if (def.applyMark) applyMarkToEnemy(state, e, def.applyMark, p.idx);
+            if (def.detonateMark) detonateMarks(state, e, def.detonateMark, p.idx, def.color);
+          }
+        }
       }
     } else {
       for (let a = -def.angle / 2; a <= def.angle / 2; a += 0.15) {
@@ -1437,19 +1455,19 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
           spawnParticles(state, p.x + Math.cos(angle + a) * d, p.y + Math.sin(angle + a) * d, def.color, 1, 0.4);
         }
       }
-    }
-    // Damage enemies in cone
-    for (const e of state.enemies) {
-      if (!e.alive) continue;
-      const d = dist(p.x, p.y, e.x, e.y);
-      if (d > def.range) continue;
-      const a2 = Math.atan2(e.y - p.y, e.x - p.x);
-      if (Math.abs(wrapAngle(a2 - angle)) <= def.angle / 2) {
-        damageEnemy(state, e, Math.round(getEffectiveSpellDmg(p, idx) * echoDmgMul), p.idx);
-        if (def.slow) e.slowTimer = (e.slowTimer || 0) + def.slow;
-        if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
-        if (def.applyMark) applyMarkToEnemy(state, e, def.applyMark, p.idx);
-        if (def.detonateMark) detonateMarks(state, e, def.detonateMark, p.idx, def.color);
+      // Angle-based cone hit detection for wide cones.
+      for (const e of state.enemies) {
+        if (!e.alive) continue;
+        const d = dist(p.x, p.y, e.x, e.y);
+        if (d > def.range) continue;
+        const a2 = Math.atan2(e.y - p.y, e.x - p.x);
+        if (Math.abs(wrapAngle(a2 - angle)) <= def.angle / 2) {
+          damageEnemy(state, e, coneDmg, p.idx);
+          if (def.slow) e.slowTimer = (e.slowTimer || 0) + def.slow;
+          if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
+          if (def.applyMark) applyMarkToEnemy(state, e, def.applyMark, p.idx);
+          if (def.detonateMark) detonateMarks(state, e, def.detonateMark, p.idx, def.color);
+        }
       }
     }
     netSfx(state, SfxName.Fire);
