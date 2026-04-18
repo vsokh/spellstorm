@@ -415,6 +415,11 @@ export function updatePlayers(state: GameState, dt: number): void {
           // Reset Feedback Loop damage stacks when the channel ends
           p._channelDetStacks = 0;
 
+          // Discharge shield: drop instantly on release instead of fading
+          if (chDef.type === SpellType.Nova && p.clsKey === 'stormcaller') {
+            p._dischargeShield = 0;
+          }
+
           // Set cooldown (deferred from channel start)
           let cd = chDef.cd;
           if (p.bloodlust && p._bloodlustStacks > 0) {
