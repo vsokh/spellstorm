@@ -471,6 +471,12 @@ export interface Player {
   _eagleEyeStreak: number;      // consecutive arrow hits (crits at 3+)
   _eagleEyeTimer: number;       // seconds until streak resets (1.5s window)
 
+  // Roll / animated dash state (Ranger RMB). Player slides along fixed velocity for _rollTimer seconds.
+  _rollTimer: number;           // seconds remaining of active roll (0 = not rolling)
+  _rollVx: number;              // active roll velocity x
+  _rollVy: number;              // active roll velocity y
+  _rollGhosts: Array<{ x: number; y: number; angle: number; age: number }>; // afterimage ring buffer
+
   // Cannoneer state
   _cannonShots: number;        // cannoneer shot counter
 

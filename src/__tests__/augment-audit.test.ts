@@ -1027,14 +1027,14 @@ describe('Augment apply() audit — all augments', () => {
     });
   });
 
-  describe('[99] Trap Master (ranger)', () => {
-    it('doubles trap damage and sets count to 5', () => {
+  describe('[99] Volley Master (ranger)', () => {
+    it('doubles Volley damage and sets count to 6', () => {
       const p = createTestPlayer(0, 'ranger');
       const beforeDmg = p.cls.spells[2]?.dmg ?? 0;
       UPGRADE_POOL[99].apply(p, 1);
       if (p.cls.spells[2]) {
         expect(p.cls.spells[2].dmg).toBe(beforeDmg * 2);
-        expect(p.cls.spells[2].count).toBe(5);
+        expect(p.cls.spells[2].count).toBe(6);
       }
     });
   });

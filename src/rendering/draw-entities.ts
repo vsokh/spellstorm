@@ -2347,7 +2347,8 @@ export function drawWizard(ctx: CanvasRenderingContext2D, state: GameState): voi
       continue;
     }
 
-    if (p.iframes > 0 && Math.sin(state.time * 25) > 0) continue;
+    // During roll, always render (no strobe) — the afterimage trail reads as i-frames
+    if (p._rollTimer <= 0 && p.iframes > 0 && Math.sin(state.time * 25) > 0) continue;
 
     // ── Stealth (Bladecaller Phantom Veil): render as faint silhouette ──
     const stealthAlpha = (p._stealth > 0) ? 0.22 : 1;
@@ -2365,6 +2366,31 @@ export function drawWizard(ctx: CanvasRenderingContext2D, state: GameState): voi
       const bounce = Math.sin(state.time * 12) * 0.04;
       scaleX = 1.0 - bounce;
       scaleY = 1.0 + bounce;
+    }
+
+    // ── Roll afterimages (drawn behind the body) ──
+    if (p._rollGhosts.length > 0) {
+      for (const g of p._rollGhosts) {
+        const ghostAlpha = Math.max(0, 0.45 * (1 - g.age / 0.35));
+        if (ghostAlpha <= 0.01) continue;
+        ctx.save();
+        ctx.globalAlpha = ghostAlpha;
+        drawClassBody(ctx, g.x, g.y, g.angle, p.clsKey, cls.color, cls.glow, state.time, p);
+        ctx.restore();
+      }
+      // Streak line from oldest ghost to current position
+      if (p._rollGhosts.length >= 2) {
+        const first = p._rollGhosts[0];
+        ctx.save();
+        ctx.strokeStyle = cls.color + '66';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(first.x, first.y);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        ctx.restore();
+      }
     }
 
     // ── Aura glow (at actual position, no bob) ──

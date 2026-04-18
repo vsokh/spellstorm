@@ -193,8 +193,8 @@ export const UPGRADE_POOL: UpgradeDef[] = [
     apply: (p: Player) => { p.splitShot = (p.splitShot || 0) + 1; } },
   { name: 'Poison Arrows', desc: 'All arrows poison (2 dmg over 2s)', forClass: 'ranger', color: '#88cc44',
     apply: (p: Player) => { p.cls.spells[0].burn = 2; } },
-  { name: 'Trap Master', desc: 'Traps do 2x damage, slow 2x longer, place 5 instead of 3', forClass: 'ranger', color: '#88cc44',
-    apply: (p: Player) => { if (p.cls.spells[2]) { p.cls.spells[2].dmg = (p.cls.spells[2].dmg || 0) * 2; p.cls.spells[2].count = 5; } } },
+  { name: 'Volley Master', desc: 'Volley fires 6 arrows instead of 4 and deals 2x damage', forClass: 'ranger', color: '#88cc44',
+    apply: (p: Player) => { if (p.cls.spells[2]) { p.cls.spells[2].dmg = (p.cls.spells[2].dmg || 0) * 2; p.cls.spells[2].count = 6; } } },
 
   // ── Druid ──
   { name: 'Pack Leader', desc: 'Spirit Wolf is 2x stronger and you can have 2 wolves', forClass: 'druid', color: '#44aa33',

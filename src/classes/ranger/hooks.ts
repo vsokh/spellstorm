@@ -1,9 +1,25 @@
 import { registerClassHooks } from '../hooks';
-import { netSfx, rand } from '../../state';
+import { netSfx, rand, spawnParticles, spawnText } from '../../state';
 import { SfxName, SpellType } from '../../types';
-import { ULTIMATE, WIZARD_SIZE } from '../../constants';
+import { ULTIMATE, WIZARD_SIZE, TIMING } from '../../constants';
+
+const ROLL_DURATION = 0.28;
+const ROLL_SPEED = 720;
 
 registerClassHooks('ranger', {
+  // RMB Roll: animated dash in aim direction with iframes.
+  castRMBAbility: (state, p, _def, angle) => {
+    p._rollTimer = ROLL_DURATION;
+    p._rollVx = Math.cos(angle) * ROLL_SPEED;
+    p._rollVy = Math.sin(angle) * ROLL_SPEED;
+    p.iframes = Math.max(p.iframes, ROLL_DURATION + TIMING.IFRAME_DASH);
+    p._rollGhosts.length = 0;
+    spawnParticles(state, p.x, p.y, p.cls.color, 6, 0.3);
+    spawnText(state, p.x, p.y - 20, 'ROLL', p.cls.color);
+    netSfx(state, SfxName.Blink);
+    return true;
+  },
+
   castUltimate: (state, p, angle) => {
     const pw = p.ultPower || 1;
     // Arrow Rain: 20 arrows in a spread cone in aimed direction.

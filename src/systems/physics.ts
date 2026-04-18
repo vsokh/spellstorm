@@ -123,8 +123,23 @@ export function updatePlayers(state: GameState, dt: number): void {
     // Normalize diagonal
     const mvLen = Math.sqrt(mvx * mvx + mvy * mvy);
     if (mvLen > ms) { mvx *= ms / mvLen; mvy *= ms / mvLen; }
-    p.vx = mvx;
-    p.vy = mvy;
+    // Animated roll overrides input-driven velocity
+    if (p._rollTimer > 0) {
+      p.vx = p._rollVx;
+      p.vy = p._rollVy;
+      p._rollTimer -= dt;
+      // Record afterimage at ~60fps-ish rate
+      p._rollGhosts.push({ x: p.x, y: p.y, angle: p.angle, age: 0 });
+      if (p._rollGhosts.length > 6) p._rollGhosts.shift();
+    } else {
+      p.vx = mvx;
+      p.vy = mvy;
+    }
+    // Age and prune ghosts
+    if (p._rollGhosts.length > 0) {
+      for (const g of p._rollGhosts) g.age += dt;
+      while (p._rollGhosts.length > 0 && p._rollGhosts[0].age > 0.35) p._rollGhosts.shift();
+    }
     p._animMoving = (Math.abs(p.vx) > 1 || Math.abs(p.vy) > 1);
     p.x += p.vx * dt;
     p.y += p.vy * dt;
