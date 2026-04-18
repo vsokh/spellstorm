@@ -11,6 +11,12 @@ export const ULTIMATE = {
   RANGER_SPREAD_STEP: 0.05,
   RANGER_ARROW_LIFE: 1.0,
   RANGER_ARROW_PIERCE: 2,
+  ARROW_STORM_DURATION: 3.0,     // seconds of active rain
+  ARROW_STORM_INTERVAL: 180,     // ms between volleys
+  ARROW_STORM_RADIUS: 180,       // rain area around player
+  ARROW_STORM_DMG: 2,            // per marker
+  ARROW_STORM_MARKER_R: 38,      // per marker impact radius
+  ARROW_STORM_DELAY: 0.28,       // marker delay before strike
   DRUID_SPAWN_DIST: 120,
   DRUID_ZONE_SLOW: 0.5,
   DRUID_ZONE_TICK: 0.5,

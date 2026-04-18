@@ -37,7 +37,7 @@ export const ULTIMATE_DESCRIPTIONS: Record<string, string> = {
   knight: 'Become invulnerable for 3 seconds and reflect all damage.',
   berserker: 'Enter a blood frenzy: double damage and speed for 5 seconds, but take double damage.',
   paladin: 'Heal all players for 75% max HP and smite all enemies.',
-  ranger: 'Unleash a barrage of 20 arrows in a wide cone.',
+  ranger: 'Rain arrows in a circle around you for 3s. The storm follows your position — keep moving.',
   druid: 'Summon a ring of 6 thorn zones and 2 treant allies.',
   warlock: 'Mark all enemies with Doom — after 3 seconds, they take 35% max HP damage.',
   monk: 'Deliver 20 rapid melee strikes in a cone with knockback.',

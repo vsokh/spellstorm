@@ -1,7 +1,7 @@
 import { registerClassHooks } from '../hooks';
-import { netSfx, rand, spawnParticles, spawnText } from '../../state';
-import { SfxName, SpellType } from '../../types';
-import { ULTIMATE, WIZARD_SIZE, TIMING } from '../../constants';
+import { netSfx, spawnParticles, spawnShockwave, spawnText } from '../../state';
+import { SfxName } from '../../types';
+import { ULTIMATE, TIMING } from '../../constants';
 
 const ROLL_DURATION = 0.28;
 const ROLL_SPEED = 720;
@@ -20,30 +20,37 @@ registerClassHooks('ranger', {
     return true;
   },
 
-  castUltimate: (state, p, angle) => {
+  // Arrow Storm: rain arrows around the player over ~3s. Follows the player
+  // (each volley is placed relative to p.x/p.y at fire-time), so rolling carries
+  // the storm with you.
+  castUltimate: (state, p) => {
     const pw = p.ultPower || 1;
-    // Arrow Rain: 20 arrows in a spread cone in aimed direction.
-    const cos0 = Math.cos(angle);
-    const sin0 = Math.sin(angle);
-    const spreadHalf = ULTIMATE.RANGER_SPREAD_BASE;
-    for (let i = 0; i < 20; i++) {
-      const aOff = -spreadHalf + (spreadHalf * 2) * (i / 19) + rand(-ULTIMATE.RANGER_SPREAD_STEP, ULTIMATE.RANGER_SPREAD_STEP);
-      const sa = angle + aOff;
-      const aCos = Math.cos(sa);
-      const aSin = Math.sin(sa);
+    const dmg = Math.round(ULTIMATE.ARROW_STORM_DMG * pw);
+    const volleys = Math.floor(ULTIMATE.ARROW_STORM_DURATION * 1000 / ULTIMATE.ARROW_STORM_INTERVAL);
+    for (let i = 0; i < volleys; i++) {
       setTimeout(() => {
-        state.spells.push({
-          type: SpellType.Projectile, dmg: Math.round(2 * pw), speed: 400, radius: 5, life: ULTIMATE.RANGER_ARROW_LIFE,
-          color: '#88cc44', trail: '#668833',
-          x: p.x + cos0 * WIZARD_SIZE, y: p.y + sin0 * WIZARD_SIZE,
-          vx: aCos * 400, vy: aSin * 400,
-          owner: p.idx, age: 0, zapTimer: 0, pierceLeft: ULTIMATE.RANGER_ARROW_PIERCE,
-          homing: 0, zap: 0, zapRate: 0, slow: 0, drain: 0, explode: 0, burn: 0,
-          stun: 0, clsKey: p.clsKey, _reversed: false, _bounces: 0,
-        });
-        netSfx(state, SfxName.Hit);
-      }, i * 30);
+        if (!p.alive) return;
+        // Two markers per volley for density
+        for (let k = 0; k < 2; k++) {
+          const a = Math.random() * Math.PI * 2;
+          const r = Math.sqrt(Math.random()) * ULTIMATE.ARROW_STORM_RADIUS;
+          const tx = p.x + Math.cos(a) * r;
+          const ty = p.y + Math.sin(a) * r;
+          const marker = state.aoeMarkers.acquire();
+          if (marker) {
+            marker.x = tx; marker.y = ty;
+            marker.radius = ULTIMATE.ARROW_STORM_MARKER_R;
+            marker.delay = ULTIMATE.ARROW_STORM_DELAY;
+            marker.dmg = dmg; marker.owner = p.idx;
+            marker.color = '#88cc44'; marker.age = 0; marker.stun = 0;
+          }
+          spawnParticles(state, tx, ty - 40, '#bbee66', 3, 0.35);
+        }
+        if (i % 5 === 0) netSfx(state, SfxName.Hit);
+      }, i * ULTIMATE.ARROW_STORM_INTERVAL);
     }
+    spawnShockwave(state, p.x, p.y, ULTIMATE.ARROW_STORM_RADIUS, 'rgba(136,204,68,.28)');
+    spawnText(state, p.x, p.y - 40, 'ARROW STORM', '#bbee66');
     return true;
   },
 });
