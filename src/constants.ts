@@ -556,9 +556,9 @@ export const CLASSES: Record<string, ClassDefInput> = {
     hp: 6, moveSpeed: 210, maxMana: 100, manaRegen: 14,
     passive: { name: 'Crimson Edge', desc: '15% lifesteal. Backstabs deal 2.5x and lifesteal 40%. Killing a stealth-crit target grants a brief 3 HP shield.', backstab: 2.5 },
     spells: [
-      { name: 'Blade Thrust', key: 'LMB', type: SpellType.Cone, dmg: 4, range: 55, mana: 3, cd: 0.3, angle: 0.3, color: '#cc3355',
+      { name: 'Blade Thrust', key: 'LMB', type: SpellType.Cone, dmg: 4, range: 70, mana: 3, cd: 0.3, angle: 0.18, color: '#cc3355',
         combo: { steps: 3, timeout: 1.5, dmgScale: [1.0, 1.3, 2.8], effects: { 3: { aoeR: 35, stun: 0.1 } } } },
-      { name: 'Shadow Step', key: 'RMB', type: SpellType.Leap, range: 200, mana: 12, cd: 3, dmg: 10, aoeR: 40, color: '#aa2244', targetLock: true },
+      { name: 'Shadow Step', key: 'RMB', type: SpellType.Leap, range: 200, mana: 12, cd: 3, dmg: 14, aoeR: 0, color: '#aa2244', targetLock: true },
       { name: 'Phantom Veil', key: 'Q', type: SpellType.Ultimate, ultCharge: 0, mana: 20, cd: 10, color: '#441122', duration: 2.0, heal: 4 },
       { name: 'Thousand Cuts', key: 'Space', type: SpellType.Ultimate, ultCharge: 100, color: '#aa2244', mana: 0, cd: 0 },
     ],

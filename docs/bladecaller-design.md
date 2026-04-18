@@ -52,7 +52,7 @@ feeds the vampire theme — connect and you heal, whiff and you die.
 ### Blade Thrust — LMB (Cone, narrow combo)
 
 ```
-dmg 4, range 55, angle 0.3, mana 3, cd 0.3,
+dmg 4, range 70, angle 0.18, mana 3, cd 0.3,
 combo: steps 3, timeout 1.5,
   dmgScale [1.0, 1.3, 2.8],
   effects: { 3: { aoeR 35, stun 0.1 } }
@@ -68,21 +68,25 @@ combo: steps 3, timeout 1.5,
 ### Shadow Step — RMB (Leap, `targetLock: true`)
 
 ```
-dmg 10, aoeR 40, range 200, mana 12, cd 3
+dmg 14, aoeR 0, range 200, mana 12, cd 3
 ```
 
+- **Single-target by default.** `aoeR === 0` makes the combat handler damage
+  only the selected target. An augment can raise `aoeR` to enable the
+  shockwave cleave later.
 - Picks the **enemy nearest the cursor** within `range` (200 units from the
   caster, measured from the caster position, not the cursor).
 - Teleports the caster to a point **behind** that enemy
   (`enemy + (enemy - caster).normalize() * (enemySize + WIZARD_SIZE + 4)`),
-  then deals AOE damage around the target with backstab auto-triggered by
-  the position.
+  then deals the backstab-multiplied hit — the post-teleport position puts
+  the caster behind the target so the passive `backstab` trigger fires
+  naturally.
 - If no valid enemy is in range → spell fizzles: **mana is refunded, cd is
   cleared**, "NO TARGET" text shown. No whiff penalty.
 - Grants `TIMING.IFRAME_LEAP` on arrival.
 - Sets `_lastShadowStep = state.time` for the Kill Rush cd reset hook.
-- Effective single-target damage: 10 × 2.5 (backstab) = **25**. Stealth-primed
-  from Phantom Veil = **50**.
+- Effective single-target damage: 14 × 2.5 (backstab) = **35**. Stealth-primed
+  from Phantom Veil = **70**.
 
 ### Phantom Veil — Q (Ultimate-typed, `key: 'Q'`)
 
@@ -109,12 +113,16 @@ type Ultimate, ultCharge 100
 ```
 
 - Sets `p._bladeFlurry = 2.5` and `p._bladeFlurryTick = 0`.
-- Physics tick (`physics.ts`): every 0.25s, finds the **3 nearest living
-  non-friendly enemies** and strikes each for `Math.round(6 * ultPower) * 2`
-  damage (12 base, auto-crit via the `* 2`).
+- Physics tick (`physics.ts`): every 0.2s, finds the **nearest** living
+  non-friendly enemy, **teleport-dashes** to a random offset next to them
+  (18-26 units around the target), and strikes for
+  `Math.round(6 * ultPower) * 2` damage (12 base, auto-crit via `* 2`).
+- The visible teleport each tick is what sells the ult as a "dancing
+  flurry" — 12–13 dashes across 2.5s.
 - Each strike grants **20% bonus lifesteal** on top of the baseline 15%.
 - **+30% move speed** during the ult.
-- 0.4s of iframes on cast. Screen flash, shockwave, red particles.
+- Ongoing 0.2s iframe refresh each tick (so the dashing caster eats no
+  incidental damage). Screen flash, shockwave, red particles on cast.
 
 ---
 

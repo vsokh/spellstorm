@@ -683,32 +683,40 @@ export function updatePlayers(state: GameState, dt: number): void {
     // Stealth shield decay (brief shield from stealth-crit kill)
     if (p._stealthShield > 0) p._stealthShield -= dt;
 
-    // Bladecaller: Thousand Cuts flurry
+    // Bladecaller: Thousand Cuts flurry — teleport-dash between nearest targets
     if (p.clsKey === 'bladecaller' && p._bladeFlurry > 0) {
       p._bladeFlurry -= dt;
       p._bladeFlurryTick -= dt;
+      p.iframes = Math.max(p.iframes, 0.2);
       const clsMs = p.cls.moveSpeed ?? DEFAULT_MOVE_SPEED;
       p.moveSpeed = Math.max(p.moveSpeed, clsMs * 1.3);
       if (p._bladeFlurryTick <= 0) {
-        p._bladeFlurryTick = 0.25;
-        // Strike 3 nearest non-friendly enemies
-        const candidates: { e: any; d: number }[] = [];
+        p._bladeFlurryTick = 0.2;
+        // Pick the nearest living non-friendly enemy; teleport next to it; strike it.
+        let nearest: any = null;
+        let nearestD = Infinity;
         for (const e of state.enemies) {
           if (!e.alive || e._friendly || e._deathTimer >= 0) continue;
-          candidates.push({ e, d: dist(p.x, p.y, e.x, e.y) });
+          const d = dist(p.x, p.y, e.x, e.y);
+          if (d < nearestD) { nearestD = d; nearest = e; }
         }
-        candidates.sort((a, b) => a.d - b.d);
-        const hits = Math.min(3, candidates.length);
-        for (let i = 0; i < hits; i++) {
-          const t = candidates[i].e;
+        if (nearest) {
+          // Dash-teleport to a random offset around the target (slashing pass)
+          const offA = Math.random() * Math.PI * 2;
+          const offD = 18 + Math.random() * 8;
+          spawnParticles(state, p.x, p.y, '#cc3355', 6, 0.3);
+          p.x = nearest.x + Math.cos(offA) * offD;
+          p.y = nearest.y + Math.sin(offA) * offD;
+          p.angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
           const dmg = Math.round(6 * (p.ultPower || 1)) * 2; // 2x auto-crit
-          damageEnemy(state, t, dmg, p.idx);
-          spawnParticles(state, t.x, t.y, '#cc3355', 6, 0.4);
+          damageEnemy(state, nearest, dmg, p.idx);
           // Bonus lifesteal during flurry (20% on top of baseline)
           const heal = Math.ceil(dmg * 0.2);
           p.hp = Math.min(p.maxHp, p.hp + heal);
+          spawnParticles(state, nearest.x, nearest.y, '#cc3355', 8, 0.4);
+          netSfx(state, SfxName.Hit);
+          shake(state, 2);
         }
-        if (hits > 0) netSfx(state, SfxName.Hit);
       }
       if (p._bladeFlurry <= 0) {
         p._bladeFlurry = 0;

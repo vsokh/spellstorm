@@ -1601,17 +1601,23 @@ export function castSpell(state: GameState, p: Player, idx: number, angle: numbe
       p.angle = Math.atan2(best.y - p.y, best.x - p.x);
       p.iframes = TIMING.IFRAME_LEAP;
       p._lastShadowStep = state.time;
-      spawnShockwave(state, best.x, best.y, def.aoeR, def.color);
       spawnParticles(state, best.x, best.y, def.color, 18, 1);
       netSfx(state, SfxName.Blink);
       shake(state, 4);
       const leapDmg = getEffectiveSpellDmg(p, idx);
-      for (const e of state.enemies) {
-        if (!e.alive) continue;
-        if (dist(best.x, best.y, e.x, e.y) < def.aoeR + ENEMIES[e.type].size) {
-          damageEnemy(state, e, leapDmg, p.idx);
-          if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
+      // Single-target backstab by default; only hit area if aoeR > 0 (augment later)
+      if ((def.aoeR || 0) > 0) {
+        spawnShockwave(state, best.x, best.y, def.aoeR, def.color);
+        for (const e of state.enemies) {
+          if (!e.alive) continue;
+          if (dist(best.x, best.y, e.x, e.y) < def.aoeR + ENEMIES[e.type].size) {
+            damageEnemy(state, e, leapDmg, p.idx);
+            if (def.stun) e.stunTimer = (e.stunTimer || 0) + def.stun;
+          }
         }
+      } else {
+        damageEnemy(state, best, leapDmg, p.idx);
+        if (def.stun) best.stunTimer = (best.stunTimer || 0) + def.stun;
       }
       return;
     }
