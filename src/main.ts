@@ -25,6 +25,7 @@ import {
 import { sfx } from './audio';
 import { SfxName } from './types';
 import { setupInput, getInput } from './input';
+import { setupTouchControls, getRenderZoom } from './touch-input';
 import { setNetworkCallbacks, sendState, sendInput, flushOutbox, getAdaptiveInterval } from './network';
 import { setChestPickupHandler } from './systems/physics';
 import { updatePlayers } from './systems/physics';
@@ -86,14 +87,20 @@ const ctx: CanvasRenderingContext2D = ctx2d;
 const state: GameState = createInitialState();
 
 function resize(): void {
-  state.width = canvas.width = window.innerWidth;
-  state.height = canvas.height = window.innerHeight;
+  // Phones render zoomed-out (bitmap larger than CSS size) to widen the view.
+  const zoom = getRenderZoom();
+  state.width = canvas.width = Math.round(window.innerWidth * zoom);
+  state.height = canvas.height = Math.round(window.innerHeight * zoom);
+  canvas.style.width = `${window.innerWidth}px`;
+  canvas.style.height = `${window.innerHeight}px`;
 }
 resize();
 window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => setTimeout(resize, 100));
 
 // Setup input handlers
 setupInput(state, canvas);
+setupTouchControls(state, canvas);
 
 // Iframe focus management: ensure canvas can receive keyboard events
 canvas.tabIndex = 0;

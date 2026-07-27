@@ -21,9 +21,20 @@ body {
   overflow: hidden;
   font-family: 'Fira Code', 'Courier New', monospace;
   color: var(--text-bright);
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
 }
 body.in-game { cursor: none; }
-canvas { display: block; }
+canvas { display: block; touch-action: none; }
+body.touch-device {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+body.touch-device.in-game { cursor: default; }
 
 /* ══════════ LOBBY ══════════ */
 #lobby {
@@ -962,6 +973,158 @@ input[type=text]:focus {
 
   .pause-spell-card { width: 130px; padding: 10px 8px; }
   #pause-screen h2 { font-size: 22px; }
+}
+
+/* ══════════ OVERFLOW-SAFE CENTERING ══════════ */
+/* justify-content:center clips the top edge (unscrollably) when content is
+   taller than the screen — hit on landscape phones. Auto margins center
+   identically when content fits, but keep overflow reachable + scrollable. */
+#lobby, #select-main, #upgrade-screen, #shop-screen, #pause-screen,
+#gameover, #victory-screen {
+  justify-content: flex-start;
+  overflow-y: auto;
+}
+#lobby > :first-child, #select-main > :first-child, #upgrade-screen > :first-child,
+#shop-screen > :first-child, #pause-screen > :first-child,
+#gameover > :first-child, #victory-screen > :first-child {
+  margin-top: auto;
+}
+#lobby > :last-child, #select-main > :last-child, #upgrade-screen > :last-child,
+#shop-screen > :last-child, #pause-screen > :last-child,
+#gameover > :last-child, #victory-screen > :last-child {
+  margin-bottom: auto;
+}
+
+/* ══════════ TOUCH CONTROLS (mobile port) ══════════ */
+#touch-controls {
+  position: fixed; inset: 0;
+  z-index: 15;
+  display: none;
+  pointer-events: none;
+}
+body.touch-device.in-game #touch-controls { display: block; }
+
+.tc-stick {
+  position: fixed;
+  width: 108px; height: 108px;
+  border-radius: 50%;
+  border: 2px solid rgba(150, 110, 220, 0.35);
+  background: rgba(20, 14, 32, 0.25);
+  transform: translate(-50%, -50%);
+  display: none;
+  pointer-events: none;
+}
+.tc-nub {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: rgba(160, 120, 240, 0.45);
+  border: 1px solid rgba(200, 170, 255, 0.5);
+  transform: translate(-50%, -50%);
+}
+
+.tc-btn {
+  position: fixed;
+  border-radius: 50%;
+  background: rgba(30, 20, 50, 0.55);
+  border: 2px solid rgba(150, 110, 220, 0.4);
+  color: var(--text-bright);
+  font-family: 'Fira Code', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.tc-btn:active {
+  background: rgba(110, 55, 190, 0.6);
+  border-color: rgba(200, 160, 255, 0.7);
+}
+.tc-ult {
+  right: calc(18px + env(safe-area-inset-right));
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  width: 74px; height: 74px;
+  font-size: 12px;
+  color: var(--accent-gold);
+  border-color: rgba(200, 170, 60, 0.5);
+}
+.tc-rmb {
+  right: calc(30px + env(safe-area-inset-right));
+  bottom: calc(104px + env(safe-area-inset-bottom));
+  width: 56px; height: 56px;
+}
+.tc-q {
+  right: calc(104px + env(safe-area-inset-right));
+  bottom: calc(30px + env(safe-area-inset-bottom));
+  width: 56px; height: 56px;
+}
+.tc-dash {
+  right: calc(108px + env(safe-area-inset-right));
+  bottom: calc(108px + env(safe-area-inset-bottom));
+  width: 50px; height: 50px;
+  font-size: 8px;
+}
+
+#touch-pause {
+  position: fixed;
+  top: calc(64px + env(safe-area-inset-top));
+  right: calc(12px + env(safe-area-inset-right));
+  width: 42px; height: 34px;
+  display: none;
+  align-items: center; justify-content: center;
+  background: rgba(30, 20, 50, 0.6);
+  border: 1px solid rgba(150, 110, 220, 0.4);
+  border-radius: 6px;
+  color: var(--text-mid);
+  font-size: 11px;
+  z-index: 16;
+  touch-action: none;
+}
+body.touch-device.in-game #touch-pause { display: flex; }
+
+/* ══════════ ROTATE OVERLAY (portrait phones in-game) ══════════ */
+#rotate-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  z-index: 200;
+  background: var(--bg-deep);
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 14px;
+}
+#rotate-overlay .rotate-icon {
+  font-size: 52px;
+  color: var(--accent-purple);
+  animation: float 2s ease-in-out infinite;
+}
+#rotate-overlay .rotate-text {
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  letter-spacing: 3px;
+  color: var(--text-mid);
+}
+@media (orientation: portrait) and (pointer: coarse) and (hover: none) {
+  body.in-game #rotate-overlay { display: flex; }
+}
+
+/* ══════════ RESPONSIVE: touch devices (phones/tablets) ══════════ */
+@media (pointer: coarse) and (hover: none) {
+  #hud { padding: 8px 10px; min-width: 140px; gap: 4px; top: calc(8px + env(safe-area-inset-top)); left: calc(10px + env(safe-area-inset-left)); }
+  .hud-side { font-size: 11px; }
+  .bar-o { width: 110px; }
+  .sp-icon { width: 40px; height: 40px; font-size: 12px; }
+  #skill-bar { top: calc(10px + env(safe-area-inset-top)); right: calc(12px + env(safe-area-inset-right)); }
+  #floor-display { font-size: 11px; top: calc(8px + env(safe-area-inset-top)); }
+  #gold-display { top: 118px; }
+  #shop-btn { top: 138px; padding: 8px 16px; }
+  #fullscreen-btn { top: 138px; left: 104px; padding: 8px 14px; }
+  .btn { padding: 12px 28px; }
+  .shop-item { padding: 14px 12px; width: 125px; }
+  .upgrade-card { padding: 16px 12px; }
 }
 
 /* ══════════ RESPONSIVE: short viewports (540px–620px height) ══════════ */

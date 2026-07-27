@@ -1,5 +1,6 @@
 import { GameState, toWorld, clamp } from './state';
 import { PlayerInput, NetworkMode } from './types';
+import { getTouchInput, getRenderZoom, noteMouseActivity } from './touch-input';
 
 // ═══════════════════════════════════
 //          INPUT HANDLING
@@ -18,13 +19,16 @@ export function setupInput(state: GameState, canvas: HTMLCanvasElement): void {
   });
 
   canvas.addEventListener('mousemove', (e: MouseEvent) => {
+    noteMouseActivity();
+    // Mouse coords are CSS px; canvas may render zoomed-out on mobile.
+    const z = getRenderZoom();
     if (document.pointerLockElement === canvas) {
       // Pointer locked: accumulate movement
-      state.mouseX = clamp(state.mouseX + (e.movementX || 0), 0, state.width);
-      state.mouseY = clamp(state.mouseY + (e.movementY || 0), 0, state.height);
+      state.mouseX = clamp(state.mouseX + (e.movementX || 0) * z, 0, state.width);
+      state.mouseY = clamp(state.mouseY + (e.movementY || 0) * z, 0, state.height);
     } else {
-      state.mouseX = e.clientX;
-      state.mouseY = e.clientY;
+      state.mouseX = e.clientX * z;
+      state.mouseY = e.clientY * z;
     }
   });
 
@@ -66,14 +70,28 @@ export function getInput(state: GameState, playerIdx: number): PlayerInput {
   }
 
   const wp = toWorld(state, state.mouseX, state.mouseY);
-  return {
-    angle: Math.atan2(wp.y - p.y, wp.x - p.x),
-    mx: state.keys['KeyA'] ? -1 : (state.keys['KeyD'] ? 1 : 0),
-    my: state.keys['KeyW'] ? -1 : (state.keys['KeyS'] ? 1 : 0),
-    shoot: state.mouseDown,
-    shoot2: state.rightDown,
-    ability: !!state.keys['KeyQ'],
-    ult: !!state.keys['Space'],
-    dash: !!(state.keys['ShiftLeft'] || state.keys['ShiftRight']),
-  };
+  let angle = Math.atan2(wp.y - p.y, wp.x - p.x);
+  let mx = state.keys['KeyA'] ? -1 : (state.keys['KeyD'] ? 1 : 0);
+  let my = state.keys['KeyW'] ? -1 : (state.keys['KeyS'] ? 1 : 0);
+  let shoot = state.mouseDown;
+  let shoot2 = state.rightDown;
+  let ability = !!state.keys['KeyQ'];
+  let ult = !!state.keys['Space'];
+  let dash = !!(state.keys['ShiftLeft'] || state.keys['ShiftRight']);
+
+  // Merge touch controls (mobile). Keyboard/mouse still works alongside.
+  const t = getTouchInput();
+  if (t.usingTouch) {
+    if (t.mx !== 0 || t.my !== 0) { mx = t.mx; my = t.my; }
+    if (t.aimActive) angle = t.aimAngle;
+    else if (t.mx !== 0 || t.my !== 0) angle = Math.atan2(t.my, t.mx);
+    else angle = t.aimAngle; // last aim direction
+    shoot = shoot || t.aimActive;
+    shoot2 = shoot2 || t.shoot2;
+    ability = ability || t.ability;
+    ult = ult || t.ult;
+    dash = dash || t.dash;
+  }
+
+  return { angle, mx, my, shoot, shoot2, ability, ult, dash };
 }
