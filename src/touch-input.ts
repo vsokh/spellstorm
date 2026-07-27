@@ -1,6 +1,7 @@
 import { GameState } from './state';
 import { GamePhase } from './types';
 import { openPause, closePause } from './systems/pause';
+import { IS_MOBILE } from './mobile';
 
 // ═══════════════════════════════════
 //     TOUCH INPUT (mobile port)
@@ -11,19 +12,6 @@ import { openPause, closePause } from './systems/pause';
 // (bottom-right cluster) cover Q / RMB / ULT / DASH and support press-and-hold
 // so charged spells keep working. Output is merged into getInput() in
 // input.ts — desktop keyboard/mouse behavior is unchanged.
-
-/** True phones/tablets. Touch-screen laptops keep the desktop experience
- *  (the sticks still activate if the screen is actually touched). */
-export const IS_MOBILE: boolean =
-  typeof window !== 'undefined' &&
-  window.matchMedia('(pointer: coarse) and (hover: none)').matches;
-
-/** Phones render a slightly zoomed-out view so more of the arena is visible.
- *  Rendering-only: gameplay never reads canvas dimensions. */
-const MOBILE_ZOOM = 1.3;
-export function getRenderZoom(): number {
-  return IS_MOBILE ? MOBILE_ZOOM : 1;
-}
 
 const STICK_RADIUS = 52; // px of thumb travel for full deflection
 const MOVE_DEADZONE = 0.12;

@@ -23,6 +23,7 @@ import {
   SfxName,
 } from './types';
 import { sfx } from './audio';
+import { IS_MOBILE } from './mobile';
 import { SpatialGrid } from './ecs/spatial-grid';
 import { SpellPool } from './ecs/spell-pool';
 import { EProjPool } from './ecs/eproj-pool';
@@ -581,10 +582,11 @@ export function spawnParticles(
   state: GameState, x: number, y: number, col: string, n: number, scale: number = 1
 ): void {
   if (state.particles.count >= MAX_PARTICLES) return;
-  // Collect fx event for guest when hosting
+  // Collect fx event for guest when hosting (full count — guest halves locally)
   if (state.mode === NetworkMode.Host) {
     state.pendingFx.push({ t: 'p', x: ~~x, y: ~~y, c: col, n, s: scale });
   }
+  if (IS_MOBILE) n = Math.max(1, n >> 1); // phones: half the particles, visual only
   for (let i = 0; i < n; i++) {
     const p = state.particles.acquire();
     if (!p) break;

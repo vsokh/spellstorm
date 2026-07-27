@@ -26,6 +26,9 @@ body {
 }
 body.in-game { cursor: none; }
 canvas { display: block; touch-action: none; }
+/* Phones rasterize the game at reduced resolution; nearest-neighbor upscale
+   keeps the pixel art crisp instead of smearing it. */
+body.touch-device #c { image-rendering: pixelated; }
 body.touch-device {
   position: fixed;
   inset: 0;
@@ -1071,7 +1074,7 @@ body.touch-device.in-game #touch-controls { display: block; }
 
 #touch-pause {
   position: fixed;
-  top: calc(64px + env(safe-area-inset-top));
+  top: calc(54px + env(safe-area-inset-top));
   right: calc(12px + env(safe-area-inset-right));
   width: 42px; height: 34px;
   display: none;
@@ -1113,15 +1116,27 @@ body.touch-device.in-game #touch-pause { display: flex; }
 
 /* ══════════ RESPONSIVE: touch devices (phones/tablets) ══════════ */
 @media (pointer: coarse) and (hover: none) {
-  #hud { padding: 8px 10px; min-width: 140px; gap: 4px; top: calc(8px + env(safe-area-inset-top)); left: calc(10px + env(safe-area-inset-left)); }
+  /* Scale the whole HUD down (~30%) and drop the per-frame blur — a real
+     GPU cost on phones since it re-blurs the moving canvas underneath. */
+  #hud {
+    padding: 8px 10px; min-width: 140px; gap: 4px;
+    top: calc(6px + env(safe-area-inset-top)); left: calc(8px + env(safe-area-inset-left));
+    transform: scale(0.7);
+    transform-origin: top left;
+    backdrop-filter: none;
+  }
   .hud-side { font-size: 11px; }
   .bar-o { width: 110px; }
+  #skill-bar {
+    top: calc(8px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right));
+    transform: scale(0.78);
+    transform-origin: top right;
+  }
   .sp-icon { width: 40px; height: 40px; font-size: 12px; }
-  #skill-bar { top: calc(10px + env(safe-area-inset-top)); right: calc(12px + env(safe-area-inset-right)); }
-  #floor-display { font-size: 11px; top: calc(8px + env(safe-area-inset-top)); }
-  #gold-display { top: 118px; }
-  #shop-btn { top: 138px; padding: 8px 16px; }
-  #fullscreen-btn { top: 138px; left: 104px; padding: 8px 14px; }
+  #floor-display { font-size: 10px; top: calc(6px + env(safe-area-inset-top)); }
+  #gold-display { top: 96px; }
+  #shop-btn { top: 114px; padding: 6px 14px; }
+  #fullscreen-btn { top: 114px; left: 92px; padding: 6px 12px; }
   .btn { padding: 12px 28px; }
   .shop-item { padding: 14px 12px; width: 125px; }
   .upgrade-card { padding: 16px 12px; }

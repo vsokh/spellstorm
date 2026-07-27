@@ -25,7 +25,8 @@ import {
 import { sfx } from './audio';
 import { SfxName } from './types';
 import { setupInput, getInput } from './input';
-import { setupTouchControls, getRenderZoom } from './touch-input';
+import { setupTouchControls } from './touch-input';
+import { getRenderZoom, getRenderRes } from './mobile';
 import { setNetworkCallbacks, sendState, sendInput, flushOutbox, getAdaptiveInterval } from './network';
 import { setChestPickupHandler } from './systems/physics';
 import { updatePlayers } from './systems/physics';
@@ -87,10 +88,16 @@ const ctx: CanvasRenderingContext2D = ctx2d;
 const state: GameState = createInitialState();
 
 function resize(): void {
-  // Phones render zoomed-out (bitmap larger than CSS size) to widen the view.
+  // Phones: view span is zoomed out (see more arena) but rasterized at a
+  // reduced resolution (fewer pixels filled). state.width/height are VIEW
+  // dimensions; the canvas bitmap may be smaller, bridged by a base
+  // ctx.setTransform each frame. Desktop: zoom = res = 1, identical to before.
   const zoom = getRenderZoom();
-  state.width = canvas.width = Math.round(window.innerWidth * zoom);
-  state.height = canvas.height = Math.round(window.innerHeight * zoom);
+  const res = getRenderRes();
+  state.width = Math.round(window.innerWidth * zoom);
+  state.height = Math.round(window.innerHeight * zoom);
+  canvas.width = Math.round(state.width * res);
+  canvas.height = Math.round(state.height * res);
   canvas.style.width = `${window.innerWidth}px`;
   canvas.style.height = `${window.innerHeight}px`;
 }
@@ -408,6 +415,8 @@ function loop(now: number): void {
 
   // ── DRAW ──
   profiler.begin('render');
+  const res = getRenderRes();
+  ctx.setTransform(res, 0, 0, res, 0, 0); // view px -> bitmap px (1:1 on desktop)
   ctx.fillStyle = '#04030a';
   ctx.fillRect(0, 0, state.width, state.height);
 
@@ -485,6 +494,8 @@ if (new URLSearchParams(window.location.search).has('screenshots')) {
     // functions for scene setup
     renderFrame() {
       updateCamera(state);
+      const res = getRenderRes();
+      ctx.setTransform(res, 0, 0, res, 0, 0);
       ctx.fillStyle = '#04030a';
       ctx.fillRect(0, 0, state.width, state.height);
       ctx.save();

@@ -1,6 +1,7 @@
 import { GameState, toWorld, clamp } from './state';
 import { PlayerInput, NetworkMode } from './types';
-import { getTouchInput, getRenderZoom, noteMouseActivity } from './touch-input';
+import { getTouchInput, noteMouseActivity } from './touch-input';
+import { getRenderZoom } from './mobile';
 
 // ═══════════════════════════════════
 //          INPUT HANDLING
