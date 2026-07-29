@@ -19,6 +19,36 @@ export function initAudio(): void {
   }
 }
 
+// ── Shared noise buffers ──
+// Generating noise per playback allocated a fresh AudioBuffer (~76KB for
+// Boom) and ran one Math.pow per sample (19k for Boom) on the main thread —
+// a measurable hitch on every explosion. AudioBuffers are reusable across
+// BufferSources, so render each noise shape once and share it.
+let boomNoise: AudioBuffer | null = null;
+let zapNoise: AudioBuffer | null = null;
+
+function getBoomNoise(ctx: AudioContext): AudioBuffer {
+  if (!boomNoise) {
+    boomNoise = ctx.createBuffer(1, ctx.sampleRate * 0.4, ctx.sampleRate);
+    const d = boomNoise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) {
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 1.5);
+    }
+  }
+  return boomNoise;
+}
+
+function getZapNoise(ctx: AudioContext): AudioBuffer {
+  if (!zapNoise) {
+    zapNoise = ctx.createBuffer(1, ctx.sampleRate * 0.08, ctx.sampleRate);
+    const d = zapNoise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) {
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 0.5);
+    }
+  }
+  return zapNoise;
+}
+
 /** Sound preset factory map: each key returns a function that builds an audio graph */
 type SfxFactory = (ctx: AudioContext, t: number, gain: GainNode) => void;
 
@@ -52,13 +82,8 @@ const SFX_PRESETS: Record<SfxName, SfxFactory> = {
   },
 
   [SfxName.Zap]: (ctx, t, g) => {
-    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.08, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) {
-      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 0.5);
-    }
     const s = ctx.createBufferSource();
-    s.buffer = buf;
+    s.buffer = getZapNoise(ctx);
     const n = ctx.createGain();
     n.gain.setValueAtTime(0.1, t);
     n.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
@@ -97,13 +122,8 @@ const SFX_PRESETS: Record<SfxName, SfxFactory> = {
   },
 
   [SfxName.Boom]: (ctx, t, g) => {
-    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.4, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) {
-      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 1.5);
-    }
     const s = ctx.createBufferSource();
-    s.buffer = buf;
+    s.buffer = getBoomNoise(ctx);
     const f = ctx.createBiquadFilter();
     f.type = 'lowpass';
     f.frequency.setValueAtTime(500, t);
@@ -177,8 +197,17 @@ const SFX_PRESETS: Record<SfxName, SfxFactory> = {
   },
 };
 
+// Retrigger cap per sound type: an AoE kill of 8 enemies used to build 8
+// simultaneous audio graphs in one frame — louder, clippier, and 8x the node
+// churn. One trigger per ~45ms per type is inaudibly different.
+const lastPlayed: Partial<Record<SfxName, number>> = {};
+const MIN_RETRIGGER_MS = 45;
+
 export function sfx(type: SfxName): void {
   if (!audioCtx) return;
+  const now = performance.now();
+  if (now - (lastPlayed[type] || 0) < MIN_RETRIGGER_MS) return;
+  lastPlayed[type] = now;
   const t = audioCtx.currentTime;
   const g = audioCtx.createGain();
   g.connect(audioCtx.destination);

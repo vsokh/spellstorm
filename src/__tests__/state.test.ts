@@ -179,6 +179,8 @@ describe('spawnText()', () => {
       color: '#fff',
       life: 1.5,
       vy: -35,
+      fontSize: 12,
+      fillColor: '#fff',
     });
   });
 

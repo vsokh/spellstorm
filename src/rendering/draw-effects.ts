@@ -554,15 +554,24 @@ export function drawAoe(ctx: CanvasRenderingContext2D, state: GameState): void {
   }
 }
 
+// Persistent color-batching maps: allocating fresh Maps + arrays 60x/second
+// was steady GC churn on phones. Arrays are emptied after each draw; the maps
+// only ever hold one entry per distinct effect color.
+const trailBatch = new Map<string, Trail[]>();
+const particleBatch = new Map<string, Particle[]>();
+const shockBatch = new Map<string, Shockwave[]>();
+
+function intoBatch<T extends { color: string }>(map: Map<string, T[]>, item: T): void {
+  const group = map.get(item.color);
+  if (group) group.push(item);
+  else map.set(item.color, [item]);
+}
+
 export function drawFx(ctx: CanvasRenderingContext2D, state: GameState): void {
   // Trails - batch by color
-  const trailsByColor = new Map<string, Trail[]>();
-  for (const t of state.trails) {
-    const group = trailsByColor.get(t.color);
-    if (group) group.push(t);
-    else trailsByColor.set(t.color, [t]);
-  }
-  for (const [color, trails] of trailsByColor) {
+  for (const t of state.trails) intoBatch(trailBatch, t);
+  for (const [color, trails] of trailBatch) {
+    if (!trails.length) continue;
     ctx.fillStyle = color;
     for (const t of trails) {
       ctx.globalAlpha = t.life * t.life * 0.6;
@@ -570,17 +579,14 @@ export function drawFx(ctx: CanvasRenderingContext2D, state: GameState): void {
       ctx.arc(t.x, t.y, t.r * t.life, 0, Math.PI * 2);
       ctx.fill();
     }
+    trails.length = 0;
   }
   ctx.globalAlpha = 1;
 
   // Particles - batch by color
-  const particlesByColor = new Map<string, Particle[]>();
-  for (const p of state.particles) {
-    const group = particlesByColor.get(p.color);
-    if (group) group.push(p);
-    else particlesByColor.set(p.color, [p]);
-  }
-  for (const [color, particles] of particlesByColor) {
+  for (const p of state.particles) intoBatch(particleBatch, p);
+  for (const [color, particles] of particleBatch) {
+    if (!particles.length) continue;
     ctx.fillStyle = color;
     for (const p of particles) {
       ctx.globalAlpha = p.life;
@@ -588,17 +594,14 @@ export function drawFx(ctx: CanvasRenderingContext2D, state: GameState): void {
       ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
       ctx.fill();
     }
+    particles.length = 0;
   }
   ctx.globalAlpha = 1;
 
   // Shockwaves - batch by color
-  const shocksByColor = new Map<string, Shockwave[]>();
-  for (const s of state.shockwaves) {
-    const group = shocksByColor.get(s.color);
-    if (group) group.push(s);
-    else shocksByColor.set(s.color, [s]);
-  }
-  for (const [color, shocks] of shocksByColor) {
+  for (const s of state.shockwaves) intoBatch(shockBatch, s);
+  for (const [color, shocks] of shockBatch) {
+    if (!shocks.length) continue;
     ctx.strokeStyle = color;
     for (const s of shocks) {
       ctx.lineWidth = 3 * s.life;
@@ -611,23 +614,15 @@ export function drawFx(ctx: CanvasRenderingContext2D, state: GameState): void {
       ctx.arc(s.x, s.y, s.radius * 0.7, 0, Math.PI * 2);
       ctx.stroke();
     }
+    shocks.length = 0;
   }
   ctx.globalAlpha = 1;
 
-  // Floating text with damage-scaled sizing
+  // Floating text with damage-scaled sizing (styling precomputed at spawn)
   for (const t of state.texts) {
     ctx.globalAlpha = Math.min(1, t.life);
-    ctx.fillStyle = t.color;
-    // Scale font for damage numbers
-    let fontSize = 12;
-    const numMatch = t.text.match(/^-?(\d+)$/);
-    if (numMatch) {
-      const val = parseInt(numMatch[1]);
-      if (val >= 12) { fontSize = 22; ctx.fillStyle = '#ffdd44'; }
-      else if (val >= 8) fontSize = 18;
-      else if (val >= 5) fontSize = 16;
-    }
-    ctx.font = `bold ${fontSize}px Courier New`;
+    ctx.fillStyle = t.fillColor || t.color;
+    ctx.font = `bold ${t.fontSize}px Courier New`;
     ctx.textAlign = 'center';
     ctx.strokeStyle = 'rgba(0,0,0,0.5)';
     ctx.lineWidth = 2;

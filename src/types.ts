@@ -667,6 +667,9 @@ export interface FloatingText {
   color: string;
   life: number;
   vy: number;
+  /** Precomputed at spawn (was a per-frame regex per text in drawFx) */
+  fontSize: number;
+  fillColor: string;
 }
 
 export interface Beam {

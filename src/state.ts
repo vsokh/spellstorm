@@ -206,7 +206,7 @@ export function createInitialState(): GameState {
     particles: new Pool<Particle>(MAX_PARTICLES, () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, r: 0, color: '' })),
     trails: new Pool<Trail>(MAX_TRAILS, () => ({ x: 0, y: 0, life: 0, r: 0, color: '' })),
     shockwaves: new Pool<Shockwave>(MAX_SHOCKWAVES, () => ({ x: 0, y: 0, radius: 0, maxR: 0, life: 0, color: '' })),
-    texts: new Pool<FloatingText>(MAX_FLOATING_TEXTS, () => ({ x: 0, y: 0, text: '', color: '', life: 0, vy: 0 })),
+    texts: new Pool<FloatingText>(MAX_FLOATING_TEXTS, () => ({ x: 0, y: 0, text: '', color: '', life: 0, vy: 0, fontSize: 12, fillColor: '' })),
     beams: new Pool<Beam>(MAX_BEAMS, () => ({ x: 0, y: 0, angle: 0, range: 0, width: 0, color: '', life: 0 })),
     zones: new Pool<Zone>(MAX_ZONES, () => ({ x: 0, y: 0, radius: 0, duration: 0, dmg: 0, color: '', owner: 0, slow: 0, tickRate: 0, tickTimer: 0, age: 0, drain: 0, heal: 0, pull: 0, freezeAfter: 0, stun: 0, _turret: false, _megaTurret: false })),
     aoeMarkers: new Pool<AoeMarker>(MAX_AOE_MARKERS, () => ({ x: 0, y: 0, radius: 0, delay: 0, dmg: 0, color: '', owner: 0, stun: 0, age: 0 })),
@@ -612,6 +612,18 @@ export function spawnText(
   const t = state.texts.acquire();
   if (!t) return;
   t.x = x; t.y = y; t.text = text; t.color = color; t.life = 1.5; t.vy = -35;
+  // Precompute damage-number styling once (drawFx used to regex every frame)
+  let fontSize = 12;
+  let fillColor = color;
+  const numMatch = text.match(/^-?(\d+)$/);
+  if (numMatch) {
+    const val = parseInt(numMatch[1]);
+    if (val >= 12) { fontSize = 22; fillColor = '#ffdd44'; }
+    else if (val >= 8) fontSize = 18;
+    else if (val >= 5) fontSize = 16;
+  }
+  t.fontSize = fontSize;
+  t.fillColor = fillColor;
 }
 
 export function spawnShockwave(
