@@ -77,6 +77,12 @@ body.touch-device.in-game { cursor: default; }
   margin-bottom: 32px;
 }
 
+.lobby-boxes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .lobby-box {
   background: rgba(14, 10, 24, 0.85);
   border: 1px solid var(--border-subtle);
@@ -1162,10 +1168,57 @@ body.touch-device.in-game #touch-pause { display: flex; }
   .btn { padding: 12px 28px; }
   .shop-item { padding: 14px 12px; width: 125px; }
   .upgrade-card { padding: 16px 12px; }
-  /* Class select: readable descriptions + selected-class summary line */
-  .class-card .cdesc { font-size: 10px; }
-  #select-status { font-size: 12px; color: var(--text-mid); min-height: 32px; padding: 0 18px; }
+
+  /* ── Native-app menus: everything fits one screen, no scrolling ── */
+
+  /* Lobby: three panels side by side instead of a stacked column */
+  #lobby h1 { font-size: 30px; margin-bottom: 0; }
+  #lobby .sub { margin-bottom: 14px; }
+  .lobby-boxes {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: center;
+    gap: 10px;
+  }
+  .lobby-box { width: 228px; margin-bottom: 0; padding: 16px 14px; }
+
+  /* Class select: flatten role columns into one compact grid of portraits.
+     Details show in the summary line (tap) — descriptions hide. */
+  #select-screen h2 { font-size: 13px; letter-spacing: 2px; margin-bottom: 8px; }
+  #select-main { padding: 8px 0; }
+  .role-section, .role-cards { display: contents; }
+  .role-header { display: none; }
+  .class-grid {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 6px;
+    width: min(96vw, 920px);
+    margin-bottom: 6px;
+  }
+  .class-card { width: auto; padding: 5px 3px; }
+  .class-card .cname {
+    font-size: 9px;
+    margin-bottom: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .class-card .cdesc { display: none; }
+  .class-card .class-char-canvas { width: 52px; height: 42px; margin: 2px auto 0; }
+  #select-status { font-size: 11px; color: var(--text-mid); min-height: 28px; padding: 0 18px; }
+
+  /* Pause: fit four spell cards + header in a phone landscape viewport */
+  #pause-screen { gap: 6px; }
+  #pause-screen h2 { font-size: 18px; }
+  .pause-spells { gap: 8px; }
+  .pause-spell-card { width: 150px; padding: 8px 10px; }
+  .pause-passive { margin-bottom: 2px; }
 }
+
+/* The app runs fullscreen already (native immersive / auto-fullscreen on
+   first touch) — the fullscreen toggle is clutter on touch devices. */
+body.touch-device #fullscreen-btn { display: none !important; }
 
 /* ══════════ RESPONSIVE: short viewports (540px–620px height) ══════════ */
 @media (max-height: 620px) {

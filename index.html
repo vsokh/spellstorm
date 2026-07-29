@@ -10,23 +10,25 @@
 <div id="lobby">
   <h1>WIZARD CRAWL</h1>
   <div class="sub">co-op roguelike wave survival</div>
-  <div class="lobby-box">
-    <h3>HOST GAME</h3>
-    <button class="btn btn-primary" id="btn-host">CREATE ROOM</button>
-    <div id="host-info" style="display:none">
-      <div class="room-code" id="room-code"></div>
-      <div class="status" id="host-status">waiting for partner...</div>
+  <div class="lobby-boxes">
+    <div class="lobby-box">
+      <h3>HOST GAME</h3>
+      <button class="btn btn-primary" id="btn-host">CREATE ROOM</button>
+      <div id="host-info" style="display:none">
+        <div class="room-code" id="room-code"></div>
+        <div class="status" id="host-status">waiting for partner...</div>
+      </div>
     </div>
-  </div>
-  <div class="lobby-box">
-    <h3>JOIN GAME</h3>
-    <input type="text" id="join-code" placeholder="CODE" maxlength="6">
-    <button class="btn" id="btn-join">CONNECT</button>
-    <div class="status" id="join-status"></div>
-  </div>
-  <div class="lobby-box">
-    <h3>SOLO RUN</h3>
-    <button class="btn" id="btn-solo">PLAY SOLO</button>
+    <div class="lobby-box">
+      <h3>JOIN GAME</h3>
+      <input type="text" id="join-code" placeholder="CODE" maxlength="6">
+      <button class="btn" id="btn-join">CONNECT</button>
+      <div class="status" id="join-status"></div>
+    </div>
+    <div class="lobby-box">
+      <h3>SOLO RUN</h3>
+      <button class="btn" id="btn-solo">PLAY SOLO</button>
+    </div>
   </div>
   <div id="error-msg"></div>
   <div id="version-display"></div>
