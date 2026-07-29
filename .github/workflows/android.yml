@@ -1,0 +1,42 @@
+name: Build Android APK
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npx tsc && npx vite build
+      - run: npx cap sync android
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Spellstorm-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish to rolling release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk Spellstorm.apk
+          gh release view android-latest >/dev/null 2>&1 || \
+            gh release create android-latest --prerelease \
+              --title "Spellstorm — Android APK (latest)" \
+              --notes "Sideloadable debug APK. Rebuilt automatically on every push to master. On your phone: download, open, allow installs from your browser when prompted."
+          gh release upload android-latest Spellstorm.apk --clobber
