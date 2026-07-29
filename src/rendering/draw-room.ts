@@ -6,6 +6,7 @@ import {
 } from '../constants';
 import { GamePhase } from '../types';
 import { radGrad } from './gradient-cache';
+import { IS_MOBILE } from '../mobile';
 
 // ═══════════════════════════════════
 //       AMBIENT PARTICLES
@@ -508,8 +509,11 @@ export function drawRoom(ctx: CanvasRenderingContext2D, state: GameState): void 
   const cx = ROOM_WIDTH / 2, cy = ROOM_HEIGHT / 2;
 
   // ── Dynamic ambient lighting shift ──
-  // Slowly cycles between cool purple, warm amber, and deep blue
-  {
+  // Slowly cycles between cool purple, warm amber, and deep blue.
+  // Skipped on phones: full-room gradient fills every frame are the single
+  // biggest measured render cost (profiler section r:room), and the static
+  // floor cache already carries a baked rune glow + vignette.
+  if (!IS_MOBILE) {
     const cyclePeriod = 25; // ~25 second full cycle
     const phase = (t / cyclePeriod) * Math.PI * 2;
     // Blend between three tint colors using sine waves
@@ -532,14 +536,16 @@ export function drawRoom(ctx: CanvasRenderingContext2D, state: GameState): void 
 
   // ── Animated rune glow ──
 
-  // Soft radial gradient glow beneath rings (pulsing fill)
-  const pulseAlpha = 0.03 + 0.02 * Math.sin(t * 0.6);
-  ctx.fillStyle = radGrad(ctx, cx, cy, 60, cx, cy, 200, [
-    [0, `rgba(100, 60, 180, ${pulseAlpha})`],
-    [0.6, `rgba(80, 50, 160, ${pulseAlpha * 0.5})`],
-    [1, 'rgba(60, 30, 120, 0)'],
-  ]);
-  ctx.beginPath(); ctx.arc(cx, cy, 200, 0, Math.PI * 2); ctx.fill();
+  // Soft radial gradient glow beneath rings (pulsing fill) — desktop only
+  if (!IS_MOBILE) {
+    const pulseAlpha = 0.03 + 0.02 * Math.sin(t * 0.6);
+    ctx.fillStyle = radGrad(ctx, cx, cy, 60, cx, cy, 200, [
+      [0, `rgba(100, 60, 180, ${pulseAlpha})`],
+      [0.6, `rgba(80, 50, 160, ${pulseAlpha * 0.5})`],
+      [1, 'rgba(60, 30, 120, 0)'],
+    ]);
+    ctx.beginPath(); ctx.arc(cx, cy, 200, 0, Math.PI * 2); ctx.fill();
+  }
 
   // Animated ring strokes
   const runeAlpha = 0.025 + 0.02 * Math.sin(t * 0.8);
@@ -548,18 +554,19 @@ export function drawRoom(ctx: CanvasRenderingContext2D, state: GameState): void 
   ctx.beginPath(); ctx.arc(cx, cy, 120 + Math.sin(t * 0.5) * 3, t * 0.1, t * 0.1 + Math.PI * 1.8); ctx.stroke();
   ctx.beginPath(); ctx.arc(cx, cy, 180 + Math.sin(t * 0.3) * 4, -t * 0.07, -t * 0.07 + Math.PI * 1.6); ctx.stroke();
 
-  // Slowly rotating individual rune symbol glows
-  ctx.fillStyle = `rgba(130, 90, 220, ${0.04 + 0.025 * Math.sin(t * 0.9)})`;
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2 + t * 0.05;
-    const rx = cx + Math.cos(a) * 150;
-    const ry = cy + Math.sin(a) * 150;
-    const glowR = 8 + 3 * Math.sin(t * 1.2 + i * 0.8);
-    ctx.fillStyle = radGrad(ctx, rx, ry, 0, rx, ry, glowR, [
-      [0, `rgba(130, 90, 220, ${0.06 + 0.03 * Math.sin(t * 1.5 + i)})`],
-      [1, 'rgba(130, 90, 220, 0)'],
-    ]);
-    ctx.beginPath(); ctx.arc(rx, ry, glowR, 0, Math.PI * 2); ctx.fill();
+  // Slowly rotating individual rune symbol glows — desktop only
+  if (!IS_MOBILE) {
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + t * 0.05;
+      const rx = cx + Math.cos(a) * 150;
+      const ry = cy + Math.sin(a) * 150;
+      const glowR = 8 + 3 * Math.sin(t * 1.2 + i * 0.8);
+      ctx.fillStyle = radGrad(ctx, rx, ry, 0, rx, ry, glowR, [
+        [0, `rgba(130, 90, 220, ${0.06 + 0.03 * Math.sin(t * 1.5 + i)})`],
+        [1, 'rgba(130, 90, 220, 0)'],
+      ]);
+      ctx.beginPath(); ctx.arc(rx, ry, glowR, 0, Math.PI * 2); ctx.fill();
+    }
   }
 
   // Spark effect along rings
@@ -577,27 +584,29 @@ export function drawRoom(ctx: CanvasRenderingContext2D, state: GameState): void 
     }
   }
 
-  // ── Atmospheric fog patches ──
-  for (const fog of fogPatches) {
-    const fx = fog.baseX + Math.sin(t * fog.speedX + fog.phaseX) * 80;
-    const fy = fog.baseY + Math.cos(t * fog.speedY + fog.phaseY) * 60;
-    ctx.fillStyle = radGrad(ctx, fx, fy, 0, fx, fy, fog.radius, [
-      [0, `hsla(${fog.hue}, 30%, 12%, ${fog.alpha})`],
-      [1, `hsla(${fog.hue}, 30%, 12%, 0)`],
-    ]);
-    ctx.fillRect(fx - fog.radius, fy - fog.radius, fog.radius * 2, fog.radius * 2);
-  }
+  // ── Atmospheric fog patches (desktop only — large animated gradient fills) ──
+  if (!IS_MOBILE) {
+    for (const fog of fogPatches) {
+      const fx = fog.baseX + Math.sin(t * fog.speedX + fog.phaseX) * 80;
+      const fy = fog.baseY + Math.cos(t * fog.speedY + fog.phaseY) * 60;
+      ctx.fillStyle = radGrad(ctx, fx, fy, 0, fx, fy, fog.radius, [
+        [0, `hsla(${fog.hue}, 30%, 12%, ${fog.alpha})`],
+        [1, `hsla(${fog.hue}, 30%, 12%, 0)`],
+      ]);
+      ctx.fillRect(fx - fog.radius, fy - fog.radius, fog.radius * 2, fog.radius * 2);
+    }
 
-  // ── Ground-level fog layer ──
-  for (const gf of groundFogBlobs) {
-    const fogX = gf.baseX + Math.sin(t * gf.driftSpeed + gf.phase) * gf.driftAmplitude;
-    const fogY = gf.y + Math.cos(t * gf.driftSpeed * 0.7 + gf.phase) * 20;
-    ctx.fillStyle = radGrad(ctx, fogX, fogY, 0, fogX, fogY, gf.radius, [
-      [0, `hsla(${gf.hue}, 35%, 15%, ${gf.alpha})`],
-      [0.6, `hsla(${gf.hue}, 35%, 12%, ${gf.alpha * 0.5})`],
-      [1, `hsla(${gf.hue}, 35%, 10%, 0)`],
-    ]);
-    ctx.fillRect(fogX - gf.radius, fogY - gf.radius, gf.radius * 2, gf.radius * 2);
+    // ── Ground-level fog layer ──
+    for (const gf of groundFogBlobs) {
+      const fogX = gf.baseX + Math.sin(t * gf.driftSpeed + gf.phase) * gf.driftAmplitude;
+      const fogY = gf.y + Math.cos(t * gf.driftSpeed * 0.7 + gf.phase) * 20;
+      ctx.fillStyle = radGrad(ctx, fogX, fogY, 0, fogX, fogY, gf.radius, [
+        [0, `hsla(${gf.hue}, 35%, 15%, ${gf.alpha})`],
+        [0.6, `hsla(${gf.hue}, 35%, 12%, ${gf.alpha * 0.5})`],
+        [1, `hsla(${gf.hue}, 35%, 10%, 0)`],
+      ]);
+      ctx.fillRect(fogX - gf.radius, fogY - gf.radius, gf.radius * 2, gf.radius * 2);
+    }
   }
 
   // ── Wall torches ──
@@ -608,12 +617,14 @@ export function drawRoom(ctx: CanvasRenderingContext2D, state: GameState): void 
     else if (torch.side === 'bottom') lightY -= 30;
     else if (torch.side === 'left') lightX += 30;
     else lightX -= 30;
-    const lightAlpha = 0.03 + 0.015 * Math.sin(t * 3.5 + torch.phase);
-    ctx.fillStyle = radGrad(ctx, lightX, lightY, 0, lightX, lightY, 60, [
-      [0, `rgba(200, 150, 60, ${lightAlpha})`],
-      [1, 'rgba(200, 150, 60, 0)'],
-    ]);
-    ctx.beginPath(); ctx.arc(lightX, lightY, 60, 0, Math.PI * 2); ctx.fill();
+    if (!IS_MOBILE) {
+      const lightAlpha = 0.03 + 0.015 * Math.sin(t * 3.5 + torch.phase);
+      ctx.fillStyle = radGrad(ctx, lightX, lightY, 0, lightX, lightY, 60, [
+        [0, `rgba(200, 150, 60, ${lightAlpha})`],
+        [1, 'rgba(200, 150, 60, 0)'],
+      ]);
+      ctx.beginPath(); ctx.arc(lightX, lightY, 60, 0, Math.PI * 2); ctx.fill();
+    }
 
     // Bracket shape
     ctx.strokeStyle = 'rgba(80, 60, 40, 0.4)';
@@ -709,8 +720,8 @@ export function drawRoom(ctx: CanvasRenderingContext2D, state: GameState): void 
   }
   ctx.globalAlpha = 1;
 
-  // ── Corner shadow pools ──
-  {
+  // ── Corner shadow pools (desktop only — 4 large animated gradient fills) ──
+  if (!IS_MOBILE) {
     const cornerPositions: [number, number][] = [
       [80, 60],
       [ROOM_WIDTH - 80, 60],

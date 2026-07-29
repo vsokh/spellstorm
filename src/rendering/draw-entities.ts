@@ -3,6 +3,7 @@ import { ENEMIES, WIZARD_SIZE, TIMING } from '../constants';
 import { PickupType } from '../types';
 import { rgba } from './rgba-cache';
 import { radGrad, linGrad } from './gradient-cache';
+import { IS_MOBILE } from '../mobile';
 import { getClassRender } from '../classes/render';
 
 // ═══════════════════════════════════
@@ -5114,10 +5115,14 @@ export function drawPickups(ctx: CanvasRenderingContext2D, state: GameState): vo
       ctx.textAlign = 'center';
       ctx.fillText('?', pk.x, pk.y + 5);
     } else if (pk.type === PickupType.Health) {
-      ctx.fillStyle = radGrad(ctx, pk.x, pk.y, 3, pk.x, pk.y, 12 + pulse * 4, [
-        [0, 'rgba(50,255,120,.3)'],
-        [1, 'transparent'],
-      ]);
+      // Phones: flat low-alpha glow — the animated gradient key (pulse radius)
+      // defeats the cache, costing one gradient build per pickup per frame.
+      ctx.fillStyle = IS_MOBILE
+        ? 'rgba(50,255,120,.12)'
+        : radGrad(ctx, pk.x, pk.y, 3, pk.x, pk.y, 12 + pulse * 4, [
+          [0, 'rgba(50,255,120,.3)'],
+          [1, 'transparent'],
+        ]);
       ctx.beginPath();
       ctx.arc(pk.x, pk.y, 12 + pulse * 4, 0, Math.PI * 2);
       ctx.fill();
@@ -5129,10 +5134,14 @@ export function drawPickups(ctx: CanvasRenderingContext2D, state: GameState): vo
       // XP gem: glowing blue-white diamond, bobbing, size based on value
       const bob = Math.sin(state.time * 4) * 3;
       const gemSize = Math.min(4 + pk.value * 0.5, 10);
-      ctx.fillStyle = radGrad(ctx, pk.x, pk.y + bob, 1, pk.x, pk.y + bob, gemSize + 4, [
-        [0, 'rgba(140,200,255,.5)'],
-        [1, 'transparent'],
-      ]);
+      // Phones: flat glow — animated key (bob) defeats the gradient cache and
+      // XP gems are the most numerous pickup mid-wave.
+      ctx.fillStyle = IS_MOBILE
+        ? 'rgba(140,200,255,.15)'
+        : radGrad(ctx, pk.x, pk.y + bob, 1, pk.x, pk.y + bob, gemSize + 4, [
+          [0, 'rgba(140,200,255,.5)'],
+          [1, 'transparent'],
+        ]);
       ctx.beginPath();
       ctx.arc(pk.x, pk.y + bob, gemSize + 4, 0, Math.PI * 2);
       ctx.fill();

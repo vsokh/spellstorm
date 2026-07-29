@@ -26,7 +26,7 @@ import { sfx } from './audio';
 import { SfxName } from './types';
 import { setupInput, getInput } from './input';
 import { setupTouchControls } from './touch-input';
-import { getRenderZoom, getRenderRes } from './mobile';
+import { getRenderZoom, getRenderRes, IS_MOBILE } from './mobile';
 import { setNetworkCallbacks, sendState, sendInput, flushOutbox, getAdaptiveInterval } from './network';
 import { setChestPickupHandler } from './systems/physics';
 import { updatePlayers } from './systems/physics';
@@ -81,7 +81,9 @@ runner
 const canvasEl = document.getElementById('c');
 if (!(canvasEl instanceof HTMLCanvasElement)) throw new Error('Canvas element #c not found');
 const canvas: HTMLCanvasElement = canvasEl;
-const ctx2d = canvas.getContext('2d');
+// alpha:false — opaque canvas skips per-frame blending with the page behind
+// it; safe because every frame starts with a full-canvas background fill.
+const ctx2d = canvas.getContext('2d', { alpha: false });
 if (!ctx2d) throw new Error('Could not get 2d context');
 const ctx: CanvasRenderingContext2D = ctx2d;
 
@@ -243,8 +245,16 @@ setupGameOver();
 // ═══════════════════════════════════
 
 let lastTime = performance.now();
+let lastFrameTs = 0;
 
 function loop(now: number): void {
+  // 120Hz phones: cap to ~60fps. Halves CPU/GPU work; dt accumulates to the
+  // next executed frame so simulation speed is unaffected.
+  if (IS_MOBILE && now - lastFrameTs < 15.5) {
+    requestAnimationFrame(loop);
+    return;
+  }
+  lastFrameTs = now;
   profiler.frameStart();
   const dt = Math.min((now - lastTime) / 1000, 0.05);
   lastTime = now;
@@ -423,8 +433,13 @@ function loop(now: number): void {
   ctx.save();
   ctx.translate(state.camX + state.shakeX, state.camY + state.shakeY);
 
-  clearGradCache();
+  // Gradient cache intentionally NOT cleared per frame: it self-evicts at
+  // capacity, and clearing every frame forced static gradients (pillars,
+  // pickups, zones) to be rebuilt 60x/second.
+  profiler.begin('r:room');
   drawRoom(ctx, state);
+  profiler.end('r:room');
+  profiler.begin('r:world');
   drawZones(ctx, state);
   drawAoe(ctx, state);
   drawPillars(ctx, state);
@@ -433,11 +448,18 @@ function loop(now: number): void {
   drawSpells(ctx, state);
   drawBeams(ctx, state);
   drawTethers(ctx, state);
+  profiler.end('r:world');
+  profiler.begin('r:enemies');
   drawEnemies(ctx, state);
+  profiler.end('r:enemies');
+  profiler.begin('r:players');
   drawWizard(ctx, state);
+  profiler.end('r:players');
+  profiler.begin('r:fx');
   drawFx(ctx, state);
   drawCrosshair(ctx, state);
   drawCountdown(ctx, state);
+  profiler.end('r:fx');
 
   ctx.restore();
 
@@ -501,6 +523,7 @@ if (new URLSearchParams(window.location.search).has('screenshots')) {
       ctx.save();
       ctx.translate(state.camX + state.shakeX, state.camY + state.shakeY);
       clearGradCache();
+      updateHUD(state, true); // force past the HUD throttle for screenshots
       drawRoom(ctx, state);
       drawZones(ctx, state);
       drawAoe(ctx, state);

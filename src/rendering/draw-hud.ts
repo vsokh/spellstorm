@@ -6,7 +6,16 @@ import { themeFor } from '../classes/theme';
 //       HUD UPDATE
 // ═══════════════════════════════════
 
-export function updateHUD(state: GameState): void {
+// Rebuilding HUD innerHTML at 60Hz costs ~1ms/frame in DOM/style work.
+// 10Hz is visually identical (bars already animate via CSS transitions).
+let lastHudUpdate = 0;
+const HUD_UPDATE_INTERVAL_MS = 100;
+
+export function updateHUD(state: GameState, force = false): void {
+  const now = performance.now();
+  if (!force && now - lastHudUpdate < HUD_UPDATE_INTERVAL_MS) return;
+  lastHudUpdate = now;
+
   const p = state.players[state.localIdx];
   if (!p) return;
 
