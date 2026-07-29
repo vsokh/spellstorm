@@ -1,6 +1,6 @@
 /** Dev toggle: skip the level-up upgrade screen and hide the shop.
  *  Set to `false` to restore normal augment/shop flow. */
-export const DEV_DISABLE_AUGMENTS = true;
+export const DEV_DISABLE_AUGMENTS = false;
 
 /** Room dimensions in world pixels */
 export const ROOM_WIDTH = 1000;

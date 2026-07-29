@@ -269,6 +269,22 @@ function loop(now: number): void {
     state.gamePhase === GamePhase.Victory ||
     state.gamePhase === GamePhase.Paused
   ) {
+    // Game-over overlay delay: must tick HERE — gameplay systems (including
+    // the physics update that used to own this timer) stop running the moment
+    // the phase flips to GameOver, which left the overlay unreachable.
+    if (state.gamePhase === GamePhase.GameOver && state._gameOverTimer > 0) {
+      state._gameOverTimer -= dt;
+      if (state._gameOverTimer <= 0) {
+        state._gameOverTimer = 0;
+        const statsEl = document.getElementById('go-stats');
+        if (statsEl) {
+          const livesInfo = state.mode === NetworkMode.Local ? `<br>Lives Used: ${state.maxLives}` : '';
+          statsEl.innerHTML = `Wave Reached: ${state.wave} / ${MAX_WAVES}<br>Kills: ${state.totalKills}<br>Gold: ${state.gold}${livesInfo}`;
+        }
+        const goEl = document.getElementById('gameover');
+        if (goEl) goEl.style.display = 'flex';
+      }
+    }
     flushOutbox();
     requestAnimationFrame(loop);
     return;

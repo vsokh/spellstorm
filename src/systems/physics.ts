@@ -16,7 +16,7 @@ import {
   GAME_OVER_DELAY_MS,
   CD_FLOORS,
 } from '../constants';
-import { Enemy, EnemyView, GamePhase, NetworkMode, PickupType, SfxName, SpellType } from '../types';
+import { EnemyView, GamePhase, PickupType, SfxName, SpellType } from '../types';
 import { castSpell, castChargedSpell, castSpellSilent, castUltimate, damageEnemy, switchStance, applyMarkToEnemy, detonateMarks } from './combat';
 import { dispatchTick } from '../classes/hooks';
 
@@ -31,22 +31,8 @@ export function setChestPickupHandler(handler: (state: GameState) => void): void
 // ═══════════════════════════════════
 
 export function updatePlayers(state: GameState, dt: number): void {
-  // Synchronous game over timer (replaces setTimeout race condition)
-  if (state._gameOverTimer > 0) {
-    state._gameOverTimer -= dt;
-    if (state._gameOverTimer <= 0) {
-      state._gameOverTimer = 0;
-      if (state.gamePhase === GamePhase.GameOver) {
-        const statsEl = document.getElementById('go-stats');
-        if (statsEl) {
-          const livesInfo = state.mode === NetworkMode.Local ? `<br>Lives Used: ${state.maxLives}` : '';
-          statsEl.innerHTML = `Wave Reached: ${state.wave} / 20<br>Kills: ${state.totalKills}<br>Gold: ${state.gold}${livesInfo}`;
-        }
-        const goEl = document.getElementById('gameover');
-        if (goEl) goEl.style.display = 'flex';
-      }
-    }
-  }
+  // NOTE: the game-over overlay timer lives in main.ts — this system stops
+  // running once gamePhase flips to GameOver, so it can't tick timers then.
 
   for (const p of state.players) {
     if (!p.alive) {
