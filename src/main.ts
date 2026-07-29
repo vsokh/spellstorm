@@ -25,7 +25,7 @@ import {
 import { sfx } from './audio';
 import { SfxName } from './types';
 import { setupInput, getInput } from './input';
-import { setupTouchControls } from './touch-input';
+import { setupTouchControls, updateTouchFeedback } from './touch-input';
 import { getRenderZoom, getRenderRes, IS_MOBILE } from './mobile';
 import { setNetworkCallbacks, sendState, sendInput, flushOutbox, getAdaptiveInterval } from './network';
 import { setChestPickupHandler } from './systems/physics';
@@ -421,6 +421,7 @@ function loop(now: number): void {
   profiler.end('effects');
   profiler.begin('hud');
   updateHUD(state);
+  updateTouchFeedback();
   profiler.end('hud');
 
   // ── DRAW ──

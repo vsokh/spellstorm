@@ -84,7 +84,7 @@ export function getInput(state: GameState, playerIdx: number): PlayerInput {
   const t = getTouchInput();
   if (t.usingTouch) {
     if (t.mx !== 0 || t.my !== 0) { mx = t.mx; my = t.my; }
-    if (t.aimActive) angle = t.aimAngle;
+    if (t.aimActive) angle = assistAim(state, p, t.aimAngle);
     else if (t.mx !== 0 || t.my !== 0) angle = Math.atan2(t.my, t.mx);
     else angle = t.aimAngle; // last aim direction
     shoot = shoot || t.aimActive;
@@ -95,4 +95,37 @@ export function getInput(state: GameState, playerIdx: number): PlayerInput {
   }
 
   return { angle, mx, my, shoot, shoot2, ability, ult, dash };
+}
+
+// ── Touch aim assist ──
+// Thumb-aiming at small sprites is the hardest part of twin-stick play on a
+// phone. Snap the stick angle to the best enemy inside a narrow cone: close
+// enough to feel magnetic, narrow enough to preserve intent. Dash is immune
+// (it uses movement direction), and mouse aim never goes through this path.
+const ASSIST_CONE = 0.35;   // ~±20°
+const ASSIST_RANGE = 640;   // world px
+const ASSIST_RANGE_SQ = ASSIST_RANGE * ASSIST_RANGE;
+
+function assistAim(state: GameState, p: { x: number; y: number }, raw: number): number {
+  let best = raw;
+  let bestScore = Infinity;
+  for (const e of state.enemies) {
+    if (!e.alive || e._friendly || e._deathTimer >= 0) continue;
+    const dx = e.x - p.x;
+    const dy = e.y - p.y;
+    const d2 = dx * dx + dy * dy;
+    if (d2 > ASSIST_RANGE_SQ || d2 < 1) continue;
+    let delta = Math.atan2(dy, dx) - raw;
+    if (delta > Math.PI) delta -= Math.PI * 2;
+    else if (delta < -Math.PI) delta += Math.PI * 2;
+    const ad = Math.abs(delta);
+    if (ad > ASSIST_CONE) continue;
+    // Prefer angular closeness; break near-ties toward closer enemies.
+    const score = ad + Math.sqrt(d2) * 0.0004;
+    if (score < bestScore) {
+      bestScore = score;
+      best = raw + delta;
+    }
+  }
+  return best;
 }

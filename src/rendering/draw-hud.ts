@@ -71,6 +71,28 @@ export function updateHUD(state: GameState, force = false): void {
   const skillBar = document.getElementById('skill-bar');
   if (skillBar) skillBar.innerHTML = spH;
 
+  // Mirror cooldown / ult-charge state onto the mobile touch buttons — on a
+  // phone the player's eyes are on the action, not the tiny skill bar.
+  if (document.body.classList.contains('touch-device')) {
+    const setBtn = (sel: string, frac: number, ready: boolean): void => {
+      const el = document.querySelector<HTMLElement>(sel);
+      if (!el) return;
+      const f = Math.max(0, Math.min(1, frac));
+      el.style.setProperty('--cd', String(f));
+      el.classList.toggle('oncd', f > 0.001);
+      el.classList.toggle('ready', ready);
+    };
+    const sd = p.cls.spells;
+    if (sd[1]) setBtn('.tc-rmb', sd[1].cd > 0 ? p.cd[1] / sd[1].cd : 0, false);
+    if (sd[2]) setBtn('.tc-q', sd[2].cd > 0 ? p.cd[2] / sd[2].cd : 0, false);
+    setBtn('.tc-dash', p.dashCd / 2, false);
+    const ultReady = p.ultCharge >= 100;
+    setBtn('.tc-ult', ultReady ? 0 : 1 - p.ultCharge / 100, ultReady);
+    // Dash is augment-gated — hide the button while the player can't dash.
+    const dashBtn = document.querySelector<HTMLElement>('.tc-dash');
+    if (dashBtn) dashBtn.style.display = p.hasDash ? '' : 'none';
+  }
+
   const hudRoom = document.getElementById('hud-room');
   if (hudRoom) {
     const aliveEnemies = state.enemies.filter(e => e.alive && !e._friendly && e._deathTimer < 0).length;

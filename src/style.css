@@ -1047,6 +1047,28 @@ body.touch-device.in-game #touch-controls { display: block; }
   background: rgba(110, 55, 190, 0.6);
   border-color: rgba(200, 160, 255, 0.7);
 }
+/* Cooldown sweep: --cd is the remaining fraction, set from updateHUD */
+.tc-btn::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: conic-gradient(rgba(8, 5, 16, 0.72) calc(var(--cd, 0) * 360deg), transparent 0);
+  opacity: 0;
+  transition: opacity 0.12s;
+  pointer-events: none;
+}
+.tc-btn.oncd::after { opacity: 1; }
+.tc-btn.oncd { color: rgba(160, 150, 190, 0.45); }
+.tc-ult.ready {
+  color: #ffd75e;
+  border-color: rgba(255, 204, 68, 0.85);
+  animation: ultReadyPulse 1.1s ease-in-out infinite;
+}
+@keyframes ultReadyPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 204, 68, 0.25); }
+  50% { box-shadow: 0 0 26px rgba(255, 204, 68, 0.55); }
+}
 .tc-ult {
   right: calc(18px + env(safe-area-inset-right));
   bottom: calc(18px + env(safe-area-inset-bottom));
@@ -1076,7 +1098,7 @@ body.touch-device.in-game #touch-controls { display: block; }
   position: fixed;
   top: calc(54px + env(safe-area-inset-top));
   right: calc(12px + env(safe-area-inset-right));
-  width: 42px; height: 34px;
+  width: 48px; height: 40px;
   display: none;
   align-items: center; justify-content: center;
   background: rgba(30, 20, 50, 0.6);
@@ -1140,6 +1162,9 @@ body.touch-device.in-game #touch-pause { display: flex; }
   .btn { padding: 12px 28px; }
   .shop-item { padding: 14px 12px; width: 125px; }
   .upgrade-card { padding: 16px 12px; }
+  /* Class select: readable descriptions + selected-class summary line */
+  .class-card .cdesc { font-size: 10px; }
+  #select-status { font-size: 12px; color: var(--text-mid); min-height: 32px; padding: 0 18px; }
 }
 
 /* ══════════ RESPONSIVE: short viewports (540px–620px height) ══════════ */

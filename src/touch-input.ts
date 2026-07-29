@@ -50,6 +50,14 @@ export function noteMouseActivity(): void {
   if (moveId === null && aimId === null) touch.usingTouch = false;
 }
 
+// Bound inside setupTouchControls (needs the GameState closure).
+let feedbackTick: (() => void) | null = null;
+
+/** Haptic feedback poll — call once per frame from the main loop. */
+export function updateTouchFeedback(): void {
+  if (feedbackTick) feedbackTick();
+}
+
 // ── Stick trackers ──
 let moveId: number | null = null;
 let moveBaseX = 0, moveBaseY = 0;
@@ -78,6 +86,34 @@ function showStick(els: StickEls | null, x: number, y: number): void {
   els.nub.style.transform = 'translate(-50%, -50%)';
 }
 
+function setStickBase(els: StickEls | null, x: number, y: number): void {
+  if (!els) return;
+  els.base.style.left = `${x}px`;
+  els.base.style.top = `${y}px`;
+}
+
+/** Short vibration pulse (Android; iOS Safari ignores it). */
+function buzz(ms: number): void {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    try { navigator.vibrate(ms); } catch (_) { /* ignore */ }
+  }
+}
+
+// Auto-fullscreen + landscape lock on the first gameplay touch (needs a user
+// gesture). Attempted once per session so an intentional exit isn't fought.
+let immersiveTried = false;
+function tryImmersive(): void {
+  if (!IS_MOBILE || immersiveTried) return;
+  immersiveTried = true;
+  const de = document.documentElement;
+  if (!document.fullscreenElement && de.requestFullscreen) {
+    de.requestFullscreen().then(() => {
+      const so = screen.orientation as unknown as { lock?: (o: string) => Promise<void> };
+      if (so && so.lock) so.lock('landscape').catch(() => { /* unsupported */ });
+    }).catch(() => { /* browser said no — fine */ });
+  }
+}
+
 function moveStickNub(els: StickEls | null, dx: number, dy: number): void {
   if (!els) return;
   els.nub.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
@@ -92,12 +128,25 @@ function makeButton(container: HTMLElement, label: string, cls: string,
   const btn = document.createElement('button');
   btn.className = `tc-btn ${cls}`;
   btn.textContent = label;
+  // A very fast tap can start and end between two game-loop input reads
+  // (16.7ms frames, or longer when the 60fps cap skips rAF ticks on 120Hz
+  // screens). Hold the logical press for at least MIN_HOLD_MS so every tap
+  // is seen by the simulation.
+  const MIN_HOLD_MS = 80;
+  let downAt = 0;
   btn.addEventListener('touchstart', (e: TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    buzz(8);
+    downAt = performance.now();
     onDown();
   }, { passive: false });
-  const up = (e: Event): void => { e.preventDefault(); onUp(); };
+  const up = (e: Event): void => {
+    e.preventDefault();
+    const held = performance.now() - downAt;
+    if (held < MIN_HOLD_MS) setTimeout(onUp, MIN_HOLD_MS - held);
+    else onUp();
+  };
   btn.addEventListener('touchend', up);
   btn.addEventListener('touchcancel', up);
   container.appendChild(btn);
@@ -156,10 +205,14 @@ export function setupTouchControls(state: GameState, canvas: HTMLCanvasElement):
   }
 
   // ── Canvas stick handling ──
+  // Long-press on controls must never open the browser context menu
+  wrap.addEventListener('contextmenu', (e: Event) => e.preventDefault());
+
   canvas.addEventListener('touchstart', (e: TouchEvent) => {
     if (!document.body.classList.contains('in-game')) return;
     e.preventDefault(); // also suppresses synthesized mouse events
     activateTouch();
+    tryImmersive();
     for (let i = 0; i < e.changedTouches.length; i++) {
       const t = e.changedTouches[i];
       const moveZone = t.clientX < window.innerWidth * MOVE_ZONE_FRAC;
@@ -185,10 +238,17 @@ export function setupTouchControls(state: GameState, canvas: HTMLCanvasElement):
       if (t.identifier === moveId) {
         let dx = t.clientX - moveBaseX;
         let dy = t.clientY - moveBaseY;
-        const dist = Math.hypot(dx, dy);
+        let dist = Math.hypot(dx, dy);
+        // Leash: the base follows an overshooting thumb, so direction changes
+        // always register instead of pinning to the original anchor.
         if (dist > STICK_RADIUS) {
-          dx *= STICK_RADIUS / dist;
-          dy *= STICK_RADIUS / dist;
+          const excess = (dist - STICK_RADIUS) / dist;
+          moveBaseX += dx * excess;
+          moveBaseY += dy * excess;
+          setStickBase(moveEls, moveBaseX, moveBaseY);
+          dx = t.clientX - moveBaseX;
+          dy = t.clientY - moveBaseY;
+          dist = STICK_RADIUS;
         }
         moveStickNub(moveEls, dx, dy);
         const mag = Math.min(1, dist / STICK_RADIUS);
@@ -204,10 +264,15 @@ export function setupTouchControls(state: GameState, canvas: HTMLCanvasElement):
       } else if (t.identifier === aimId) {
         let dx = t.clientX - aimBaseX;
         let dy = t.clientY - aimBaseY;
-        const dist = Math.hypot(dx, dy);
+        let dist = Math.hypot(dx, dy);
         if (dist > STICK_RADIUS) {
-          dx *= STICK_RADIUS / dist;
-          dy *= STICK_RADIUS / dist;
+          const excess = (dist - STICK_RADIUS) / dist;
+          aimBaseX += dx * excess;
+          aimBaseY += dy * excess;
+          setStickBase(aimEls, aimBaseX, aimBaseY);
+          dx = t.clientX - aimBaseX;
+          dy = t.clientY - aimBaseY;
+          dist = STICK_RADIUS;
         }
         moveStickNub(aimEls, dx, dy);
         if (dist >= AIM_DEADZONE_PX) {
@@ -219,6 +284,30 @@ export function setupTouchControls(state: GameState, canvas: HTMLCanvasElement):
       }
     }
   }, { passive: false });
+
+  // ── Haptic pulses on gameplay events (Android) ──
+  // Polled from the main loop; compares against previous values so it needs
+  // no hooks into the combat pipeline.
+  let prevHp = Infinity;
+  let prevLives = Infinity;
+  let prevUltReady = false;
+  let lastHitBuzz = 0;
+  feedbackTick = (): void => {
+    if (!IS_MOBILE) return;
+    const p = state.players[state.localIdx];
+    if (!p) { prevHp = Infinity; prevLives = Infinity; prevUltReady = false; return; }
+    const now = performance.now();
+    if (p.hp < prevHp && now - lastHitBuzz > 200) {
+      buzz(25);
+      lastHitBuzz = now;
+    }
+    prevHp = p.hp;
+    if (state.lives < prevLives && prevLives !== Infinity) buzz(90);
+    prevLives = state.lives;
+    const ultReady = p.ultCharge >= 100;
+    if (ultReady && !prevUltReady) buzz(35);
+    prevUltReady = ultReady;
+  };
 
   const endTouch = (e: TouchEvent): void => {
     for (let i = 0; i < e.changedTouches.length; i++) {

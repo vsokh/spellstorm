@@ -5,6 +5,7 @@ import { sendMessage } from '../network';
 import { getSynergy, getSynergiesForClass } from '../systems/synergy';
 import { startPreviews, stopPreviews } from './spell-preview';
 import { drawClassBody, drawWeapon, CLASS_SCALE } from '../rendering/draw-entities';
+import { IS_MOBILE } from '../mobile';
 
 // ═══════════════════════════════════
 //       CLASS SELECTION SCREEN
@@ -444,6 +445,16 @@ function buildGrid(state: GameState): void {
     card.onclick = () => {
       state.selectedClassIndex = i;
       buildGrid(state);
+      // Phones hide the detail side panel — surface the passive in the
+      // status line so class picks aren't blind.
+      if (IS_MOBILE) {
+        const statusEl = document.getElementById('select-status');
+        if (statusEl) {
+          statusEl.textContent = c.passive
+            ? `${c.name} — ${c.passive.name}: ${c.passive.desc}`
+            : c.name;
+        }
+      }
     };
     return card;
   };
